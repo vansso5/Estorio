@@ -96,7 +96,10 @@ async function fetchProductDetails() {
       <div class="swiper mySwiper"><div class="swiper-wrapper">${swiperSlides}</div><div class="swiper-pagination"></div></div>
       <div class="product-detail-info">
         <h2>${product.name}</h2>
-        <p class="product-detail-price">${Number(product.newPrice).toLocaleString()} دج</p>
+        <p class="product-detail-price">
+  ${product.oldPrice ? `<span style="text-decoration: line-through; color: #999; font-size: 18px; margin-left: 10px;">${Number(product.oldPrice).toLocaleString()} دج</span>` : ''}
+  <span style="color: #e74c3c; font-weight: bold;">${Number(product.newPrice).toLocaleString()} دج</span>
+</p>
         <p class="product-description">${product.description || ''}</p>
         <button id="orderBtn">اطلب الآن</button>
       </div>
