@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>إدارة المنتجات</title>
+  <link rel="stylesheet" href="admin-style.css" />
+  <style>
+    /* ✅ زر الإضافة العائم */
+    .floating-btn {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      font-size: 32px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s;
+      z-index: 1000;
+    }
+    .floating-btn:hover {
+      background-color: #0056b3;
+    }
+
+    /* ✅ النافذة المنبثقة */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .modal-content h3 {
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .close-btn {
+      float: left;
+      font-size: 22px;
+      cursor: pointer;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">لوحة التحكم</div>
+    <div class="links">
+      <a href="admin-products.html">المنتجات</a>
+      <a href="admin-orders.html">الطلبيات النشطة</a>
+      <a href="completed-orders.html">الطلبيات المكتملة</a>
+      <a href="admin-analytics.html">التحليلات</a>
+      <a href="admin-settings.html">الإعدادات</a>
+      <a href="#" id="logoutBtn" style="display: none;">تسجيل الخروج</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h2>إدارة المنتجات</h2>
+
+    <!-- ✅ الزر الدائري -->
+    <button id="openAddProductModal" class="floating-btn">+</button>
+
+    <!-- ✅ نافذة إضافة منتج -->
+    <div id="addProductModal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close-btn" id="closeModal">&times;</span>
+        <h3>إضافة منتج جديد</h3>
+
+        <form id="addProductForm">
+          <input type="text" id="productName" placeholder="اسم المنتج" required />
+          <textarea id="productDescription" placeholder="وصف المنتج" required></textarea>
+          <input type="number" id="productOldPrice" placeholder="السعر السابق (اختياري)" step="0.01" />
+          <input type="number" id="productNewPrice" placeholder="السعر الجديد / بعد التخفيض" step="0.01" required />
+          <div id="imagesContainer">
+            <input type="url" class="productImageInput" placeholder="رابط الصورة الأولى" required />
+          </div>
+          <button type="button" id="addImageBtn">➕ إضافة صورة أخرى</button>
+          <button type="submit" id="addProductButton">إضافة المنتج</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="productsContainer" class="products-grid">
+      <p class="loading-message">جاري تحميل المنتجات...</p>
+    </div>
+  </div>
+
+  <script type="module">
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
+      authDomain: "myestore-34f65.firebaseapp.com",
+      databaseURL: "https://myestore-34f65-default-rtdb.firebaseio.com",
+      projectId: "myestore-34f65",
+      storageBucket: "myestore-34f65.firebasestorage.app",
+      messagingSenderId: "14078917211",
+      appId: "1:14078917211:web:a48eab2a7396c094f7dd7e",
+      measurementId: "G-9181DX0XNJ"
+    };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const auth = getAuth(app);
+    const productsRef = ref(database, 'products');
+
+    const form = document.getElementById('addProductForm');
+    const productsContainer = document.getElementById('productsContainer');
+    const nameInput = document.getElementById('productName');
+    const descriptionInput = document.getElementById('productDescription');
+    const oldPriceInput = document.getElementById('productOldPrice');
+    const newPriceInput = document.getElementById('productNewPrice');
+    const imagesContainer = document.getElementById('imagesContainer');
+    const addImageBtn = document.getElementById('addImageBtn');
+    const addProductButton = document.getElementById('addProductButton');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    const modal = document.getElementById('addProductModal');
+    const openModalBtn = document.getElementById('openAddProductModal');
+    const closeModal = document.getElementById('closeModal');
+
+    let editingProductId = null;
+    let userAuthenticated = false;
+
+    // ✅ فتح وإغلاق النافذة
+    openModalBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    closeModal.addEventListener('click', () => modal.classList.add('hidden'));
+    window.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+
+    // 🔑 التحقق من تسجيل الدخول
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        userAuthenticated = true;
+        logoutBtn.style.display = 'block';
+        document.querySelector('.container').style.display = 'block';
+      } else {
+        userAuthenticated = false;
+        logoutBtn.style.display = 'none';
+        document.querySelector('.container').style.display = 'none';
+        setTimeout(() => {
+          alert("يرجى تسجيل الدخول للوصول إلى لوحة التحكم");
+          window.location.href = 'admin-login.html';
+        }, 100);
+      }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        alert("تم تسجيل الخروج بنجاح!");
+        window.location.href = 'admin-login.html';
+      } catch (error) {
+        alert("فشل تسجيل الخروج: " + error.message);
+      }
+    });
+
+    // ➕ إضافة حقل صورة إضافية
+    addImageBtn.addEventListener('click', () => {
+      if (!userAuthenticated) return;
+      const input = document.createElement('input');
+      input.type = 'url';
+      input.placeholder = 'رابط صورة إضافية';
+      input.className = 'productImageInput';
+      imagesContainer.appendChild(input);
+    });
+
+    // 🧾 عرض المنتجات
+    const renderProducts = (productsData) => {
+      if (!userAuthenticated) return;
+      productsContainer.innerHTML = '';
+
+      if (productsData && Object.keys(productsData).length > 0) {
+        Object.entries(productsData).forEach(([id, product]) => {
+          const div = document.createElement('div');
+          div.className = 'product-card';
+          div.setAttribute('data-id', id);
+
+          const productLink = `product-detail.html?id=${id}`;
+          const images = Array.isArray(product.images) && product.images.length > 0
+            ? product.images
+            : (product.image ? [product.image] : ['https://via.placeholder.com/150?text=لا+يوجد+صورة']);
+
+          const imageGallery = images.map(src =>
+            `<img src="${src}" class="product-image" alt="${product.name || 'منتج'}">`
+          ).join('');
+
+          const oldPrice = product.oldPrice ? `${parseFloat(product.oldPrice).toFixed(2)} دج` : '';
+          const newPrice = product.newPrice ? `${parseFloat(product.newPrice).toFixed(2)} دج` : '';
+
+          div.innerHTML = `
+            <div class="product-gallery">${imageGallery}</div>
+            <div class="product-info">
+              <h3>${product.name || 'منتج بدون اسم'}</h3>
+              <p>${product.description || 'لا يوجد وصف لهذا المنتج.'}</p>
+              <p class="price">
+                ${oldPrice ? `<span class="old-price">${oldPrice}</span>` : ''}
+                <span class="new-price">${newPrice}</span>
+              </p>
+              <p class="share-link">
+                <strong>رابط المنتج:</strong>
+                <a href="${productLink}" target="_blank">${productLink}</a>
+              </p>
+            </div>
+            <div class="product-actions">
+              <button class="edit-btn" data-id="${id}">تعديل</button>
+              <button class="delete-btn" data-id="${id}">حذف</button>
+              <a href="${productLink}" target="_blank" class="view-btn">عرض للزبون</a>
+            </div>
+          `;
+          productsContainer.appendChild(div);
+        });
+
+        document.querySelectorAll('.edit-btn').forEach(btn =>
+          btn.addEventListener('click', e => {
+            const id = e.target.dataset.id;
+            editProduct(id, productsData[id]);
+            modal.classList.remove('hidden');
+          })
+        );
+
+        document.querySelectorAll('.delete-btn').forEach(btn =>
+          btn.addEventListener('click', e => deleteProduct(e.target.dataset.id))
+        );
+      } else {
+        productsContainer.innerHTML = '<p class="error-message">لا توجد منتجات حالياً</p>';
+      }
+    };
+
+    onValue(productsRef, (snapshot) => {
+      if (!userAuthenticated) return;
+      renderProducts(snapshot.val());
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!userAuthenticated) return;
+
+      const name = nameInput.value.trim();
+      const description = descriptionInput.value.trim();
+      const oldPrice = oldPriceInput.value.trim();
+      const newPrice = newPriceInput.value.trim();
+      const imageInputs = document.querySelectorAll('.productImageInput');
+      const images = Array.from(imageInputs).map(i => i.value.trim()).filter(Boolean);
+
+      if (!name || !description || !newPrice || images.length === 0) {
+        alert("يرجى ملء جميع الحقول المطلوبة");
+        return;
+      }
+
+      const productData = {
+        name,
+        description,
+        oldPrice: oldPrice || null,
+        newPrice: parseFloat(newPrice),
+        images,
+        createdAt: new Date().toISOString()
+      };
+
+      try {
+        if (editingProductId) {
+          await update(ref(database, 'products/' + editingProductId), productData);
+          alert("تم تعديل المنتج بنجاح!");
+        } else {
+          await push(productsRef, productData);
+          alert("تم إضافة المنتج بنجاح!");
+        }
+        modal.classList.add('hidden');
+        resetForm();
+      } catch (error) {
+        alert("حدث خطأ أثناء الحفظ: " + error.message);
+      }
+    });
+
+    const editProduct = (id, product) => {
+      editingProductId = id;
+      nameInput.value = product.name || '';
+      descriptionInput.value = product.description || '';
+      oldPriceInput.value = product.oldPrice || '';
+      newPriceInput.value = product.newPrice || '';
+      imagesContainer.innerHTML = '';
+      const imgs = Array.isArray(product.images) ? product.images : [product.image].filter(Boolean);
+      imgs.forEach(url => {
+        const input = document.createElement('input');
+        input.type = 'url';
+        input.className = 'productImageInput';
+        input.value = url;
+        imagesContainer.appendChild(input);
+      });
+      addProductButton.textContent = 'تعديل المنتج';
+    };
+
+    const deleteProduct = async (id) => {
+      if (!confirm("هل أنت متأكد من حذف هذا المنتج؟")) return;
+      try {
+        await remove(ref(database, 'products/' + id));
+        alert("تم حذف المنتج بنجاح");
+      } catch (error) {
+        alert("فشل الحذف: " + error.message);
+      }
+    };
+
+    const resetForm = () => {
+      form.reset();
+      editingProductId = null;
+      addProductButton.textContent = 'إضافة المنتج';
+      imagesContainer.innerHTML = '<input type="url" class="productImageInput" placeholder="رابط الصورة الأولى" required />';
+    };
+
+    document.addEventListener('DOMContentLoaded', resetForm);
+  </script>
+</body>
+</html>

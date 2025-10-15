@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>الإعدادات</title>
+  <link rel="stylesheet" href="admin-style.css" />
+</head>
+<body>
+  <nav>
+    <div class="logo">لوحة التحكم</div>
+    <div class="links">
+      <a href="admin-products.html">المنتجات</a>
+      <a href="admin-orders.html">الطلبيات النشطة</a>
+      <a href="completed-orders.html">الطلبيات المكتملة</a>
+      <a href="admin-analytics.html">التحليلات</a>
+      <a href="admin-settings.html">الإعدادات</a>
+      <a href="#" id="logoutBtn" style="display: none;">تسجيل الخروج</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h2>⚙️ الإعدادات</h2>
+    
+    <div class="analytics-grid">
+      <!-- مسح الطلبيات المكتملة -->
+      <div class="stat-card danger-zone">
+        <h3>🗑️ مسح الطلبيات المكتملة</h3>
+        <div class="setting-item">
+          <div class="orders-stats">
+            <div class="stat-card">
+              <h3>الطلبيات المكتملة</h3>
+              <span id="completedOrdersCount">0</span>
+            </div>
+            <div class="stat-card">
+              <h3>إجمالي الطلبيات</h3>
+              <span id="totalOrdersCount">0</span>
+            </div>
+          </div>
+          
+          <!-- خيارات الفترة الزمنية -->
+          <div class="time-period-selector">
+            <label>اختر الفترة الزمنية:</label>
+            <select id="timePeriod" onchange="updatePeriodSelection()">
+              <option value="all">جميع الطلبيات</option>
+              <option value="month">هذا الشهر</option>
+              <option value="last_month">الشهر الماضي</option>
+              <option value="last_3_months">آخر 3 أشهر</option>
+              <option value="custom">تحديد مخصص</option>
+            </select>
+          </div>
+
+          <!-- تحديد تاريخ مخصص -->
+          <div id="customDateRange" style="display: none; margin-top: 15px;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <div>
+                <label>من تاريخ:</label>
+                <input type="date" id="startDate" style="margin-top: 5px;">
+              </div>
+              <div>
+                <label>إلى تاريخ:</label>
+                <input type="date" id="endDate" style="margin-top: 5px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- عرض ملخص الفترة -->
+          <div id="periodSummary" class="period-summary" style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+            <p>سيتم مسح <strong id="periodCount">0</strong> طلبية</p>
+          </div>
+          
+          <p class="error-message">⚠️ هذا الإجراء لا يمكن التراجع عنه</p>
+          
+          <div class="product-actions">
+            <button class="delete-btn" onclick="clearCompletedOrders()">
+              🗑️ مسح الطلبيات المحددة
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getDatabase, ref, onValue, get, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
+      authDomain: "myestore-34f65.firebaseapp.com",
+      databaseURL: "https://myestore-34f65-default-rtdb.firebaseio.com",
+      projectId: "myestore-34f65",
+      storageBucket: "myestore-34f65.firebasestorage.app",
+      messagingSenderId: "14078917211",
+      appId: "1:14078917211:web:a48eab2a7396c094f7dd7e",
+      measurementId: "G-9181DX0XNJ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const auth = getAuth(app);
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    let allOrders = {};
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        logoutBtn.style.display = 'block';
+        loadStatistics();
+      } else {
+        logoutBtn.style.display = 'none';
+        alert("يرجى تسجيل الدخول للوصول إلى الإعدادات");
+        window.location.href = 'admin-login.html';
+      }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        window.location.href = 'admin-login.html';
+      } catch (error) {
+        console.error("خطأ في تسجيل الخروج:", error);
+      }
+    });
+
+    // تحميل الإحصائيات
+    function loadStatistics() {
+      const ordersRef = ref(database, 'orders');
+      
+      onValue(ordersRef, (snapshot) => {
+        allOrders = snapshot.val() || {};
+        const completedOrders = Object.values(allOrders).filter(order => order.status === 'تم التوصيل' || order.status === 'تم التوصيل');
+        
+        document.getElementById('completedOrdersCount').textContent = completedOrders.length;
+        document.getElementById('totalOrdersCount').textContent = Object.keys(allOrders).length;
+        
+        updatePeriodCount();
+      });
+    }
+
+    // تحديث اختيار الفترة
+    function updatePeriodSelection() {
+      const period = document.getElementById('timePeriod').value;
+      const customRange = document.getElementById('customDateRange');
+      
+      if (period === 'custom') {
+        customRange.style.display = 'block';
+        // تعيين التواريخ الافتراضية
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - 1);
+        
+        document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+        document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+      } else {
+        customRange.style.display = 'none';
+      }
+      
+      updatePeriodCount();
+    }
+
+    // تحديث عدد الطلبيات في الفترة المحددة
+    function updatePeriodCount() {
+      const period = document.getElementById('timePeriod').value;
+      const completedOrders = Object.values(allOrders).filter(order => order.status === 'تم التوصيل');
+      
+      let filteredOrders = completedOrders;
+      
+      if (period !== 'all') {
+        filteredOrders = filterOrdersByPeriod(completedOrders, period);
+      }
+      
+      document.getElementById('periodCount').textContent = filteredOrders.length;
+    }
+
+    // تصفية الطلبيات حسب الفترة
+    function filterOrdersByPeriod(orders, period) {
+      const now = new Date();
+      let startDate = new Date();
+      
+      switch(period) {
+        case 'month':
+          startDate.setDate(1); // أول يوم من الشهر الحالي
+          break;
+        case 'last_month':
+          startDate.setMonth(now.getMonth() - 1);
+          startDate.setDate(1);
+          const endDate = new Date(now.getFullYear(), now.getMonth(), 0); // آخر يوم من الشهر الماضي
+          return orders.filter(order => {
+            const orderDate = new Date(order.timestamp);
+            return orderDate >= startDate && orderDate <= endDate;
+          });
+        case 'last_3_months':
+          startDate.setMonth(now.getMonth() - 3);
+          break;
+        case 'custom':
+          const customStart = document.getElementById('startDate').value;
+          const customEnd = document.getElementById('endDate').value;
+          if (customStart && customEnd) {
+            return orders.filter(order => {
+              const orderDate = new Date(order.timestamp).toISOString().split('T')[0];
+              return orderDate >= customStart && orderDate <= customEnd;
+            });
+          }
+          return orders;
+      }
+      
+      return orders.filter(order => new Date(order.timestamp) >= startDate);
+    }
+
+    // مسح الطلبيات المكتملة
+    async function clearCompletedOrders() {
+      const period = document.getElementById('timePeriod').value;
+      const completedOrders = Object.values(allOrders).filter(order => order.status === 'تم التوصيل');
+      const ordersToDelete = period === 'all' ? completedOrders : filterOrdersByPeriod(completedOrders, period);
+      
+      if (ordersToDelete.length === 0) {
+        alert('ℹ️ لا توجد طلبيات مكتملة للمسح في الفترة المحددة');
+        return;
+      }
+      
+      let periodText = '';
+      switch(period) {
+        case 'month': periodText = 'هذا الشهر'; break;
+        case 'last_month': periodText = 'الشهر الماضي'; break;
+        case 'last_3_months': periodText = 'آخر 3 أشهر'; break;
+        case 'custom': 
+          const start = document.getElementById('startDate').value;
+          const end = document.getElementById('endDate').value;
+          periodText = `من ${start} إلى ${end}`;
+          break;
+        default: periodText = 'جميع الطلبيات';
+      }
+      
+      if (!confirm(`⚠️ هل أنت متأكد من مسح ${ordersToDelete.length} طلبيات مكتملة؟\n\nالفترة: ${periodText}\nهذا الإجراء لا يمكن التراجع عنه!`)) return;
+      
+      try {
+        const ordersRef = ref(database, 'orders');
+        const snapshot = await get(ordersRef);
+        const orders = snapshot.val() || {};
+        
+        const updates = {};
+        
+        // البحث عن معرفات الطلبيات المكتملة في الفترة المحددة
+        Object.keys(orders).forEach(orderId => {
+          const order = orders[orderId];
+          if (order.status === 'تم التوصيل' || order.status === 'تم التوصيل') {
+            // التحقق إذا كانت الطلبية ضمن الفترة المحددة
+            if (period === 'all' || isOrderInPeriod(order, period)) {
+              updates[orderId] = null; // هذا سيحذف الطلبية
+            }
+          }
+        });
+        
+        // تنفيذ الحذف
+        await update(ref(database, 'orders'), updates);
+        alert(`✅ تم مسح الطلبيات المكتملة بنجاح\nالفترة: ${periodText}`);
+        
+      } catch (error) {
+        console.error('❌ خطأ في مسح الطلبيات:', error);
+        alert('❌ حدث خطأ أثناء مسح الطلبيات المكتملة');
+      }
+    }
+
+    // التحقق إذا كانت الطلبية ضمن الفترة المحددة
+    function isOrderInPeriod(order, period) {
+      const orderDate = new Date(order.timestamp);
+      
+      switch(period) {
+        case 'month':
+          const startOfMonth = new Date();
+          startOfMonth.setDate(1);
+          startOfMonth.setHours(0, 0, 0, 0);
+          return orderDate >= startOfMonth;
+          
+        case 'last_month':
+          const startOfLastMonth = new Date();
+          startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1);
+          startOfLastMonth.setDate(1);
+          startOfLastMonth.setHours(0, 0, 0, 0);
+          
+          const endOfLastMonth = new Date();
+          endOfLastMonth.setDate(0); // آخر يوم من الشهر الماضي
+          endOfLastMonth.setHours(23, 59, 59, 999);
+          return orderDate >= startOfLastMonth && orderDate <= endOfLastMonth;
+          
+        case 'last_3_months':
+          const threeMonthsAgo = new Date();
+          threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+          threeMonthsAgo.setHours(0, 0, 0, 0);
+          return orderDate >= threeMonthsAgo;
+          
+        case 'custom':
+          const customStart = new Date(document.getElementById('startDate').value);
+          const customEnd = new Date(document.getElementById('endDate').value);
+          customEnd.setHours(23, 59, 59, 999);
+          return orderDate >= customStart && orderDate <= customEnd;
+          
+        default:
+          return true;
+      }
+    }
+
+    // جعل الدوال متاحة globally
+    window.clearCompletedOrders = clearCompletedOrders;
+    window.updatePeriodSelection = updatePeriodSelection;
+
+    // تحديث العدد عند تغيير التواريخ المخصصة
+    document.getElementById('startDate')?.addEventListener('change', updatePeriodCount);
+    document.getElementById('endDate')?.addEventListener('change', updatePeriodCount);
+
+  </script>
+</body>
+</html>

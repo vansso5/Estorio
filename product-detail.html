@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تفاصيل المنتج</title>
+<link rel="stylesheet" href="customer-style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css">
+<style>
+/* تنسيقات سريعة */
+body { font-family: 'Cairo', sans-serif; background:#f5f5f5; margin:0; padding:0; color:#333; }
+.container { max-width:1200px; margin:20px auto; padding:0 15px; }
+
+.swiper { width:100%; height:400px; border-radius:15px; overflow:hidden; margin-bottom:20px; }
+.swiper-slide img { width:100%; height:100%; object-fit:cover; border-radius:15px; }
+
+.product-detail-info { background:#fff; padding:20px 25px; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1); text-align:center; }
+.product-detail-info h2 { margin-bottom:10px; font-size:28px; color:#222; }
+.product-detail-info p { margin-bottom:10px; }
+.product-detail-info .product-detail-price { font-size:24px; color:#e74c3c; margin-bottom:15px; }
+.product-detail-info .product-description { font-size:16px; color:#555; margin-bottom:15px; }
+
+#orderBtn { background:#ff5e57; border:none; padding:12px 25px; font-size:18px; color:#fff; border-radius:50px; transition:0.3s; }
+#orderBtn:hover { background:#ff3838; transform:scale(1.05); }
+
+.modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:999; opacity:0; pointer-events:none; transition:0.3s; }
+.modal-content { background:#fff; padding:25px 20px; border-radius:15px; width:90%; max-width:400px; display:flex; flex-direction:column; gap:15px; box-shadow:0 10px 25px rgba(0,0,0,0.2); }
+.modal.hidden { opacity:0; pointer-events:none; }
+.modal:not(.hidden) { opacity:1; pointer-events:auto; }
+
+.modal h3 { text-align:center; margin-bottom:10px; color:#333; }
+.modal input, .modal select { padding:10px 15px; border-radius:10px; border:1px solid #ddd; font-size:16px; width:100%; box-sizing:border-box; transition:0.3s; }
+.modal input:focus, .modal select:focus { border-color:#ff5e57; outline:none; }
+
+#confirmOrderBtn { background:#28a745; border:none; padding:12px 20px; color:#fff; border-radius:50px; font-size:18px; transition:0.3s; }
+#confirmOrderBtn:hover { background:#218838; transform:scale(1.05); }
+
+.quantity-selector { display:flex; align-items:center; justify-content:center; gap:10px; margin:10px 0; }
+.quantity-selector button { background:#ff5e57; color:#fff; border:none; width:40px; height:40px; font-size:20px; border-radius:50%; transition:0.3s; }
+.quantity-selector button:hover { background:#ff3838; transform:scale(1.1); }
+#quantityValue { min-width:40px; text-align:center; font-weight:bold; font-size:18px; }
+
+#thankYouModal .modal-content { text-align:center; }
+#thankYouModal h3 { font-size:24px; color:#28a745; }
+#thankYouModal p { font-size:18px; }
+
+@media(max-width:768px) {
+  .swiper { height:300px; }
+  .product-detail-info h2 { font-size:22px; }
+  .product-detail-info .product-detail-price { font-size:20px; }
+  #orderBtn, #confirmOrderBtn { font-size:16px; padding:10px 20px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="productDetailContainer"><p>جاري تحميل تفاصيل المنتج...</p></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, get, child, push, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
+  authDomain: "myestore-34f65.firebaseapp.com",
+  databaseURL: "https://myestore-34f65-default-rtdb.firebaseio.com",
+  projectId: "myestore-34f65",
+  storageBucket: "myestore-34f65.appspot.com",
+  messagingSenderId: "14078917211",
+  appId: "1:14078917211:web:a48eab2a7396c094f7dd7e",
+  measurementId: "G-9181DX0XNJ"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const container = document.getElementById('productDetailContainer');
+
+function getProductIdFromUrl() {
+  return new URLSearchParams(window.location.search).get('id');
+}
+
+async function fetchProductDetails() {
+  const productId = getProductIdFromUrl();
+  if (!productId) return container.innerHTML = '<p class="error-message">لم يتم العثور على معرف المنتج.</p>';
+
+  try {
+    const snapshot = await get(child(ref(db), `products/${productId}`));
+    if (!snapshot.exists()) return container.innerHTML = '<p class="error-message">المنتج غير موجود.</p>';
+
+    const product = snapshot.val();
+    const images = Array.isArray(product.images) ? product.images : [product.images || 'default.jpg'];
+    const swiperSlides = images.map(src => `<div class="swiper-slide"><img src="${src}" alt="صورة المنتج"></div>`).join('');
+
+    container.innerHTML = `
+      <div class="swiper mySwiper"><div class="swiper-wrapper">${swiperSlides}</div><div class="swiper-pagination"></div></div>
+      <div class="product-detail-info">
+        <h2>${product.name}</h2>
+        <p class="product-detail-price">${product.newPrice} دج</p>
+        <p class="product-description">${product.description || ''}</p>
+        <button id="orderBtn">اطلب الآن</button>
+      </div>
+
+      <div id="orderModal" class="modal hidden">
+        <div class="modal-content">
+          <h3>أدخل معلومات الطلب</h3>
+          <input type="text" id="fname" placeholder="الاسم">
+          <input type="text" id="lname" placeholder="اللقب">
+          <input type="text" id="phone" placeholder="رقم الهاتف">
+          <input type="text" id="address" placeholder="العنوان">
+
+          <div class="quantity-selector">
+            <button type="button" id="decreaseQty">-</button>
+            <span id="quantityValue">1</span>
+            <button type="button" id="increaseQty">+</button>
+          </div>
+
+          <select id="deliveryType">
+            <option value="المنزل">توصيل إلى المنزل</option>
+            <option value="مكتب الشركة">إلى مكتب الشركة</option>
+          </select>
+          <button id="confirmOrderBtn">تأكيد الطلب</button>
+        </div>
+      </div>
+
+      <div id="thankYouModal" class="modal hidden">
+        <div class="modal-content">
+          <h3>شكرًا لطلبك!</h3>
+          <p>تم إرسال طلبك بنجاح ❤️</p>
+        </div>
+      </div>
+    `;
+
+    new Swiper(".mySwiper", { pagination: { el: ".swiper-pagination", clickable: true } });
+
+    const orderBtn = document.getElementById("orderBtn");
+    const orderModal = document.getElementById("orderModal");
+    const confirmOrderBtn = document.getElementById("confirmOrderBtn");
+    const thankYouModal = document.getElementById("thankYouModal");
+    const decreaseQty = document.getElementById("decreaseQty");
+    const increaseQty = document.getElementById("increaseQty");
+    const quantityValue = document.getElementById("quantityValue");
+
+    let quantity = 1;
+
+    orderBtn.addEventListener("click", () => orderModal.classList.remove("hidden"));
+    
+    // اغلاق النافذة عند الضغط خارجها
+    orderModal.addEventListener("click", e => {
+      if(e.target === orderModal) orderModal.classList.add("hidden");
+    });
+
+    decreaseQty.addEventListener("click", () => { if(quantity>1) quantity--; quantityValue.textContent = quantity; });
+    increaseQty.addEventListener("click", () => { quantity++; quantityValue.textContent = quantity; });
+
+    confirmOrderBtn.addEventListener("click", async () => {
+      const fname = document.getElementById("fname").value.trim();
+      const lname = document.getElementById("lname").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const deliveryType = document.getElementById("deliveryType").value;
+
+      if (!fname || !lname || !phone || !address) return alert("يرجى ملء جميع الخانات بشكل صحيح.");
+
+      orderModal.classList.add("hidden");
+
+      const orderRef = push(ref(db, "orders"));
+      const totalPrice = parseFloat(product.newPrice) * quantity;
+
+      await set(orderRef, {
+        productId: productId,
+        productName: product.name,
+        productPrice: parseFloat(product.newPrice),
+        quantity: quantity,
+        totalPrice: totalPrice,
+        customerName: `${fname} ${lname}`,
+        customerPhone: phone,
+        customerAddress: address,
+        deliveryOption: deliveryType,
+        timestamp: Date.now(),
+        status: "الطلبات الجديدة",
+        rating: 0
+      });
+
+      thankYouModal.classList.remove("hidden");
+      setTimeout(() => thankYouModal.classList.add("hidden"), 3000);
+    });
+
+  } catch(err) {
+    console.error(err);
+    container.innerHTML = '<p class="error-message">حدث خطأ أثناء تحميل تفاصيل المنتج.</p>';
+  }
+}
+
+fetchProductDetails();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+</body>
+</html>

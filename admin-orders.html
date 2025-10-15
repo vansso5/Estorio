@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الطلبيات النشطة</title>
+<link rel="stylesheet" href="admin-style.css">
+<style>
+.orders-grid { display: flex; flex-direction: column; gap: 20px; margin-top: 20px; }
+.order-card { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); position: relative; }
+.order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.status-badge { padding: 5px 10px; border-radius: 5px; color: #fff; font-weight: bold; }
+.status-new { background: #17a2b8; }
+.status-processing { background: #ffc107; color: #000; }
+.status-shipped { background: #fd7e14; }
+.order-customer, .order-products, .order-meta { margin-bottom: 10px; }
+.product-item { margin-bottom: 5px; }
+.product-details span { display: inline-block; margin-right: 10px; }
+.order-actions { margin-top: 15px; }
+.action-btn { 
+  background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-left: 10px;
+}
+.action-btn:hover { background: #0056b3; }
+.action-btn:disabled { background: #6c757d; cursor: not-allowed; }
+.loading-message, .error-message { text-align: center; color: #888; margin-top: 20px; }
+
+.orders-stats { display: flex; gap: 20px; margin-bottom: 20px; }
+.stat-card { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; text-align: center; cursor: pointer; transition: all 0.3s ease; position: relative; }
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+.stat-card.active { border: 2px solid #007bff; background: #f8f9fa; }
+.stat-card h3 { margin: 0 0 10px 0; color: #555; font-size: 14px; }
+.stat-card span { font-size: 24px; font-weight: bold; color: #007bff; }
+
+.orders-tabs { display: none; }
+.orders-tabs.active { display: block; }
+.tab-content { margin-top: 20px; }
+
+/* إشعار الطلبات الجديدة */
+.new-order-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ff4757;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* أيقونة الطلبات الجديدة في الشريط العلوي */
+.notification-badge {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-icon {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff4757;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  animation: pulse 1.5s infinite;
+}
+</style>
+</head>
+<body>
+<nav>
+<div class="logo">لوحة التحكم</div>
+<div class="links">
+  <a href="admin-products.html">المنتجات</a>
+  <a href="admin-orders.html" class="notification-badge">
+    الطلبيات النشطة
+    <span id="activeOrdersBadge" class="notification-icon" style="display: none;"></span>
+  </a>
+  <a href="completed-orders.html">الطلبيات المكتملة</a>
+  <a href="admin-analytics.html">التحليلات</a>
+  <a href="admin-settings.html">الإعدادات</a>
+  <a href="#" id="logoutBtn" style="display: none;">تسجيل الخروج</a>
+</div>
+</nav>
+
+<div class="container">
+<h2>الطلبيات النشطة</h2>
+
+<div class="orders-stats">
+  <div class="stat-card active" data-tab="new">
+    <h3>الطلبيات الجديدة</h3>
+    <span id="newOrdersCount">0</span>
+  </div>
+  <div class="stat-card" data-tab="processing">
+    <h3>قيد التجهيز</h3>
+    <span id="processingOrdersCount">0</span>
+  </div>
+  <div class="stat-card" data-tab="shipped">
+    <h3>طلبات مشحونة</h3>
+    <span id="shippedOrdersCount">0</span>
+  </div>
+</div>
+
+<div id="newOrdersTab" class="orders-tabs active">
+  <h3>الطلبيات الجديدة</h3>
+  <div id="newOrdersContainer" class="orders-grid">
+    <p class="loading-message">جاري تحميل الطلبيات الجديدة...</p>
+  </div>
+</div>
+
+<div id="processingOrdersTab" class="orders-tabs">
+  <h3>الطلبيات قيد التجهيز</h3>
+  <div id="processingOrdersContainer" class="orders-grid">
+    <p class="loading-message">جاري تحميل الطلبيات قيد التجهيز...</p>
+  </div>
+</div>
+
+<div id="shippedOrdersTab" class="orders-tabs">
+  <h3>الطلبيات المشحونة</h3>
+  <div id="shippedOrdersContainer" class="orders-grid">
+    <p class="loading-message">جاري تحميل الطلبيات المشحونة...</p>
+  </div>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, onValue, update, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
+  authDomain: "myestore-34f65.firebaseapp.com",
+  databaseURL: "https://myestore-34f65-default-rtdb.firebaseio.com",
+  projectId: "myestore-34f65",
+  storageBucket: "myestore-34f65.firebasestorage.app",
+  messagingSenderId: "14078917211",
+  appId: "1:14078917211:web:a48eab2a7396c094f7dd7e",
+  measurementId: "G-9181DX0XNJ"
+};
+
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+const auth = getAuth(app);
+const ordersRef = ref(database, 'orders');
+
+const logoutBtn = document.getElementById('logoutBtn');
+const newOrdersCount = document.getElementById('newOrdersCount');
+const processingOrdersCount = document.getElementById('processingOrdersCount');
+const shippedOrdersCount = document.getElementById('shippedOrdersCount');
+const activeOrdersBadge = document.getElementById('activeOrdersBadge');
+
+const newOrdersContainer = document.getElementById('newOrdersContainer');
+const processingOrdersContainer = document.getElementById('processingOrdersContainer');
+const shippedOrdersContainer = document.getElementById('shippedOrdersContainer');
+
+const statCards = document.querySelectorAll('.stat-card');
+let userAuthenticated = false;
+let currentOrders = {};
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    userAuthenticated = true;
+    logoutBtn.style.display = 'block';
+  } else {
+    userAuthenticated = false;
+    logoutBtn.style.display = 'none';
+    alert("يرجى تسجيل الدخول للوصول إلى لوحة التحكم");
+    window.location.href = 'admin-login.html';
+  }
+});
+
+logoutBtn.addEventListener('click', async () => {
+  try { await signOut(auth); window.location.href = 'admin-login.html'; }
+  catch (error) { console.error("خطأ في تسجيل الخروج:", error); }
+});
+
+statCards.forEach(card => {
+  card.addEventListener('click', () => {
+    statCards.forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    document.querySelectorAll('.orders-tabs').forEach(tab => tab.classList.remove('active'));
+    const tabName = card.dataset.tab;
+    document.getElementById(`${tabName}OrdersTab`).classList.add('active');
+  });
+});
+
+function formatDate(timestamp) {
+  if (!timestamp || timestamp === 0) return 'غير محدد';
+  const date = new Date(timestamp);
+  return date.toLocaleString('en-GB', { 
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false 
+  });
+}
+
+function getNextAction(status) {
+  // تم تعديل هذا الجزء ليكون أكثر دقة
+  if (!status || status === 'الطلبات الجديدة' || status === 'الطلبات الجديدة' || status === 'الطلبات الجديدة') {
+    return { text: 'جهّز الطلب', nextStatus: 'قيد التجهيز' };
+  } else if (status === 'Processing' || status === 'قيد التجهيز' || status === 'قيد المعالجة') {
+    return { text: 'تم الشحن', nextStatus: 'Shipped' };
+  } else {
+    return { text: 'تم الاستلام', nextStatus: 'تم التوصيل' };
+  }
+}
+
+function updateOrdersCount(ordersData) {
+  const newOrders = Object.values(ordersData || {}).filter(order => 
+    !order.status || 
+    order.status === 'الطلبات الجديدة' || 
+    order.status === 'الطلبيات الجديدة' || 
+    order.status === 'الطلبيات الجديدة'
+  );
+  
+  const processingOrders = Object.values(ordersData || {}).filter(order => 
+    order.status === 'Processing' || 
+    order.status === 'قيد التجهيز' || 
+    order.status === 'قيد المعالجة'
+  );
+  
+  const shippedOrders = Object.values(ordersData || {}).filter(order => 
+    order.status === 'Shipped'
+  );
+  
+  newOrdersCount.textContent = newOrders.length;
+  processingOrdersCount.textContent = processingOrders.length;
+  shippedOrdersCount.textContent = shippedOrders.length;
+  
+  // تحديث شارة الإشعار في الشريط العلوي
+  if (newOrders.length > 0) {
+    activeOrdersBadge.style.display = 'flex';
+    activeOrdersBadge.textContent = newOrders.length > 9 ? '9+' : newOrders.length;
+  } else {
+    activeOrdersBadge.style.display = 'none';
+  }
+}
+
+function renderOrderCard(order, id, container) {
+  const action = getNextAction(order.status);
+  const orderCard = document.createElement('div');
+  orderCard.className = 'order-card';
+  
+  // إضافة شارة الطلب الجديد إذا كان الطلب جديداً
+  const isNewOrder = !order.status || order.status === 'الطلبات الجديدة' || order.status === 'الطلبيات الجديدة' || order.status === 'الطلبيات الجديدة';
+  
+  orderCard.innerHTML = `
+    <div class="order-header">
+      <h3>طلب #${id.slice(-6)}</h3>
+      ${isNewOrder ? '<div class="new-order-badge">جديد</div>' : ''}
+    </div>
+    <div class="order-customer">
+      <h4>معلومات العميل:</h4>
+      <p><strong>الاسم:</strong> ${order.customerName || 'غير متوفر'}</p>
+      <p><strong>الهاتف:</strong> ${order.customerPhone || 'غير متوفر'}</p>
+      <p><strong>العنوان:</strong> ${order.customerAddress || 'غير متوفر'}</p>
+    </div>
+    <div class="order-products">
+      <h4>المنتجات:</h4>
+      <div class="product-item">
+        <strong>${order.productName || 'غير متوفر'}</strong>
+        <div class="product-details">
+          <span>الكمية: ${order.quantity || 1}</span>
+          <span>السعر: ${parseFloat(order.productPrice || 0).toFixed(2)} دج</span>
+          <span>المجموع: ${parseFloat(order.totalPrice || 0).toFixed(2)} دج</span>
+        </div>
+      </div>
+    </div>
+    <div class="order-meta">
+      <p><strong>تاريخ الطلب:</strong> ${formatDate(order.timestamp)}</p>
+    </div>
+    <div class="order-actions">
+      <button class="action-btn update-status-btn" data-order-id="${id}" data-next-status="${action.nextStatus}">${action.text}</button>
+    </div>
+  `;
+  container.appendChild(orderCard);
+}
+
+async function renderAllOrders(ordersData) {
+  if (!userAuthenticated) return;
+  currentOrders = ordersData || {};
+  updateOrdersCount(ordersData);
+
+  newOrdersContainer.innerHTML = '';
+  processingOrdersContainer.innerHTML = '';
+  shippedOrdersContainer.innerHTML = '';
+
+  let hasNewOrders = false, hasProcessingOrders = false, hasShippedOrders = false;
+
+  Object.entries(currentOrders).forEach(([id, order]) => {
+    if (!order) return;
+    
+    const status = order.status;
+    
+    // تم تعديل هذا الجزء ليكون أكثر دقة في تصنيف الطلبات
+    if (!status || status === 'الطلبات الجديدة') {
+  renderOrderCard(order, id, newOrdersContainer);
+  hasNewOrders = true;
+} else if (status === 'قيد التجهيز' || status === 'قيد المعالجة') {
+  renderOrderCard(order, id, processingOrdersContainer);
+  hasProcessingOrders = true;
+} else if (status === 'Shipped' || status === 'تم الشحن') {
+  renderOrderCard(order, id, shippedOrdersContainer);
+  hasShippedOrders = true;
+}
+  });
+
+  if (!hasNewOrders) newOrdersContainer.innerHTML = '<p class="error-message">لا توجد طلبيات جديدة</p>';
+  if (!hasProcessingOrders) processingOrdersContainer.innerHTML = '<p class="error-message">لا توجد طلبيات قيد التجهيز</p>';
+  if (!hasShippedOrders) shippedOrdersContainer.innerHTML = '<p class="error-message">لا توجد طلبيات مشحونة</p>';
+
+  document.querySelectorAll('.update-status-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const orderId = e.target.dataset.orderId;
+      const nextStatus = e.target.dataset.nextStatus;
+      if (!orderId || !nextStatus) return;
+      
+      e.target.disabled = true;
+      e.target.textContent = 'جاري التحديث...';
+      
+      try {
+        await update(ref(database, 'orders/' + orderId), { 
+          status: nextStatus, 
+          updatedAt: Date.now() 
+        });
+        
+        // تحديث البطاقة محليًا قبل إعادة الرسم
+currentOrders[orderId].status = nextStatus;
+renderAllOrders(currentOrders);
+        
+        if (nextStatus === 'تم التوصيل') {
+          alert('تم نقل الطلبية إلى الطلبيات المكتملة');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('حدث خطأ أثناء تحديث حالة الطلب');
+        e.target.disabled = false;
+        e.target.textContent = getNextAction(currentOrders[orderId]?.status).text;
+      }
+    });
+  });
+}
+
+onValue(ordersRef, snapshot => renderAllOrders(snapshot.val() || {}));
+</script>
+</body>
+</html>
