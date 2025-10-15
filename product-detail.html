@@ -96,7 +96,7 @@ async function fetchProductDetails() {
       <div class="swiper mySwiper"><div class="swiper-wrapper">${swiperSlides}</div><div class="swiper-pagination"></div></div>
       <div class="product-detail-info">
         <h2>${product.name}</h2>
-        <p class="product-detail-price">${product.newPrice} دج</p>
+        <p class="product-detail-price">${Number(product.newPrice).toLocaleString()} دج</p>
         <p class="product-description">${product.description || ''}</p>
         <button id="orderBtn">اطلب الآن</button>
       </div>
@@ -124,11 +124,12 @@ async function fetchProductDetails() {
       </div>
 
       <div id="thankYouModal" class="modal hidden">
-        <div class="modal-content">
-          <h3>شكرًا لطلبك!</h3>
-          <p>تم إرسال طلبك بنجاح ❤️</p>
-        </div>
-      </div>
+  <div class="modal-content">
+    <h3>شكرًا لطلبك!</h3>
+    <p>تم إرسال طلبك بنجاح ❤️</p>
+    <p id="orderIdDisplay" style="font-weight:bold; color:#555;"></p>
+  </div>
+</div>
     `;
 
     new Swiper(".mySwiper", { pagination: { el: ".swiper-pagination", clickable: true } });
@@ -154,37 +155,62 @@ async function fetchProductDetails() {
     increaseQty.addEventListener("click", () => { quantity++; quantityValue.textContent = quantity; });
 
     confirmOrderBtn.addEventListener("click", async () => {
-      const fname = document.getElementById("fname").value.trim();
-      const lname = document.getElementById("lname").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const address = document.getElementById("address").value.trim();
-      const deliveryType = document.getElementById("deliveryType").value;
+  const fname = document.getElementById("fname").value.trim();
+  const lname = document.getElementById("lname").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const address = document.getElementById("address").value.trim();
+  const deliveryType = document.getElementById("deliveryType").value;
 
-      if (!fname || !lname || !phone || !address) return alert("يرجى ملء جميع الخانات بشكل صحيح.");
+  if (!fname || !lname || !phone || !address) return alert("يرجى ملء جميع الخانات بشكل صحيح.");
 
-      orderModal.classList.add("hidden");
+  orderModal.classList.add("hidden");
 
-      const orderRef = push(ref(db, "orders"));
-      const totalPrice = parseFloat(product.newPrice) * quantity;
+  const orderRef = push(ref(db, "orders"));
+  const orderId = orderRef.key;
+  const totalPrice = parseFloat(product.newPrice) * quantity;
 
-      await set(orderRef, {
-        productId: productId,
-        productName: product.name,
-        productPrice: parseFloat(product.newPrice),
-        quantity: quantity,
-        totalPrice: totalPrice,
-        customerName: `${fname} ${lname}`,
-        customerPhone: phone,
-        customerAddress: address,
-        deliveryOption: deliveryType,
-        timestamp: Date.now(),
-        status: "الطلبات الجديدة",
-        rating: 0
-      });
+  await set(orderRef, {
+    id: orderId,
+    productId: productId,
+    productName: product.name,
+    productPrice: parseFloat(product.newPrice),
+    quantity: quantity,
+    totalPrice: totalPrice,
+    customerName: `${fname} ${lname}`,
+    customerPhone: phone,
+    customerAddress: address,
+    deliveryOption: deliveryType,
+    timestamp: Date.now(),
+    status: "الطلبات الجديدة",
+    rating: 0
+  });
 
-      thankYouModal.classList.remove("hidden");
-      setTimeout(() => thankYouModal.classList.add("hidden"), 3000);
-    });
+  // ✅ إظهار النافذة أولاً
+  // ✅ عرض نافذة رقم الطلب فورًا
+thankYouModal.innerHTML = `
+  <div class="modal-content" style="text-align:center;">
+    <h3>✅ تم إرسال طلبك بنجاح سيتم التواصل معك قريبا من خدمة الزبائن لتأكيد طلبك</h3>
+    <p>رقم طلبك:</p>
+    <div id="orderIdBox" style="background:#f0f0f0;padding:10px;border-radius:8px;margin-bottom:10px;font-weight:bold;">${orderId}</div>
+    <button id="copyOrderId" style="background:#4CAF50;color:white;padding:8px 12px;border:none;border-radius:6px;cursor:pointer;margin-bottom:10px;">📋 نسخ الرقم</button>
+    <br>
+    <button id="closeModal" style="background:#e74c3c;color:white;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;">موافق</button>
+  </div>
+`;
+
+thankYouModal.classList.remove("hidden");
+
+// زر النسخ
+document.getElementById("copyOrderId").onclick = () => {
+  navigator.clipboard.writeText(orderId);
+  alert("تم نسخ رقم الطلب!");
+};
+
+// زر الإغلاق
+document.getElementById("closeModal").onclick = () => {
+  thankYouModal.classList.add("hidden");
+};
+});
 
   } catch(err) {
     console.error(err);
