@@ -270,6 +270,7 @@ function renderOrderCard(order, id, container) {
       <p><strong>الاسم:</strong> ${order.customerName || 'غير متوفر'}</p>
       <p><strong>الهاتف:</strong> ${order.customerPhone || 'غير متوفر'}</p>
       <p><strong>العنوان:</strong> ${order.customerAddress || 'غير متوفر'}</p>
+      <p><strong>🚚 نوع التوصيل:</strong> ${order.deliveryOption || 'غير محدد'}</p>
     </div>
     <div class="order-products">
       <h4>المنتجات:</h4>
