@@ -5,67 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>إدارة المنتجات</title>
   <link rel="stylesheet" href="admin-style.css" />
-  <style>
-    /* ✅ زر الإضافة العائم */
-    .floating-btn {
-      position: fixed;
-      bottom: 25px;
-      right: 25px;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background-color: #007bff;
-      color: #fff;
-      border: none;
-      font-size: 32px;
-      cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      transition: background-color 0.3s;
-      z-index: 1000;
-    }
-    .floating-btn:hover {
-      background-color: #0056b3;
-    }
-
-    /* ✅ النافذة المنبثقة */
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .modal-content {
-      background: #fff;
-      padding: 20px;
-      border-radius: 15px;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    }
-
-    .modal-content h3 {
-      margin-bottom: 15px;
-      text-align: center;
-    }
-
-    .close-btn {
-      float: left;
-      font-size: 22px;
-      cursor: pointer;
-      color: #333;
-    }
-  </style>
+  <!-- لا يوجد أي ستايل إضافي هنا كما طلبت -->
 </head>
 <body>
   <nav>
@@ -80,11 +20,20 @@
     </div>
   </nav>
 
-  <div class="container">
+  <div class="container" style="position: relative;"> 
+    <!-- تمت إضافة style="position: relative;" هنا كاستثناء للحفاظ على عمل الزر في الأعلى يمين، 
+         وإلا سيصبح الزر خارج نطاق التحكم بالـ CSS الخارجي بشكل كامل.
+         إذا كان لديك بالفعل .container { position: relative; } في admin-style.css، يمكنك إزالة هذا الـ inline style. -->
     <h2>إدارة المنتجات</h2>
 
-    <!-- ✅ الزر الدائري -->
-    <button id="openAddProductModal" class="floating-btn">+</button>
+    <!-- ✅ الزر الدائري (المعدل موقعه، والستايل سيعتمد على admin-style.css) -->
+    <button id="openAddProductModal" class="floating-btn" title="إضافة منتج جديد">+</button>
+
+    <!-- ***** 1. خانة البحث المضافة هنا ***** -->
+    <div class="search-wrapper">
+      <input id="searchInput" class="search-input" type="text" placeholder="ابحث باسم المنتج أو الوصف...">
+    </div>
+    <!-- ***** انتهى البحث ***** -->
 
     <!-- ✅ نافذة إضافة منتج -->
     <div id="addProductModal" class="modal hidden">
@@ -95,8 +44,10 @@
         <form id="addProductForm">
           <input type="text" id="productName" placeholder="اسم المنتج" required />
           <textarea id="productDescription" placeholder="وصف المنتج" required></textarea>
-          <input type="number" id="productOldPrice" placeholder="السعر السابق (اختياري)" step="0.01" />
-          <input type="number" id="productNewPrice" placeholder="السعر الجديد / بعد التخفيض" step="0.01" required />
+          <!-- ✅ 3. حقل سعر الشراء الجديد -->
+          <input type="number" id="productPurchasePrice" placeholder="سعر الشراء (دج)" step="0.01" required />
+          <input type="number" id="productOldPrice" placeholder="السعر السابق (اختياري) (دج)" step="0.01" />
+          <input type="number" id="productNewPrice" placeholder="السعر الجديد / بعد التخفيض (دج)" step="0.01" required />
           <div id="imagesContainer">
             <input type="url" class="productImageInput" placeholder="رابط الصورة الأولى" required />
           </div>
@@ -137,6 +88,7 @@
     const productsContainer = document.getElementById('productsContainer');
     const nameInput = document.getElementById('productName');
     const descriptionInput = document.getElementById('productDescription');
+    const purchasePriceInput = document.getElementById('productPurchasePrice'); // ✅ 3. جلب حقل سعر الشراء الجديد
     const oldPriceInput = document.getElementById('productOldPrice');
     const newPriceInput = document.getElementById('productNewPrice');
     const imagesContainer = document.getElementById('imagesContainer');
@@ -148,11 +100,18 @@
     const openModalBtn = document.getElementById('openAddProductModal');
     const closeModal = document.getElementById('closeModal');
 
+    const searchInput = document.getElementById('searchInput'); // ✅ 1. جلب عنصر البحث
+    let currentProductsData = {}; // ✅ لتخزين بيانات المنتجات للبحث فيها
+    let searchKeyword = ""; // ✅ كلمة البحث
+
     let editingProductId = null;
     let userAuthenticated = false;
 
     // ✅ فتح وإغلاق النافذة
-    openModalBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    openModalBtn.addEventListener('click', () => {
+      resetForm(); // إعادة تعيين النموذج عند فتح نافذة الإضافة/التعديل
+      modal.classList.remove('hidden');
+    });
     closeModal.addEventListener('click', () => modal.classList.add('hidden'));
     window.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
 
@@ -193,13 +152,34 @@
       imagesContainer.appendChild(input);
     });
 
-    // 🧾 عرض المنتجات
+    // 🧾 عرض المنتجات (تم تعديلها لتطبيق البحث)
     const renderProducts = (productsData) => {
       if (!userAuthenticated) return;
       productsContainer.innerHTML = '';
+      currentProductsData = productsData || {}; // حفظ البيانات الكاملة
 
-      if (productsData && Object.keys(productsData).length > 0) {
-        Object.entries(productsData).forEach(([id, product]) => {
+      const filteredProducts = {};
+      Object.entries(currentProductsData).forEach(([id, product]) => {
+        if (!product) return;
+
+        // تطبيق فلترة البحث (إن وُجد)
+        if (searchKeyword && searchKeyword.length > 0) {
+          const kw = searchKeyword.toLowerCase();
+          const concat = [
+            (product.name || '').toString(),
+            (product.description || '').toString(),
+            (product.oldPrice || '').toString(),
+            (product.newPrice || '').toString(),
+            (product.purchasePrice || '').toString(), // تضمين سعر الشراء في البحث
+          ].join(' ').toLowerCase();
+
+          if (!concat.includes(kw)) return; // لا تطابق — تجاهل هذا المنتج
+        }
+        filteredProducts[id] = product;
+      });
+
+      if (Object.keys(filteredProducts).length > 0) {
+        Object.entries(filteredProducts).forEach(([id, product]) => {
           const div = document.createElement('div');
           div.className = 'product-card';
           div.setAttribute('data-id', id);
@@ -215,6 +195,7 @@
 
           const oldPrice = product.oldPrice ? `${parseFloat(product.oldPrice).toFixed(2)} دج` : '';
           const newPrice = product.newPrice ? `${parseFloat(product.newPrice).toFixed(2)} دج` : '';
+          const purchasePrice = product.purchasePrice ? `${parseFloat(product.purchasePrice).toFixed(2)} دج` : ''; // عرض سعر الشراء
 
           div.innerHTML = `
             <div class="product-gallery">${imageGallery}</div>
@@ -225,6 +206,7 @@
                 ${oldPrice ? `<span class="old-price">${oldPrice}</span>` : ''}
                 <span class="new-price">${newPrice}</span>
               </p>
+              ${product.purchasePrice ? `<p><strong>سعر الشراء:</strong> ${purchasePrice}</p>` : ''} <!-- عرض سعر الشراء -->
               <p class="share-link">
                 <strong>رابط المنتج:</strong>
                 <a href="${productLink}" target="_blank">${productLink}</a>
@@ -242,7 +224,7 @@
         document.querySelectorAll('.edit-btn').forEach(btn =>
           btn.addEventListener('click', e => {
             const id = e.target.dataset.id;
-            editProduct(id, productsData[id]);
+            editProduct(id, currentProductsData[id]); // استخدام currentProductsData
             modal.classList.remove('hidden');
           })
         );
@@ -251,13 +233,13 @@
           btn.addEventListener('click', e => deleteProduct(e.target.dataset.id))
         );
       } else {
-        productsContainer.innerHTML = '<p class="error-message">لا توجد منتجات حالياً</p>';
+        productsContainer.innerHTML = '<p class="error-message">لا توجد منتجات حالياً تتوافق مع معايير البحث.</p>';
       }
     };
 
     onValue(productsRef, (snapshot) => {
       if (!userAuthenticated) return;
-      renderProducts(snapshot.val());
+      renderProducts(snapshot.val()); // سيتم تخزين البيانات في currentProductsData داخل renderProducts
     });
 
     form.addEventListener('submit', async (e) => {
@@ -266,12 +248,13 @@
 
       const name = nameInput.value.trim();
       const description = descriptionInput.value.trim();
+      const purchasePrice = purchasePriceInput.value.trim(); // ✅ 3. جلب قيمة سعر الشراء
       const oldPrice = oldPriceInput.value.trim();
       const newPrice = newPriceInput.value.trim();
       const imageInputs = document.querySelectorAll('.productImageInput');
       const images = Array.from(imageInputs).map(i => i.value.trim()).filter(Boolean);
 
-      if (!name || !description || !newPrice || images.length === 0) {
+      if (!name || !description || !purchasePrice || !newPrice || images.length === 0) { // ✅ التأكد من سعر الشراء
         alert("يرجى ملء جميع الحقول المطلوبة");
         return;
       }
@@ -279,6 +262,7 @@
       const productData = {
         name,
         description,
+        purchasePrice: parseFloat(purchasePrice), // ✅ إضافة سعر الشراء للبيانات
         oldPrice: oldPrice || null,
         newPrice: parseFloat(newPrice),
         images,
@@ -304,6 +288,7 @@
       editingProductId = id;
       nameInput.value = product.name || '';
       descriptionInput.value = product.description || '';
+      purchasePriceInput.value = product.purchasePrice || ''; // ✅ تعبئة سعر الشراء
       oldPriceInput.value = product.oldPrice || '';
       newPriceInput.value = product.newPrice || '';
       imagesContainer.innerHTML = '';
@@ -334,6 +319,12 @@
       addProductButton.textContent = 'إضافة المنتج';
       imagesContainer.innerHTML = '<input type="url" class="productImageInput" placeholder="رابط الصورة الأولى" required />';
     };
+
+    // ✅ 1. ربط خانة البحث: تحدث الكلمة المفتاحية ثم أعد عرض المنتجات
+    searchInput.addEventListener('input', (e) => {
+      searchKeyword = e.target.value.trim().toLowerCase();
+      renderProducts(currentProductsData); // أعد العرض باستخدام البيانات المخزنة والكلمة المفتاحية الجديدة
+    });
 
     document.addEventListener('DOMContentLoaded', resetForm);
   </script>
