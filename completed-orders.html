@@ -15,6 +15,10 @@
     .product-item { margin-bottom: 5px; }
     .product-details span { display: inline-block; margin-right: 10px; }
     .error-message { text-align: center; color: #888; margin-top: 20px; }
+
+    /* --- إضافة بسيطة لعنصر البحث (لا يغيّر أي ستايل آخر) --- */
+    .search-wrapper { margin-top: 12px; margin-bottom: 10px; text-align: center; }
+    .search-input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; width: 90%; max-width: 420px; direction: ltr; }
   </style>
 </head>
 <body>
@@ -33,6 +37,12 @@
   <div class="container">
     <h2>الطلبيات المكتملة</h2>
     
+    <!-- ***** خانة البحث المضافة هنا ***** -->
+    <div class="search-wrapper">
+      <input id="searchInput" class="search-input" type="text" placeholder="ابحث بالاسم أو الهاتف أو رقم الطلب أو المنتج...">
+    </div>
+    <!-- ***** انتهى البحث ***** -->
+
     <div class="orders-stats">
       <div class="stat-card">
         <h3>إجمالي الطلبيات المكتملة</h3>
@@ -69,8 +79,11 @@
     const ordersContainer = document.getElementById('ordersContainer');
     const logoutBtn = document.getElementById('logoutBtn');
     const completedOrdersCount = document.getElementById('completedOrdersCount');
+    const searchInput = document.getElementById('searchInput'); // جلب عنصر البحث
 
     let userAuthenticated = false;
+    let currentOrdersData = {}; // لحفظ جميع الطلبيات التي تم جلبها من Firebase
+    let searchKeyword = ""; // لتعقب كلمة البحث
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -102,20 +115,42 @@
     function renderOrders(ordersData) {
       if (!userAuthenticated) return;
 
-      const completedOrders = {};
+      const filteredCompletedOrders = {};
       Object.entries(ordersData || {}).forEach(([id, order]) => {
-        if (order && (order.status === 'Delivered' || order.status === 'تم التوصيل')) completedOrders[id] = order;
+        if (order && (order.status === 'Delivered' || order.status === 'تم التوصيل')) {
+          // تطبيق فلترة البحث
+          if (searchKeyword && searchKeyword.length > 0) {
+            const kw = searchKeyword.toLowerCase();
+            const concat = [
+              id,
+              (order.id || '').toString(),
+              (order.orderId || '').toString(),
+              (order.customerName || order.name || '').toString(),
+              (order.customerPhone || order.phone || '').toString(),
+              (order.customerWilaya || order.state || '').toString(),
+              (order.customerCommune || order.city || '').toString(),
+              (order.customerAddress || order.address || '').toString(),
+              (order.productName || '').toString(),
+              (order.note || order.customerNote || '').toString(),
+            ].join(' ').toLowerCase();
+
+            if (!concat.includes(kw)) {
+              return; // لا تطابق — تجاهل هذا الطلب
+            }
+          }
+          filteredCompletedOrders[id] = order;
+        }
       });
 
-      completedOrdersCount.textContent = Object.keys(completedOrders).length;
+      completedOrdersCount.textContent = Object.keys(filteredCompletedOrders).length;
       ordersContainer.innerHTML = '';
 
-      if (Object.keys(completedOrders).length === 0) {
-        ordersContainer.innerHTML = '<p class="error-message">لا توجد طلبيات مكتملة لعرضها</p>';
+      if (Object.keys(filteredCompletedOrders).length === 0) {
+        ordersContainer.innerHTML = '<p class="error-message">لا توجد طلبيات مكتملة لعرضها تتوافق مع معايير البحث.</p>';
         return;
       }
 
-      Object.entries(completedOrders).forEach(([id, order]) => {
+      Object.entries(filteredCompletedOrders).forEach(([id, order]) => {
         const orderCard = document.createElement('div');
         orderCard.className = 'order-card completed';
         orderCard.innerHTML = `
@@ -152,10 +187,16 @@
 
     onValue(ordersRef, (snapshot) => {
       if (userAuthenticated) {
-        renderOrders(snapshot.val() || {});
+        currentOrdersData = snapshot.val() || {}; // حفظ البيانات الكاملة
+        renderOrders(currentOrdersData); // عرضها مع تطبيق أي بحث موجود
       }
     });
 
+    // ربط خانة البحث: تحدث الكلمة المفتاحية ثم أعد عرض الطلبيات
+    searchInput.addEventListener('input', (e) => {
+      searchKeyword = e.target.value.trim().toLowerCase();
+      renderOrders(currentOrdersData); // أعد العرض باستخدام البيانات المحفوظة والكلمة المفتاحية الجديدة
+    });
   </script>
 </body>
 </html>
