@@ -30,11 +30,18 @@ nav .logo {
   font-size: 1.2rem;
 }
 
+nav .links {
+  display: flex; /* لترتيب الروابط أفقيًا */
+  gap: 1rem;     /* مسافة بين الروابط */
+  flex-wrap: wrap; /* لتسمح بالالتفاف على الشاشات الصغيرة */
+  justify-content: flex-end; /* لترتيب الروابط في اليمين */
+}
+
 nav .links a {
   color: #fff;
-  margin-left: 1rem;
   text-decoration: none;
   font-weight: 500;
+  padding: 0.5rem 0; /* لجعل الروابط قابلة للنقر بسهولة */
 }
 
 nav .links a:hover {
@@ -91,7 +98,7 @@ button:disabled {
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  margin-bottom: 1rem; /* تم دمج margin-bottom من عدة أماكن */
+  margin-bottom: 1rem;
 }
 
 /* ===== حالة التغيير في الإحصائيات (positive/negative) ===== */
@@ -109,16 +116,17 @@ button:disabled {
 }
 
 /* ===== شبكة الإحصائيات ===== */
+/* سنعيد تعريفها للشاشات الكبيرة */
 .analytics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* الافتراضي للشاشات الصغيرة */
   gap: 1rem;
   margin-bottom: 2rem;
 }
 
 /* ===== مخططات ===== */
 .chart-container {
-  margin-bottom: 2rem; /* تم نقلها هنا لتوحيدها */
+  margin-bottom: 2rem;
 }
 
 .time-filters {
@@ -132,12 +140,10 @@ button:disabled {
 }
 
 /* ===== قائمة أفضل المنتجات والطلبات الأخيرة ===== */
-.top-products, .recent-orders {
-  /* الستايل الأساسي مدمج في .stat-card, .order-card, ... */
-}
+/* الستايل الأساسي مدمج في .stat-card, .order-card, ... */
 
 /* ===== تصميم عنصر المنتج (سواء في القائمة أو الشبكة) ===== */
-.product-item { /* يستخدم في قوائم مثل "أفضل المنتجات" */
+.product-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -165,7 +171,7 @@ button:disabled {
 }
 
 /* ===== تصميم عنصر الطلب (سواء في القائمة أو الشبكة) ===== */
-.order-item { /* يستخدم في قوائم مثل "الطلبات الأخيرة" */
+.order-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -228,24 +234,26 @@ button:disabled {
 }
 
 /* ===== الزر العائم (Floating Action Button) + نافذة المنبثقة (Modal) ===== */
+/* تم حذف خصائص position: fixed, top, right, z-index */
+/* هذا الستايل سيطبق على زر إضافة المنتجات في صفحة المنتجات إذا كان موجودًا. */
 .floating-btn {
-  /* تم إزالة position: fixed, top, right, z-index */
   width: 60px;
   height: 60px;
   border-radius: 10px; /* أو القيمة التي تفضلها للمربع/المستطيل */
   font-size: 32px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  background-color: #667eea; /* للتأكد من اللون إذا لم يكن موروثًا */
-  color: #fff; /* للتأكد من لون النص/الأيقونة */
+  background-color: #667eea;
+  color: #fff;
   cursor: pointer;
   border: none;
-  display: inline-flex; /* أو flex إذا كان داخل flex container */
+  display: inline-flex;
   justify-content: center;
   align-items: center;
-  text-decoration: none; /* إذا كان link وليس button */
-  /* الآن سنستخدم الـ margin لضبط مسافته في الـ HTML */
-  /* margin-top: 20px; */ /* مثال: يمكنك إضافته هنا أو كـ inline style في الـ HTML */
+  text-decoration: none;
+  margin-top: 20px; /* مسافة افتراضية، يمكن تجاوزها في HTML بـ inline style إذا لزم الأمر */
+  margin-right: 20px; /* مسافة عن اليمين */
 }
+
 
 .modal {
   position: fixed;
@@ -293,7 +301,7 @@ input[type="text"], input[type="url"], input[type="number"], textarea, select {
   border-radius: 6px;
   border: 1px solid #ccc;
   font-size: 0.9rem;
-  box-sizing: border-box; /* لضمان أن العرض 100% يشمل الـ padding والـ border */
+  box-sizing: border-box;
 }
 
 textarea {
@@ -364,8 +372,8 @@ body.login-layout {
   align-items: center;
   height: 100vh;
   background-color: #f5f6fa;
-  background: linear-gradient(135deg, #667eea, #764ba2); /* يمكن استخدام هذا أو الذي في body.login-layout */
-  padding-top: 0; /* صفحة تسجيل الدخول لا تحتاج padding-top من الـ nav */
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  padding-top: 0;
 }
 
 .login-container {
@@ -385,11 +393,11 @@ body.login-layout {
 
 .login-container input {
   width: 100%;
-  padding: 0.7rem 1rem; /* تم تعديل من 0.6rem 0.8rem إلى 0.7rem 1rem للتوحيد */
+  padding: 0.7rem 1rem;
   margin: 0.5rem 0;
   border-radius: 6px;
   border: 1px solid #ccc;
-  font-size: 1rem; /* تم تعديل من 0.9rem إلى 1rem */
+  font-size: 1rem;
 }
 
 .login-container input:focus {
@@ -399,13 +407,87 @@ body.login-layout {
 
 .login-container button {
   width: 100%;
-  padding: 0.7rem; /* توحيد حجم الـ padding */
+  padding: 0.7rem;
   font-size: 1rem;
-  margin-top: 1rem; /* تم التأكد من وجودها */
+  margin-top: 1rem;
 }
 
 .login-container .error-message {
   margin-top: 0.5rem;
   color: #f44336;
   font-weight: bold;
+}
+
+/* ===== Media Queries لتصميم الشاشات الكبيرة (Desktop) ===== */
+@media (min-width: 768px) {
+  /* تعديلات على شريط التنقل على الديسكتوب */
+  nav .links {
+    flex-wrap: nowrap; /* لا تلتف الروابط */
+    justify-content: flex-start; /* إذا أردت الروابط تبدأ من اليسار بجانب الشعار */
+    /* أو يمكنك تركها flex-end إذا كنت تفضل أن تكون في أقصى اليمين */
+  }
+
+  /* تحسين تخطيط الحاوية الرئيسية */
+  .container {
+    padding: 0 2rem; /* زيادة الـ padding الجانبي */
+  }
+
+  /* تصميم صفحة الإعدادات على الديسكتوب */
+  .analytics-grid {
+    grid-template-columns: 1fr 2fr; /* عمود للإعدادات الرئيسية وعمود أكبر للمحتوى */
+    gap: 2rem; /* زيادة المسافة بين الأعمدة */
+    align-items: start; /* لبدء العناصر من الأعلى */
+  }
+
+  .analytics-grid > .stat-card.danger-zone {
+    grid-column: 1 / span 2; /* لتأخذ البطاقة عمودين إذا كانت هي الوحيدة */
+    /* إذا أردتها في عمود واحد على اليمين أو اليسار: */
+    /* grid-column: 1; */
+    /* أو */
+    /* grid-column: 2; */
+
+    max-width: 800px; /* تحديد أقصى عرض للبطاقة */
+    margin-left: auto; /* لمركزتها إذا كانت في عمود واحد */
+    margin-right: auto;
+  }
+
+  /* تعديلات داخل بطاقة الإعدادات */
+  .setting-item {
+    display: flex;
+    flex-direction: column; /* ترتيب العناصر عموديًا افتراضيًا */
+    gap: 1.5rem; /* مسافة بين المجموعات الفرعية */
+  }
+
+  .orders-stats {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-around;
+  }
+
+  .orders-stats .stat-card {
+    flex: 1;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .time-period-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #customDateRange {
+    display: flex;
+    flex-direction: row; /* لعرض حقول التاريخ جنبًا إلى جنب */
+    gap: 15px;
+  }
+
+  #customDateRange > div {
+    flex: 1; /* لتوزيع المساحة بالتساوي */
+  }
+
+  .product-actions {
+    text-align: center; /* توسيط زر المسح */
+    margin-top: 1.5rem;
+  }
 }
