@@ -16,6 +16,7 @@
       <a href="completed-orders.html">الطلبيات المكتملة</a>
       <a href="admin-analytics.html">التحليلات</a>
       <a href="admin-settings.html">الإعدادات</a>
+      <a href="admin-reviews.html" class="active">التعليقات والتقييمات</a>
       <a href="#" id="logoutBtn" style="display: none;">تسجيل الخروج</a>
     </div>
   </nav>
@@ -96,324 +97,466 @@
     <div class="chart-container">
       <h3>🥧 تقسيم المبيعات حسب المنتجات</h3>
       <canvas id="productsChart"></canvas>
+      <!-- هنا سنضيف legend المخصص -->
+      <div id="productsChartLegend" class="chart-legend"></div>
     </div>
 
   </div>
-
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
-      authDomain: "myestore-34f65.firebaseapp.com",
-      databaseURL: "https://myestore-34f65-default-rtdb.firebaseio.com",
-      projectId: "myestore-34f65",
-      storageBucket: "myestore-34f65.firebasestorage.app",
-      messagingSenderId: "14078917211",
-      appId: "1:14078917211:web:a48eab2a7396c094f7dd7e",
-      measurementId: "G-9181DX0XNJ"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
+  authDomain: "myestore-34f65.firebaseapp.com",
+  databaseURL: "https://myestore-34f65-default-rtdb.firebaseio.com",
+  projectId: "myestore-34f65",
+  storageBucket: "myestore-34f65.firebasestorage.app",
+  messagingSenderId: "14078917211",
+  appId: "1:14078917211:web:a48eab2a7396c094f7dd7e",
+  measurementId: "G-9181DX0XNJ"
+};
 
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-    const auth = getAuth(app);
-    const ordersRef = ref(database, 'orders');
-    const productsRef = ref(database, 'products');
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+const auth = getAuth(app);
+const ordersRef = ref(database, 'orders');
+const productsRef = ref(database, 'products');
 
-    let salesChart, productsChart;
-    let currentTimeRange = 'month';
-    let allOrders = {};
-    let allProducts = {};
+let salesChart, productsChart;
+let currentTimeRange = 'month';
+let allOrders = {};
+let allProducts = {};
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        document.getElementById('logoutBtn').style.display = 'block';
-        loadAnalyticsData();
-      } else {
-        document.getElementById('logoutBtn').style.display = 'none';
-        alert("يرجى تسجيل الدخول للوصول إلى لوحة التحكم");
-        window.location.href = 'admin-login.html';
-      }
+// --- Debugging: Check if Chart.js and ChartDataLabels are loaded ---
+console.log("Chart.js loaded:", typeof Chart !== 'undefined');
+console.log("ChartDataLabels loaded:", typeof ChartDataLabels !== 'undefined');
+// --- End Debugging ---
+
+
+onAuthStateChanged(auth, (user) => {
+  console.log("Auth state changed. User:", user ? user.uid : "No user");
+  if (user) {
+    document.getElementById('logoutBtn').style.display = 'block';
+    loadAnalyticsData();
+  } else {
+    document.getElementById('logoutBtn').style.display = 'none';
+    alert("يرجى تسجيل الدخول للوصول إلى لوحة التحكم");
+    window.location.href = 'admin-login.html';
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  try {
+    await signOut(auth);
+    window.location.href = 'admin-login.html';
+  } catch (error) {
+    console.error("خطأ في تسجيل الخروج:", error);
+  }
+});
+
+function loadAnalyticsData() {
+  console.log("Loading analytics data...");
+  onValue(ordersRef, (snapshot) => {
+    allOrders = snapshot.val() || {};
+    console.log("Orders data received:", Object.keys(allOrders).length, "orders.");
+    calculateAnalytics();
+  });
+
+  onValue(productsRef, (snapshot) => {
+    allProducts = snapshot.val() || {};
+    console.log("Products data received:", Object.keys(allProducts).length, "products.");
+    // calculateAnalytics will be called by onValue(ordersRef) for now,
+    // as we need both to be present for full analytics.
+  });
+}
+
+function calculateAnalytics() {
+  console.log("Calculating analytics...");
+  if (Object.keys(allOrders).length === 0) {
+    console.warn("No orders found, skipping analytics calculation.");
+    return;
+  }
+
+  const completedOrders = Object.values(allOrders).filter(order => order.status === 'تم التوصيل' || order.status === 'Delivered');
+  console.log("Completed orders count:", completedOrders.length);
+  
+  const totalSales = completedOrders.reduce((sum, order) => sum + parseFloat(order.totalPrice), 0);
+  const totalOrdersCount = completedOrders.length;
+  const avgOrderValue = totalOrdersCount > 0 ? totalSales / totalOrdersCount : 0;
+  const totalProfit = totalSales * 0.3;
+
+  document.getElementById('totalSales').textContent = totalSales.toFixed(2) + ' دج';
+  document.getElementById('totalProfit').textContent = totalProfit.toFixed(2) + ' دج';
+  document.getElementById('totalOrders').textContent = totalOrdersCount;
+  document.getElementById('avgOrderValue').textContent = avgOrderValue.toFixed(2) + ' دج';
+  document.getElementById('completionRate').textContent = '100%';
+
+  calculateTopProducts(completedOrders);
+  showRecentOrders(completedOrders);
+  updateCharts(completedOrders); // هذا هو المكان الذي يجب أن يتم فيه استدعاء تحديث المخططات
+  console.log("Analytics calculation finished.");
+}
+
+function calculateTopProducts(orders) {
+  const productSales = {};
+  orders.forEach(order => {
+    const productName = order.productName;
+    if (productSales[productName]) {
+      productSales[productName] += parseInt(order.quantity);
+    } else {
+      productSales[productName] = parseInt(order.quantity);
+    }
+  });
+
+  const topProducts = Object.entries(productSales)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  const topProductsList = document.getElementById('topProductsList');
+  topProductsList.innerHTML = '';
+
+  if (topProducts.length > 0) {
+    const maxSales = Math.max(...topProducts.map(p => p[1]));
+    
+    topProducts.forEach(([productName, sales]) => {
+      const percentage = (sales / maxSales) * 100;
+      const productItem = document.createElement('div');
+      productItem.className = 'product-item';
+      productItem.innerHTML = `
+        <div class="product-info">
+          <strong>${productName}</strong>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${percentage}%"></div>
+          </div>
+        </div>
+        <div class="product-stats">${sales} مبيع</div>
+      `;
+      topProductsList.appendChild(productItem);
     });
 
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      try {
-        await signOut(auth);
-        window.location.href = 'admin-login.html';
-      } catch (error) {
-        console.error("خطأ في تسجيل الخروج:", error);
-      }
-    });
+    document.getElementById('topProduct').textContent = topProducts[0][0];
+    document.getElementById('topProductSales').textContent = topProducts[0][1] + ' مبيع';
+  }
+}
 
-    function loadAnalyticsData() {
-      onValue(ordersRef, (snapshot) => {
-        allOrders = snapshot.val() || {};
-        calculateAnalytics();
-      });
+function showRecentOrders(orders) {
+  const recentOrders = orders
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .slice(0, 5);
 
-      onValue(productsRef, (snapshot) => {
-        allProducts = snapshot.val() || {};
-        calculateAnalytics();
-      });
-    }
+  const recentOrdersList = document.getElementById('recentOrdersList');
+  recentOrdersList.innerHTML = '';
 
-    function calculateAnalytics() {
-      if (Object.keys(allOrders).length === 0) return;
+  recentOrders.forEach(order => {
+    const orderItem = document.createElement('div');
+    orderItem.className = 'order-item';
+    orderItem.innerHTML = `
+      <div class="order-info">
+        <strong>${order.customerName}</strong>
+        <div>${order.productName}</div>
+      </div>
+      <div class="order-status">
+        <div>${parseFloat(order.totalPrice).toFixed(2)} دج</div>
+        <div class="status-delivered">تم التوصيل</div>
+      </div>
+    `;
+    recentOrdersList.appendChild(orderItem);
+  });
+}
 
-      const completedOrders = Object.values(allOrders).filter(order => order.status === 'تم التوصيل' || order.status === 'Delivered');
-      const totalSales = completedOrders.reduce((sum, order) => sum + parseFloat(order.totalPrice), 0);
-      const totalOrdersCount = completedOrders.length;
-      const avgOrderValue = totalOrdersCount > 0 ? totalSales / totalOrdersCount : 0;
-      const totalProfit = totalSales * 0.3;
+function updateCharts(orders) {
+  console.log("Updating all charts...");
+  updateSalesChart(orders);
+  updateProductsChart(orders); // استدعاء مخطط الدونات
+}
 
-      document.getElementById('totalSales').textContent = totalSales.toFixed(2) + ' دج';
-      document.getElementById('totalProfit').textContent = totalProfit.toFixed(2) + ' دج';
-      document.getElementById('totalOrders').textContent = totalOrdersCount;
-      document.getElementById('avgOrderValue').textContent = avgOrderValue.toFixed(2) + ' دج';
-      document.getElementById('completionRate').textContent = '100%';
+function updateSalesChart(orders) {
+  const ctx = document.getElementById('salesChart').getContext('2d');
+  
+  if (salesChart) {
+    salesChart.destroy();
+  }
 
-      calculateTopProducts(completedOrders);
-      showRecentOrders(completedOrders);
-      updateCharts(completedOrders);
-    }
+  const labels = generateTimeLabels();
+  const data = generateSalesData(orders, labels);
 
-    function calculateTopProducts(orders) {
-      const productSales = {};
-      
-      orders.forEach(order => {
-        const productName = order.productName;
-        if (productSales[productName]) {
-          productSales[productName] += parseInt(order.quantity);
-        } else {
-          productSales[productName] = parseInt(order.quantity);
-        }
-      });
-
-      const topProducts = Object.entries(productSales)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5);
-
-      const topProductsList = document.getElementById('topProductsList');
-      topProductsList.innerHTML = '';
-
-      if (topProducts.length > 0) {
-        const maxSales = Math.max(...topProducts.map(p => p[1]));
-        
-        topProducts.forEach(([productName, sales]) => {
-          const percentage = (sales / maxSales) * 100;
-          const productItem = document.createElement('div');
-          productItem.className = 'product-item';
-          productItem.innerHTML = `
-            <div class="product-info">
-              <strong>${productName}</strong>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: ${percentage}%"></div>
-              </div>
-            </div>
-            <div class="product-stats">${sales} مبيع</div>
-          `;
-          topProductsList.appendChild(productItem);
-        });
-
-        document.getElementById('topProduct').textContent = topProducts[0][0];
-        document.getElementById('topProductSales').textContent = topProducts[0][1] + ' مبيع';
-      }
-    }
-
-    function showRecentOrders(orders) {
-      const recentOrders = orders
-        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-        .slice(0, 5);
-
-      const recentOrdersList = document.getElementById('recentOrdersList');
-      recentOrdersList.innerHTML = '';
-
-      recentOrders.forEach(order => {
-        const orderItem = document.createElement('div');
-        orderItem.className = 'order-item';
-        orderItem.innerHTML = `
-          <div class="order-info">
-            <strong>${order.customerName}</strong>
-            <div>${order.productName}</div>
-          </div>
-          <div class="order-status">
-            <div>${parseFloat(order.totalPrice).toFixed(2)} دج</div>
-            <div class="status-delivered">تم التوصيل</div>
-          </div>
-        `;
-        recentOrdersList.appendChild(orderItem);
-      });
-    }
-
-    function updateCharts(orders) {
-      updateSalesChart(orders);
-      updateProductsChart(orders);
-    }
-
-    function updateSalesChart(orders) {
-      const ctx = document.getElementById('salesChart').getContext('2d');
-      
-      if (salesChart) {
-        salesChart.destroy();
-      }
-
-      const labels = generateTimeLabels();
-      const data = generateSalesData(orders, labels);
-
-      salesChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'المبيعات',
-            data: data,
-            borderColor: '#667eea',
-            backgroundColor: 'rgba(102, 126, 234, 0.1)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.4
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              rtl: true,
-              labels: {
-                font: {
-                  family: 'Arial, sans-serif'
-                }
-              }
+  salesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'المبيعات',
+        data: data,
+        borderColor: '#667eea',
+        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          rtl: true,
+          labels: {
+            font: {
+              family: 'Arial, sans-serif'
             }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return value + ' دج';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function updateProductsChart(orders) {
+  console.log("Attempting to update products chart...");
+  const canvasElement = document.getElementById('productsChart');
+  if (!canvasElement) {
+    console.error("Canvas element with ID 'productsChart' not found.");
+    return;
+  }
+  
+  const ctx = canvasElement.getContext('2d');
+  if (!ctx) {
+    console.error("Could not get 2D context for canvas 'productsChart'.");
+    return;
+  }
+  console.log("Canvas context obtained successfully.");
+  
+  if (typeof ChartDataLabels === 'undefined') {
+    console.error("ChartDataLabels plugin is still undefined inside updateProductsChart. Make sure the script is loaded correctly.");
+    return;
+  }
+  
+  Chart.register(ChartDataLabels);
+  console.log("ChartDataLabels registered.");
+  
+  if (productsChart) {
+    console.log("Destroying existing products chart.");
+    productsChart.destroy();
+  } else {
+    console.log("No existing products chart to destroy.");
+  }
+  
+  // Build productSales robustly: trim names, skip missing names, handle NaN prices
+  const productSales = {};
+  orders.forEach(order => {
+    const rawName = order.productName;
+    const name = rawName ? String(rawName).trim() : null;
+    const price = parseFloat(order.totalPrice);
+    const value = Number.isFinite(price) ? price : 0;
+    
+    if (!name || value <= 0) {
+      // Ignoring entries with no product name or zero/invalid price
+      return;
+    }
+    
+    if (!productSales[name]) productSales[name] = 0;
+    productSales[name] += value;
+  });
+  
+  console.log("Raw product sales after sanitization:", productSales);
+  
+  const sortedProducts = Object.entries(productSales)
+    .sort((a, b) => b[1] - a[1]);
+  
+  const totalSales = sortedProducts.reduce((sum, [, v]) => sum + v, 0);
+  console.log("Total sales for doughnut chart:", totalSales.toFixed(2));
+  
+  const legendContainer = document.getElementById('productsChartLegend');
+  legendContainer.innerHTML = ''; // Clear previous legend items
+  
+  if (totalSales === 0 || sortedProducts.length === 0) {
+    console.log("No sales data or products for doughnut chart. Displaying message.");
+    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    ctx.font = '18px Arial, sans-serif';
+    ctx.fillStyle = '#555';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('لا توجد بيانات مبيعات لعرضها حاليًا.', canvasElement.width / 2, canvasElement.height / 2);
+    productsChart = null;
+    return;
+  }
+  
+  // Exclude strictly-zero items (should be none after sanitization)
+  const productsToDisplay = sortedProducts.filter(([_, sales]) => sales > 0);
+  
+  if (productsToDisplay.length === 0) {
+    console.log("Products list is empty after filtering non-positive sales.");
+    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    ctx.font = '18px Arial, sans-serif';
+    ctx.fillStyle = '#555';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('لا توجد بيانات كافية لعرضها في المخطط.', canvasElement.width / 2, canvasElement.height / 2);
+    productsChart = null;
+    return;
+  }
+  
+  console.log("Products to be displayed in chart:", productsToDisplay);
+  
+  const colors = [
+    '#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b',
+    '#ff9a9e', '#fbd540', '#fa709a', '#a6c1ee', '#fbc2eb',
+    '#5C7AFF', '#8E44AD', '#3498DB', '#2ECC71', '#F1C40F',
+    '#e74c3c', '#9b59b6', '#34495e', '#f39c12', '#c0392b',
+    '#9B59B6', '#1ABC9C', '#C0392B', '#2980B9', '#8E44AD',
+    '#2C3E50', '#D35400', '#F39C12', '#E74C3C', '#7F8C8D',
+    '#A569BD', '#16A085', '#D68910', '#3498DB', '#95A5A6',
+    '#EB984E', '#BA4A00', '#27AE60', '#ECF0F1', '#D4AC0D'
+  ];
+  
+  productsChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: productsToDisplay.map(p => p[0]),
+      datasets: [{
+        data: productsToDisplay.map(p => p[1]),
+        backgroundColor: colors.slice(0, productsToDisplay.length),
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const value = context.parsed;
+              const percentage = ((value / totalSales) * 100);
+              const percDisplay = (percentage > 0 && percentage < 0.1) ? '<0.1' : percentage.toFixed(1);
+              return `${context.label}: ${value.toFixed(2)} دج (${percDisplay}%)`;
+            }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: { weight: 'bold', size: 11 },
+          formatter: (value, context) => {
+            const percentage = (value / totalSales) * 100;
+            // show small percentages as '<0.1%' instead of hiding them or showing 0%
+            if (percentage > 0 && percentage < 0.5) {
+              // small slices: show very small label to avoid overlap; you can adjust threshold
+              return '<0.5%';
+            }
+            return `${percentage.toFixed(1)}%`;
           },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: function(value) {
-                  return value + ' دج';
-                }
-              }
-            }
-          }
+          anchor: 'center',
+          align: 'center',
         }
-      });
-    }
-
-    function updateProductsChart(orders) {
-      const ctx = document.getElementById('productsChart').getContext('2d');
-      
-      if (productsChart) {
-        productsChart.destroy();
       }
+    },
+    plugins: [ChartDataLabels]
+  });
+  
+  console.log("Products chart created successfully.");
+  
+  // Custom legend (with safe small-percentage display)
+  productsToDisplay.forEach(([productName, sales], index) => {
+    const percentage = (sales / totalSales) * 100;
+    const percentageText = (percentage > 0 && percentage < 0.1) ? '<0.1%' : percentage.toFixed(1) + '%';
+    const legendItem = document.createElement('div');
+    legendItem.className = 'legend-item';
+    legendItem.innerHTML = `
+      <span class="color-box" style="background-color: ${colors[index]}"></span>
+      <span class="product-name">${productName}</span>
+      <span class="percentage">${percentageText}</span>
+    `;
+    legendContainer.appendChild(legendItem);
+  });
+}
 
-      const productSales = {};
-      orders.forEach(order => {
-        const productName = order.productName;
-        if (productSales[productName]) {
-          productSales[productName] += parseFloat(order.totalPrice);
-        } else {
-          productSales[productName] = parseFloat(order.totalPrice);
-        }
-      });
+function generateTimeLabels() {
+  switch(currentTimeRange) {
+    case 'day':
+      return ['8 ص', '10 ص', '12 ظ', '2 م', '4 م', '6 م', '8 م'];
+    case 'week':
+      return ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+    case 'month':
+      return ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4'];
+    case 'year':
+      return ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    default:
+      return [];
+  }
+}
 
-      const topProducts = Object.entries(productSales)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 6);
+function generateSalesData(orders, labels) {
+  const data = new Array(labels.length).fill(0);
+  
+  orders.forEach(order => {
+    const orderDate = new Date(order.timestamp);
+    let index = -1;
 
-      const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#ff9a9e'];
-
-      productsChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: topProducts.map(p => p[0]),
-          datasets: [{
-            data: topProducts.map(p => p[1]),
-            backgroundColor: colors,
-            borderWidth: 2,
-            borderColor: '#fff'
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              rtl: true,
-              labels: {
-                font: {
-                  family: 'Arial, sans-serif'
-                }
-              }
-            }
-          }
-        }
-      });
+    switch(currentTimeRange) {
+      case 'day':
+        index = Math.floor(orderDate.getHours() / 3);
+        break;
+      case 'week':
+        index = orderDate.getDay();
+        break;
+      case 'month':
+        index = Math.floor((orderDate.getDate() - 1) / 7);
+        break;
+      case 'year':
+        index = orderDate.getMonth();
+        break;
     }
 
-    function generateTimeLabels() {
-      switch(currentTimeRange) {
-        case 'day':
-          return ['8 ص', '10 ص', '12 ظ', '2 م', '4 م', '6 م', '8 م'];
-        case 'week':
-          return ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
-        case 'month':
-          return ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4'];
-        case 'year':
-          return ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-        default:
-          return [];
-      }
+    if (index >= 0 && index < data.length) {
+      data[index] += parseFloat(order.totalPrice);
     }
+  });
 
-    function generateSalesData(orders, labels) {
-      const data = new Array(labels.length).fill(0);
-      
-      orders.forEach(order => {
-        const orderDate = new Date(order.timestamp);
-        let index = -1;
+  return data;
+}
 
-        switch(currentTimeRange) {
-          case 'day':
-            index = Math.floor(orderDate.getHours() / 3);
-            break;
-          case 'week':
-            index = orderDate.getDay();
-            break;
-          case 'month':
-            index = Math.floor((orderDate.getDate() - 1) / 7);
-            break;
-          case 'year':
-            index = orderDate.getMonth();
-            break;
-        }
+function changeTimeRange(range) {
+  currentTimeRange = range;
+  
+  document.querySelectorAll('.time-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  const clickedButton = Array.from(document.querySelectorAll('.time-btn')).find(btn => 
+    btn.textContent.includes(
+      range === 'day' ? 'اليوم' : 
+      range === 'week' ? 'الأسبوع' : 
+      range === 'month' ? 'الشهر' : 
+      'السنة'
+    )
+  );
+  if (clickedButton) {
+      clickedButton.classList.add('active');
+  }
 
-        if (index >= 0 && index < data.length) {
-          data[index] += parseFloat(order.totalPrice);
-        }
-      });
+  if (Object.keys(allOrders).length > 0) {
+    const completedOrders = Object.values(allOrders).filter(order => order.status === 'تم التوصيل' || order.status === 'Delivered');
+    updateCharts(completedOrders);
+  }
+}
 
-      return data;
-    }
-
-    function changeTimeRange(range) {
-      currentTimeRange = range;
-      
-      document.querySelectorAll('.time-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      
-      event.target.classList.add('active');
-      
-      if (Object.keys(allOrders).length > 0) {
-        const completedOrders = Object.values(allOrders).filter(order => order.status === 'تم التوصيل' || order.status === 'Delivered');
-        updateCharts(completedOrders);
-      }
-    }
-
-    window.changeTimeRange = changeTimeRange;
+// Ensure the global function is defined for HTML onclicks
+window.changeTimeRange = changeTimeRange;
 
   </script>
 </body>
