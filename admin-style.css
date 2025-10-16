@@ -6,10 +6,8 @@ body {
   margin: 0;
   padding: 0;
   line-height: 1.5;
-  padding-top: 100px; /* تم تعديل هذه القيمة لدفع المحتوى لأسفل بعد تثبيت الـ nav */
 }
 
-/* ===== شريط التنقل العلوي (Fixed Navbar) ===== */
 nav {
   background-color: #667eea;
   display: flex;
@@ -17,12 +15,6 @@ nav {
   align-items: center;
   padding: 0.8rem 1.5rem;
   color: #fff;
-  position: fixed;   /* تثبيت الشريط */
-  top: 0;            /* في أعلى الصفحة */
-  width: 100%;       /* ليأخذ عرض الشاشة بالكامل */
-  z-index: 1000;     /* للتأكد من ظهوره فوق المحتوى الآخر */
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* ظل خفيف لتحسين المظهر */
-  box-sizing: border-box; /* لضمان أن العرض 100% يشمل الـ padding */
 }
 
 nav .logo {
@@ -30,37 +22,29 @@ nav .logo {
   font-size: 1.2rem;
 }
 
-nav .links {
-  display: flex; /* لترتيب الروابط أفقيًا */
-  gap: 1rem;     /* مسافة بين الروابط */
-  flex-wrap: wrap; /* لتسمح بالالتفاف على الشاشات الصغيرة */
-  justify-content: flex-end; /* لترتيب الروابط في اليمين */
-}
-
 nav .links a {
   color: #fff;
+  margin-left: 1rem;
   text-decoration: none;
   font-weight: 500;
-  padding: 0.5rem 0; /* لجعل الروابط قابلة للنقر بسهولة */
 }
 
 nav .links a:hover {
   text-decoration: underline;
 }
 
-/* ===== الحاوية الرئيسية للمحتوى ===== */
 .container {
   max-width: 1200px;
   margin: 2rem auto;
   padding: 0 1rem;
 }
 
-h2, h3, h4 {
+h2, h3 {
   color: #333;
 }
 
-/* ===== الأزرار الموحدة وعناصر التحكم (select) لجميع الصفحات ===== */
-button, .status-btn, .time-btn, .edit-btn, .delete-btn, .view-btn, .floating-btn, select {
+/* ===== الأزرار الموحدة لجميع الصفحات ===== */
+button, .status-btn, .time-btn {
   background-color: #667eea;
   color: #fff;
   border: none;
@@ -69,10 +53,9 @@ button, .status-btn, .time-btn, .edit-btn, .delete-btn, .view-btn, .floating-btn
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s ease-in-out;
-  font-size: 0.9rem;
 }
 
-button:hover, .status-btn:hover, .time-btn:hover, .edit-btn:hover, .delete-btn:hover, .view-btn:hover, .floating-btn:hover, select:hover {
+button:hover, .status-btn:hover, .time-btn:hover {
   background-color: #5564d8;
 }
 
@@ -81,19 +64,8 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* ===== زر الفلترة (select) ===== */
-.filters select {
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 0.9rem;
-  background-color: #fff;
-  color: #333;
-  cursor: pointer;
-}
-
-/* ===== الحاويات والبطاقات الموحدة (مثل بطاقات الإحصائيات، المنتجات، الطلبات) ===== */
-.stat-card, .order-card, .product-item, .order-item, .top-products, .recent-orders, .chart-container {
+/* ===== الحاويات والبطاقات الموحدة ===== */
+.stat-card, .order-card, .product-item, .order-item {
   background-color: #fff;
   border-radius: 8px;
   padding: 1rem;
@@ -101,7 +73,7 @@ button:disabled {
   margin-bottom: 1rem;
 }
 
-/* ===== حالة التغيير في الإحصائيات (positive/negative) ===== */
+/* ===== حالة التغيير في الإحصائيات ===== */
 .change {
   font-weight: bold;
   margin-top: 0.3rem;
@@ -116,17 +88,20 @@ button:disabled {
 }
 
 /* ===== شبكة الإحصائيات ===== */
-/* سنعيد تعريفها للشاشات الكبيرة */
 .analytics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* الافتراضي للشاشات الصغيرة */
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
 }
 
 /* ===== مخططات ===== */
 .chart-container {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 1rem;
   margin-bottom: 2rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
 .time-filters {
@@ -139,10 +114,15 @@ button:disabled {
   background-color: #5564d8;
 }
 
-/* ===== قائمة أفضل المنتجات والطلبات الأخيرة ===== */
-/* الستايل الأساسي مدمج في .stat-card, .order-card, ... */
+/* ===== قائمة أفضل المنتجات ===== */
+.top-products, .recent-orders {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
 
-/* ===== تصميم عنصر المنتج (سواء في القائمة أو الشبكة) ===== */
 .product-item {
   display: flex;
   justify-content: space-between;
@@ -170,7 +150,7 @@ button:disabled {
   transition: width 0.3s ease-in-out;
 }
 
-/* ===== تصميم عنصر الطلب (سواء في القائمة أو الشبكة) ===== */
+/* ===== الطلبات الأخيرة ===== */
 .order-item {
   display: flex;
   justify-content: space-between;
@@ -183,12 +163,324 @@ button:disabled {
   font-weight: bold;
 }
 
-/* ===== شبكة الطلبيات (لصفحة الطلبيات) ===== */
+/* ===== رسائل التحميل والأخطاء ===== */
+.loading-message, .error-message {
+  color: #666;
+  font-style: italic;
+  text-align: center;
+}
+/* ===== ستايل عام للوحة التحكم لجميع الصفحات ===== */
+body {
+  font-family: 'Cairo', sans-serif;
+  background-color: #f5f6fa;
+  color: #333;
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+}
+
+nav {
+  background-color: #667eea;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1.5rem;
+  color: #fff;
+}
+
+nav .logo {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+nav .links a {
+  color: #fff;
+  margin-left: 1rem;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+nav .links a:hover {
+  text-decoration: underline;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+h2, h3 {
+  color: #333;
+}
+
+/* ===== الأزرار الموحدة لجميع الصفحات ===== */
+button, .status-btn, .time-btn {
+  background-color: #667eea;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover, .status-btn:hover, .time-btn:hover {
+  background-color: #5564d8;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== الحاويات والبطاقات الموحدة ===== */
+.stat-card, .order-card, .product-item, .order-item {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  margin-bottom: 1rem;
+}
+
+/* ===== حالة التغيير في الإحصائيات ===== */
+.change {
+  font-weight: bold;
+  margin-top: 0.3rem;
+}
+
+.change.positive {
+  color: #43e97b;
+}
+
+.change.negative {
+  color: #f093fb;
+}
+
+/* ===== شبكة الإحصائيات ===== */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* ===== مخططات ===== */
+.chart-container {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.time-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.time-btn.active {
+  background-color: #5564d8;
+}
+
+/* ===== قائمة أفضل المنتجات ===== */
+.top-products, .recent-orders {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.product-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.product-info {
+  flex: 1;
+  margin-right: 0.5rem;
+}
+
+.progress-bar {
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 8px;
+  margin-top: 0.3rem;
+}
+
+.progress-fill {
+  background-color: #667eea;
+  height: 100%;
+  width: 0%;
+  transition: width 0.3s ease-in-out;
+}
+
+/* ===== الطلبات الأخيرة ===== */
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.order-status .status-delivered {
+  color: #43e97b;
+  font-weight: bold;
+}
+
+/* ===== رسائل التحميل والأخطاء ===== */
+.loading-message, .error-message {
+  color: #666;
+  font-style: italic;
+  text-align: center;
+}
+
+/* ===== ستايل خاص لصفحة تسجيل الدخول ===== */
+body.login-layout {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.login-container {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+.login-container h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.login-container input {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.login-container input:focus {
+  border-color: #667eea;
+  outline: none;
+}
+
+.login-container button {
+  width: 100%;
+  padding: 0.7rem;
+  font-size: 1rem;
+}
+
+.login-container .error-message {
+  margin-top: 0.5rem;
+  color: #f44336;
+  font-weight: bold;
+}
+/* ===== ستايل عام للوحة التحكم لجميع الصفحات ===== */
+body {
+  font-family: 'Cairo', sans-serif;
+  background-color: #f5f6fa;
+  color: #333;
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+}
+
+nav {
+  background-color: #667eea;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1.5rem;
+  color: #fff;
+}
+
+nav .logo {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+nav .links a {
+  color: #fff;
+  margin-left: 1rem;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+nav .links a:hover {
+  text-decoration: underline;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+h2, h3, h4 {
+  color: #333;
+}
+
+/* ===== الأزرار الموحدة لجميع الصفحات ===== */
+button, .status-btn, .time-btn, select {
+  background-color: #667eea;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+  font-size: 0.9rem;
+}
+
+button:hover, .status-btn:hover, .time-btn:hover, select:hover {
+  background-color: #5564d8;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== زر الفلترة select ===== */
+.filters select {
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+  background-color: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+/* ===== بطاقات الطلبيات ===== */
 .orders-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1rem;
   margin-top: 1rem;
+}
+
+.order-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
 .order-header {
@@ -216,12 +508,20 @@ button:disabled {
   margin: 0.2rem 0;
 }
 
+.product-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.3rem;
+}
+
 .product-details span {
   display: block;
   font-size: 0.85rem;
   color: #555;
 }
 
+/* ===== أزرار الحالة داخل كل بطاقة ===== */
 .order-actions {
   margin-top: 0.8rem;
   text-align: right;
@@ -233,27 +533,123 @@ button:disabled {
   border-radius: 5px;
 }
 
-/* ===== الزر العائم (Floating Action Button) + نافذة المنبثقة (Modal) ===== */
-/* تم حذف خصائص position: fixed, top, right, z-index */
-/* هذا الستايل سيطبق على زر إضافة المنتجات في صفحة المنتجات إذا كان موجودًا. */
-.floating-btn {
-  width: 60px;
-  height: 60px;
-  border-radius: 10px; /* أو القيمة التي تفضلها للمربع/المستطيل */
-  font-size: 32px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  background-color: #667eea;
-  color: #fff;
-  cursor: pointer;
-  border: none;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  text-decoration: none;
-  margin-top: 20px; /* مسافة افتراضية، يمكن تجاوزها في HTML بـ inline style إذا لزم الأمر */
-  margin-right: 20px; /* مسافة عن اليمين */
+/* ===== رسائل التحميل والأخطاء ===== */
+.loading-message, .error-message {
+  color: #666;
+  font-style: italic;
+  text-align: center;
 }
 
+/* ===== ستايل صفحة تسجيل الدخول ===== */
+body.login-layout {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f5f6fa;
+}
+
+.login-container {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 350px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.login-container input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  margin: 0.5rem 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+}
+
+.login-container button {
+  width: 100%;
+  margin-top: 1rem;
+}
+/* ===== ستايل عام للوحة التحكم ===== */
+body {
+  font-family: 'Cairo', sans-serif;
+  background-color: #f5f6fa;
+  color: #333;
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+}
+
+nav {
+  background-color: #667eea;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1.5rem;
+  color: #fff;
+}
+
+nav .logo {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+nav .links a {
+  color: #fff;
+  margin-left: 1rem;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+nav .links a:hover {
+  text-decoration: underline;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+h2, h3, h4 {
+  color: #333;
+}
+
+/* ===== أزرار موحدة ===== */
+button, .status-btn, .edit-btn, .delete-btn, .view-btn, .floating-btn, select {
+  background-color: #667eea;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+  font-size: 0.9rem;
+}
+
+button:hover, .status-btn:hover, .edit-btn:hover, .delete-btn:hover, .view-btn:hover, .floating-btn:hover, select:hover {
+  background-color: #5564d8;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== الزر العائم + نافذة المنبثقة ===== */
+.floating-btn {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 32px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
 
 .modal {
   position: fixed;
@@ -293,7 +689,7 @@ button:disabled {
   color: #333;
 }
 
-/* ===== إدخالات النموذج (Inputs, Textarea, Select) ===== */
+/* ===== إدخالات النموذج ===== */
 input[type="text"], input[type="url"], input[type="number"], textarea, select {
   width: 100%;
   padding: 0.6rem 0.8rem;
@@ -308,7 +704,7 @@ textarea {
   resize: vertical;
 }
 
-/* ===== شبكة المنتجات (لصفحة المنتجات) ===== */
+/* ===== شبكة المنتجات ===== */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -364,130 +760,123 @@ textarea {
   font-style: italic;
   text-align: center;
 }
-
-/* ===== ستايل صفحة تسجيل الدخول ===== */
-body.login-layout {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background-color: #f5f6fa;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  padding-top: 0;
+/* ---------- Reviews Page (صفحة التعليقات) ---------- */
+.reviews-container {
+    max-width: 1200px;  /* نفس عرض الحاويات في الصفحات الأخرى */
+    margin: 2rem auto;
+    padding: 0 1rem;
 }
 
-.login-container {
-  background-color: #fff;
-  padding: 2rem;
-  border-radius: 10px;
-  width: 100%;
-  max-width: 380px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  text-align: center;
+.review-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    padding: 1rem 1.2rem;
+    margin-bottom: 1rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.login-container h2 {
-  margin-bottom: 1.5rem;
-  color: #333;
+.review-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.login-container input {
-  width: 100%;
-  padding: 0.7rem 1rem;
-  margin: 0.5rem 0;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
+.review-card h3 {
+    font-size: 1.1rem;
+    color: #2c3e50;
+    margin: 0 0 0.5rem 0;
 }
 
-.login-container input:focus {
-  border-color: #667eea;
-  outline: none;
+.review-card p {
+    font-size: 0.95rem;
+    color: #555;
+    line-height: 1.5;
+    margin: 0.3rem 0;
 }
 
-.login-container button {
-  width: 100%;
-  padding: 0.7rem;
-  font-size: 1rem;
-  margin-top: 1rem;
-}
-
-.login-container .error-message {
-  margin-top: 0.5rem;
-  color: #f44336;
-  font-weight: bold;
-}
-
-/* ===== Media Queries لتصميم الشاشات الكبيرة (Desktop) ===== */
-@media (min-width: 768px) {
-  /* تعديلات على شريط التنقل على الديسكتوب */
-  nav .links {
-    flex-wrap: nowrap; /* لا تلتف الروابط */
-    justify-content: flex-start; /* إذا أردت الروابط تبدأ من اليسار بجانب الشعار */
-    /* أو يمكنك تركها flex-end إذا كنت تفضل أن تكون في أقصى اليمين */
-  }
-
-  /* تحسين تخطيط الحاوية الرئيسية */
-  .container {
-    padding: 0 2rem; /* زيادة الـ padding الجانبي */
-  }
-
-  /* تصميم صفحة الإعدادات على الديسكتوب */
-  .analytics-grid {
-    grid-template-columns: 1fr 2fr; /* عمود للإعدادات الرئيسية وعمود أكبر للمحتوى */
-    gap: 2rem; /* زيادة المسافة بين الأعمدة */
-    align-items: start; /* لبدء العناصر من الأعلى */
-  }
-
-  .analytics-grid > .stat-card.danger-zone {
-    grid-column: 1 / span 2; /* لتأخذ البطاقة عمودين إذا كانت هي الوحيدة */
-    /* إذا أردتها في عمود واحد على اليمين أو اليسار: */
-    /* grid-column: 1; */
-    /* أو */
-    /* grid-column: 2; */
-
-    max-width: 800px; /* تحديد أقصى عرض للبطاقة */
-    margin-left: auto; /* لمركزتها إذا كانت في عمود واحد */
-    margin-right: auto;
-  }
-
-  /* تعديلات داخل بطاقة الإعدادات */
-  .setting-item {
+.review-meta {
     display: flex;
-    flex-direction: column; /* ترتيب العناصر عموديًا افتراضيًا */
-    gap: 1.5rem; /* مسافة بين المجموعات الفرعية */
-  }
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
 
-  .orders-stats {
-    display: flex;
-    gap: 1rem;
-    justify-content: space-around;
-  }
+.review-meta strong {
+    color: #333;
+    font-size: 1rem;
+}
 
-  .orders-stats .stat-card {
-    flex: 1;
-    text-align: center;
-    padding: 1rem;
-  }
+.review-rating i {
+    color: #f5a623;
+    margin-left: 2px;
+}
 
-  .time-period-selector {
+.review-date {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 5px;
+    display: block;
+}
+
+.delete-review-btn {
+    background-color: #e74c3c;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+    float: left;
+}
+
+.delete-review-btn:hover {
+    background-color: #c0392b;
+}
+
+.back-to-list {
+    background: none;
+    border: none;
+    color: #3498db;
+    font-size: 0.95rem;
+    cursor: pointer;
+    margin-bottom: 15px;
     display: flex;
     align-items: center;
-    gap: 10px;
-  }
+    gap: 5px;
+    transition: color 0.2s ease;
+}
 
-  #customDateRange {
-    display: flex;
-    flex-direction: row; /* لعرض حقول التاريخ جنبًا إلى جنب */
-    gap: 15px;
-  }
+.back-to-list:hover {
+    color: #2980b9;
+}
 
-  #customDateRange > div {
-    flex: 1; /* لتوزيع المساحة بالتساوي */
-  }
+.back-to-list i {
+    transform: rotate(180deg);
+}
 
-  .product-actions {
-    text-align: center; /* توسيط زر المسح */
-    margin-top: 1.5rem;
-  }
+/* ===== Media Queries لجعل البطاقات متجاوبة ===== */
+@media (max-width: 768px) {
+    .review-card {
+        padding: 0.8rem 1rem;
+    }
+
+    .review-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+    }
+
+    .delete-review-btn {
+        margin-top: 8px;
+    }
+
+    .back-to-list {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+    }
 }
