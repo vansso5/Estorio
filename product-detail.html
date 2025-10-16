@@ -7,12 +7,32 @@
 <link rel="stylesheet" href="customer-style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css">
 <style>
-/* تنسيقات سريعة */
 body { font-family: 'Cairo', sans-serif; background:#f5f5f5; margin:0; padding:0; color:#333; }
 .container { max-width:1200px; margin:20px auto; padding:0 15px; }
 
-.swiper { width:100%; height:400px; border-radius:15px; overflow:hidden; margin-bottom:20px; }
-.swiper-slide img { width:100%; height:100%; object-fit:cover; border-radius:15px; }
+/* ✅ رقم الهاتف الثابت */
+.top-contact {
+  background:#fff;
+  padding:10px 0;
+  text-align:center;
+  font-weight:bold;
+  font-size:18px;
+  color:#007bff;
+  box-shadow:0 2px 5px rgba(0,0,0,0.1);
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+.top-contact a {
+  color:#007bff;
+  text-decoration:none;
+}
+.top-contact a:hover {
+  text-decoration:underline;
+}
+
+.swiper { width:100%; height:400px; border-radius:15px; overflow:hidden; margin-bottom:20px; cursor: zoom-in; }
+.swiper-slide img { width:100%; height:100%; object-fit:cover; border-radius:15px; transition:0.3s; }
 
 .product-detail-info { background:#fff; padding:20px 25px; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1); text-align:center; }
 .product-detail-info h2 { margin-bottom:10px; font-size:28px; color:#222; }
@@ -29,8 +49,8 @@ body { font-family: 'Cairo', sans-serif; background:#f5f5f5; margin:0; padding:0
 .modal:not(.hidden) { opacity:1; pointer-events:auto; }
 
 .modal h3 { text-align:center; margin-bottom:10px; color:#333; }
-.modal input, .modal select { padding:10px 15px; border-radius:10px; border:1px solid #ddd; font-size:16px; width:100%; box-sizing:border-box; transition:0.3s; }
-.modal input:focus, .modal select:focus { border-color:#ff5e57; outline:none; }
+.modal input, .modal select, .modal textarea { padding:10px 15px; border-radius:10px; border:1px solid #ddd; font-size:16px; width:100%; box-sizing:border-box; transition:0.3s; }
+.modal input:focus, .modal select:focus, .modal textarea:focus { border-color:#ff5e57; outline:none; }
 
 #confirmOrderBtn { background:#28a745; border:none; padding:12px 20px; color:#fff; border-radius:50px; font-size:18px; transition:0.3s; }
 #confirmOrderBtn:hover { background:#218838; transform:scale(1.05); }
@@ -44,6 +64,36 @@ body { font-family: 'Cairo', sans-serif; background:#f5f5f5; margin:0; padding:0
 #thankYouModal h3 { font-size:24px; color:#28a745; }
 #thankYouModal p { font-size:18px; }
 
+/* ✅ نافذة تكبير الصورة */
+.image-preview-modal {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2000; opacity: 0; pointer-events: none;
+  transition: 0.3s;
+}
+.image-preview-modal.active {
+  opacity: 1; pointer-events: auto;
+}
+.image-preview-modal img {
+  max-width: 90%; max-height: 90%; border-radius: 15px;
+  box-shadow: 0 0 25px rgba(255,255,255,0.2);
+  animation: zoomIn 0.3s ease;
+}
+@keyframes zoomIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.close-preview {
+  position: absolute; top: 20px; right: 25px;
+  background: rgba(255,255,255,0.2);
+  color: #fff; border: none; font-size: 30px;
+  border-radius: 50%; width: 45px; height: 45px;
+  cursor: pointer; transition: 0.3s;
+}
+.close-preview:hover { background: rgba(255,255,255,0.4); }
+
 @media(max-width:768px) {
   .swiper { height:300px; }
   .product-detail-info h2 { font-size:22px; }
@@ -53,8 +103,21 @@ body { font-family: 'Cairo', sans-serif; background:#f5f5f5; margin:0; padding:0
 </style>
 </head>
 <body>
+
+<!-- ✅ شريط الاتصال الثابت -->
+<div class="top-contact">
+📞 اتصل بنا على 
+<a href="tel:0540667186">0540667186</a>
+</div>
+
 <div class="container">
   <div id="productDetailContainer"><p>جاري تحميل تفاصيل المنتج...</p></div>
+</div>
+
+<!-- ✅ نافذة تكبير الصورة -->
+<div class="image-preview-modal" id="imagePreviewModal">
+  <button class="close-preview" id="closePreview">&times;</button>
+  <img id="previewImage" src="" alt="صورة مكبرة">
 </div>
 
 <script type="module">
@@ -75,6 +138,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const container = document.getElementById('productDetailContainer');
+const previewModal = document.getElementById('imagePreviewModal');
+const previewImage = document.getElementById('previewImage');
+const closePreview = document.getElementById('closePreview');
 
 function getProductIdFromUrl() {
   return new URLSearchParams(window.location.search).get('id');
@@ -91,6 +157,12 @@ async function fetchProductDetails() {
     const product = snapshot.val();
     const images = Array.isArray(product.images) ? product.images : [product.images || 'default.jpg'];
     const swiperSlides = images.map(src => `<div class="swiper-slide"><img src="${src}" alt="صورة المنتج"></div>`).join('');
+
+    const wilayas = [
+      "أدرار","الشلف","الأغواط","أم البواقي","باتنة","بجاية","بسكرة","بشار","البليدة","البويرة","تمنراست","تبسة","تلمسان","تيارت","تيزي وزو","الجزائر","الجلفة","جيجل","سطيف","سعيدة","سكيكدة","سيدي بلعباس","عنابة","قالمة","قسنطينة","المدية","مستغانم","المسيلة","معسكر","ورقلة","وهران","البيض","إليزي","برج بوعريريج","بومرداس","الطارف","تندوف","تيسمسيلت","الوادي","خنشلة","سوق أهراس","تيبازة","ميلة","عين الدفلى","النعامة","عين تموشنت","غرداية","غليزان","تيميمون","برج باجي مختار","أولاد جلال","بني عباس","إن صالح","إن قزام","تقرت","جانت","المغير","المنيعة"
+    ];
+
+    const wilayaOptions = wilayas.map(w => `<option value="${w}">${w}</option>`).join('');
 
     container.innerHTML = `
       <div class="swiper mySwiper"><div class="swiper-wrapper">${swiperSlides}</div><div class="swiper-pagination"></div></div>
@@ -110,7 +182,13 @@ async function fetchProductDetails() {
           <input type="text" id="fname" placeholder="الاسم">
           <input type="text" id="lname" placeholder="اللقب">
           <input type="text" id="phone" placeholder="رقم الهاتف">
-          <input type="text" id="address" placeholder="العنوان">
+
+          <select id="wilaya">
+            <option value="">اختر الولاية</option>
+            ${wilayaOptions}
+          </select>
+          <input type="text" id="commune" placeholder="البلدية (إجباري)">
+          <input type="text" id="address" placeholder="العنوان الكامل">
 
           <div class="quantity-selector">
             <button type="button" id="decreaseQty">-</button>
@@ -122,21 +200,35 @@ async function fetchProductDetails() {
             <option value="المنزل">توصيل إلى المنزل</option>
             <option value="مكتب الشركة">إلى مكتب الشركة</option>
           </select>
+
+          <textarea id="note" placeholder="ملاحظات إضافية (اختياري)" rows="3"></textarea>
           <button id="confirmOrderBtn">تأكيد الطلب</button>
         </div>
       </div>
 
       <div id="thankYouModal" class="modal hidden">
-  <div class="modal-content">
-    <h3>شكرًا لطلبك!</h3>
-    <p>تم إرسال طلبك بنجاح ❤️</p>
-    <p id="orderIdDisplay" style="font-weight:bold; color:#555;"></p>
-  </div>
-</div>
+        <div class="modal-content">
+          <h3>شكرًا لطلبك!</h3>
+          <p>تم إرسال طلبك بنجاح ❤️</p>
+          <p id="orderIdDisplay" style="font-weight:bold; color:#555;"></p>
+        </div>
+      </div>
     `;
 
-    new Swiper(".mySwiper", { pagination: { el: ".swiper-pagination", clickable: true } });
+    const swiper = new Swiper(".mySwiper", { pagination: { el: ".swiper-pagination", clickable: true } });
 
+    // ✅ عند الضغط على الصورة يتم تكبيرها
+    document.querySelectorAll('.swiper-slide img').forEach(img => {
+      img.addEventListener('click', () => {
+        previewImage.src = img.src;
+        previewModal.classList.add('active');
+      });
+    });
+
+    closePreview.addEventListener('click', () => previewModal.classList.remove('active'));
+    previewModal.addEventListener('click', e => { if(e.target === previewModal) previewModal.classList.remove('active'); });
+
+    // باقي الأكواد كما هي (زر الطلب وغيره)
     const orderBtn = document.getElementById("orderBtn");
     const orderModal = document.getElementById("orderModal");
     const confirmOrderBtn = document.getElementById("confirmOrderBtn");
@@ -148,72 +240,64 @@ async function fetchProductDetails() {
     let quantity = 1;
 
     orderBtn.addEventListener("click", () => orderModal.classList.remove("hidden"));
-    
-    // اغلاق النافذة عند الضغط خارجها
-    orderModal.addEventListener("click", e => {
-      if(e.target === orderModal) orderModal.classList.add("hidden");
-    });
+    orderModal.addEventListener("click", e => { if(e.target === orderModal) orderModal.classList.add("hidden"); });
 
     decreaseQty.addEventListener("click", () => { if(quantity>1) quantity--; quantityValue.textContent = quantity; });
     increaseQty.addEventListener("click", () => { quantity++; quantityValue.textContent = quantity; });
 
     confirmOrderBtn.addEventListener("click", async () => {
-  const fname = document.getElementById("fname").value.trim();
-  const lname = document.getElementById("lname").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const address = document.getElementById("address").value.trim();
-  const deliveryType = document.getElementById("deliveryType").value;
+      const fname = document.getElementById("fname").value.trim();
+      const lname = document.getElementById("lname").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const wilaya = document.getElementById("wilaya").value.trim();
+      const commune = document.getElementById("commune").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const deliveryType = document.getElementById("deliveryType").value;
+      const note = document.getElementById("note").value.trim();
 
-  if (!fname || !lname || !phone || !address) return alert("يرجى ملء جميع الخانات بشكل صحيح.");
+      if (!fname || !lname || !phone || !wilaya || !commune || !address)
+        return alert("يرجى ملء جميع الخانات الإجبارية بشكل صحيح.");
 
-  orderModal.classList.add("hidden");
+      orderModal.classList.add("hidden");
 
-  const orderRef = push(ref(db, "orders"));
-  const orderId = orderRef.key;
-  const totalPrice = parseFloat(product.newPrice) * quantity;
+      const orderRef = push(ref(db, "orders"));
+      const orderId = orderRef.key;
+      const totalPrice = parseFloat(product.newPrice) * quantity;
 
-  await set(orderRef, {
-    id: orderId,
-    productId: productId,
-    productName: product.name,
-    productPrice: parseFloat(product.newPrice),
-    quantity: quantity,
-    totalPrice: totalPrice,
-    customerName: `${fname} ${lname}`,
-    customerPhone: phone,
-    customerAddress: address,
-    deliveryOption: deliveryType,
-    timestamp: Date.now(),
-    status: "الطلبات الجديدة",
-    rating: 0
-  });
+      await set(orderRef, {
+        id: orderId,
+        productId: productId,
+        productName: product.name,
+        productPrice: parseFloat(product.newPrice),
+        quantity,
+        totalPrice,
+        customerName: `${fname} ${lname}`,
+        customerPhone: phone,
+        customerWilaya: wilaya,
+        customerCommune: commune,
+        customerAddress: address,
+        deliveryOption: deliveryType,
+        note,
+        timestamp: Date.now(),
+        status: "الطلبات الجديدة",
+        rating: 0
+      });
 
-  // ✅ إظهار النافذة أولاً
-  // ✅ عرض نافذة رقم الطلب فورًا
-thankYouModal.innerHTML = `
-  <div class="modal-content" style="text-align:center;">
-    <h3>✅ تم إرسال طلبك بنجاح سيتم التواصل معك قريبا من خدمة الزبائن </h3>
-    <p>رقم طلبك:</p>
-    <div id="orderIdBox" style="background:#f0f0f0;padding:10px;border-radius:8px;margin-bottom:10px;font-weight:bold;">${orderId}</div>
-    <button id="copyOrderId" style="background:#4CAF50;color:white;padding:8px 12px;border:none;border-radius:6px;cursor:pointer;margin-bottom:10px;">📋 نسخ الرقم</button>
-    <br>
-    <button id="closeModal" style="background:#e74c3c;color:white;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;">موافق</button>
-  </div>
-`;
+      thankYouModal.innerHTML = `
+        <div class="modal-content" style="text-align:center;">
+          <h3>✅ تم إرسال طلبك بنجاح سيتم التواصل معك قريبا</h3>
+          <p>رقم طلبك:</p>
+          <div id="orderIdBox" style="background:#f0f0f0;padding:10px;border-radius:8px;margin-bottom:10px;font-weight:bold;">${orderId}</div>
+          <button id="copyOrderId" style="background:#4CAF50;color:white;padding:8px 12px;border:none;border-radius:6px;cursor:pointer;margin-bottom:10px;">📋 نسخ الرقم</button>
+          <br>
+          <button id="closeModal" style="background:#e74c3c;color:white;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;">موافق</button>
+        </div>
+      `;
 
-thankYouModal.classList.remove("hidden");
-
-// زر النسخ
-document.getElementById("copyOrderId").onclick = () => {
-  navigator.clipboard.writeText(orderId);
-  alert("تم نسخ رقم الطلب!");
-};
-
-// زر الإغلاق
-document.getElementById("closeModal").onclick = () => {
-  thankYouModal.classList.add("hidden");
-};
-});
+      thankYouModal.classList.remove("hidden");
+      document.getElementById("copyOrderId").onclick = () => { navigator.clipboard.writeText(orderId); alert("تم نسخ رقم الطلب!"); };
+      document.getElementById("closeModal").onclick = () => { thankYouModal.classList.add("hidden"); };
+    });
 
   } catch(err) {
     console.error(err);
