@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إدارة التعليقات - لوحة الأدمن</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="admin-style.css">
+<style>
+/* تعديل حجم بطاقات التعليقات */
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+
+.product-summary-card, .comment-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    padding: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.product-summary-card img, .product-detail-header img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.comment-card {
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 0.85rem;
+}
+
+.comment-meta {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 4px;
+}
+
+.comment-meta strong {
+    font-size: 0.9rem;
+}
+
+.comment-rating i {
+    color: #f5a623;
+    margin-left: 2px;
+    font-size: 0.8rem;
+}
+
+.comment-text {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.comment-date {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 3px;
+}
+
+.delete-review-btn {
+    background-color: #e74c3c;
+    color: #fff;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 5px;
+    font-size: 0.8rem;
+}
+
+.delete-review-btn:hover {
+    background-color: #c0392b;
+}
+
+.back-to-list {
+    background: none;
+    border: none;
+    color: #3498db;
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.back-to-list:hover { color: #2980b9; }
+.back-to-list i { transform: rotate(180deg); }
+
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">لوحة التحكم</div>
+  <div class="links">
+    <a href="admin-products.html">المنتجات</a>
+    <a href="admin-orders.html">الطلبيات النشطة</a>
+    <a href="completed-orders.html">الطلبيات المكتملة</a>
+    <a href="admin-analytics.html">التحليلات</a>
+    <a href="admin-settings.html">الإعدادات</a>
+    <a href="admin-reviews.html" class="active">التعليقات والتقييمات</a>
+    <a href="#" id="logoutBtn">تسجيل الخروج</a>
+  </div>
+</nav>
+
+<div class="container">
+    <div id="adminContent">
+        <p class="loading-message">جاري تحميل المنتجات والتعليقات...</p>
+    </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, get, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
+  authDomain: "myestore-34f65.firebaseapp.com",
+  databaseURL: "https://myestore-34f65-default-rtdb.firebaseio.com",
+  projectId: "myestore-34f65",
+  storageBucket: "myestore-34f65.appspot.com",
+  messagingSenderId: "14078917211",
+  appId: "1:14078917211:web:a48eab2a7396c094f7dd7e",
+  measurementId: "G-9181DX0XNJ"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+const adminContent = document.getElementById('adminContent');
+const logoutBtn = document.getElementById('logoutBtn');
+
+// التحقق من تسجيل الدخول
+onAuthStateChanged(auth, (user) => {
+  if(!user){
+    window.location.href='admin-login.html';
+  }
+});
+
+logoutBtn.addEventListener('click', async ()=>{
+  await signOut(auth);
+  window.location.href='admin-login.html';
+});
+
+// دوال مساعدة
+function escapeHtml(text){
+  if(!text) return '';
+  return String(text)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
+}
+
+function generateStarIconsForDisplay(rating){
+  let stars='';
+  for(let i=1;i<=5;i++){
+    if(rating>=i) stars+='<i class="fas fa-star"></i>';
+    else if(rating>=i-0.5) stars+='<i class="fas fa-star-half-alt"></i>';
+    else stars+='<i class="far fa-star"></i>';
+  }
+  return stars;
+}
+
+// عرض المنتجات
+let currentView='list';
+let currentProductId=null;
+
+async function fetchAndRenderProductSummaries(){
+  currentView='list';
+  adminContent.innerHTML='<p class="loading-message">جاري التحميل...</p>';
+  try{
+    const productsSnap = await get(ref(db,'products'));
+    const reviewsSnap = await get(ref(db,'reviews'));
+    if(!productsSnap.exists()){
+      adminContent.innerHTML='<p>لا توجد منتجات.</p>'; return;
+    }
+    const products = productsSnap.val();
+    const reviewsByProduct = reviewsSnap.exists()?reviewsSnap.val():{};
+    let html='';
+    Object.keys(products).forEach(pid=>{
+      const product=products[pid];
+      const count = reviewsByProduct[pid]?Object.keys(reviewsByProduct[pid]).length:0;
+      if(count>0){
+        const img=product.images && product.images[0]?product.images[0]:'https://via.placeholder.com/60';
+        html+=`
+          <div class="product-summary-card" data-product-id="${pid}">
+            <img src="${escapeHtml(img)}" alt="${escapeHtml(product.name)}">
+            <div>
+              <h2>${escapeHtml(product.name)}</h2>
+              <p>عدد التعليقات: ${count}</p>
+            </div>
+          </div>
+        `;
+      }
+    });
+    adminContent.innerHTML=html || '<p>لا توجد منتجات تحتوي على تعليقات.</p>';
+    document.querySelectorAll('.product-summary-card').forEach(card=>{
+      card.addEventListener('click',()=>renderProductDetails(card.dataset.productId));
+    });
+  } catch(err){
+    console.error(err);
+    adminContent.innerHTML='<p>خطأ أثناء التحميل.</p>';
+  }
+}
+
+async function renderProductDetails(pid){
+  currentView='detail';
+  currentProductId=pid;
+  adminContent.innerHTML='<p class="loading-message">جاري تحميل التعليقات...</p>';
+  try{
+    const productSnap = await get(ref(db,`products/${pid}`));
+    const reviewsSnap = await get(ref(db,`reviews/${pid}`));
+    if(!productSnap.exists()){ adminContent.innerHTML='<p>المنتج غير موجود.</p>'; return; }
+    const product = productSnap.val();
+    const reviews = reviewsSnap.exists()?reviewsSnap.val():{};
+    const reviewsArr = Object.keys(reviews).map(k=>({id:k,...reviews[k]}));
+    reviewsArr.sort((a,b)=>b.timestamp-a.timestamp);
+    const img=product.images && product.images[0]?product.images[0]:'https://via.placeholder.com/120';
+    let html=`
+      <button class="back-to-list" id="backToListBtn"><i class="fas fa-arrow-left"></i> العودة</button>
+      <div class="product-detail-header">
+        <img src="${escapeHtml(img)}" alt="${escapeHtml(product.name)}">
+        <h2>${escapeHtml(product.name)}</h2>
+        <p>عدد التعليقات: ${reviewsArr.length}</p>
+      </div>
+      <div class="comments-section">
+        ${reviewsArr.map(r=>{
+          const date=new Date(r.timestamp).toLocaleDateString('ar-DZ',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+          return `
+            <div class="comment-card">
+              <div class="comment-meta">
+                <strong>${escapeHtml(r.reviewerName||'مجهول')}</strong>
+                <div class="comment-rating">${generateStarIconsForDisplay(parseFloat(r.rating)||0)}</div>
+              </div>
+              <p class="comment-text">${escapeHtml(r.comment)}</p>
+              <span class="comment-date">${date}</span>
+              <button class="delete-review-btn" data-product-id="${pid}" data-review-id="${r.id}"><i class="fas fa-trash-alt"></i> حذف</button>
+            </div>
+          `;
+        }).join('')}
+        ${reviewsArr.length===0?'<p>لا توجد تعليقات لهذا المنتج.</p>':''}
+      </div>
+    `;
+    adminContent.innerHTML=html;
+
+    document.getElementById('backToListBtn').addEventListener('click', fetchAndRenderProductSummaries);
+
+    document.querySelectorAll('.delete-review-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(confirm('هل تريد حذف هذا التعليق؟')){
+          await remove(ref(db,`reviews/${pid}/${btn.dataset.reviewId}`));
+          renderProductDetails(pid);
+        }
+      });
+    });
+
+  } catch(err){ console.error(err); adminContent.innerHTML='<p>حدث خطأ.</p>'; }
+}
+
+// تحميل أول مرة
+fetchAndRenderProductSummaries();
+
+</script>
+</body>
+</html>
