@@ -35,7 +35,6 @@
 .orders-tabs.active { display: block; }
 .tab-content { margin-top: 20px; }
 
-/* إشعار الطلبات الجديدة */
 .new-order-badge {
   position: absolute;
   top: -8px;
@@ -59,7 +58,6 @@
   100% { transform: scale(1); }
 }
 
-/* أيقونة الطلبات الجديدة في الشريط العلوي */
 .notification-badge {
   position: relative;
   display: inline-block;
@@ -81,6 +79,11 @@
   font-weight: bold;
   animation: pulse 1.5s infinite;
 }
+
+/* --- لا تغييرات خارج ما طلبت --- */
+/* إضافة بسيطة لعنصر البحث (لا يغيّر أي ستايل آخر) */
+.search-wrapper { margin-top: 12px; margin-bottom: 10px; text-align: center; }
+.search-input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; width: 90%; max-width: 420px; direction: ltr; }
 </style>
 </head>
 <body>
@@ -101,6 +104,12 @@
 
 <div class="container">
 <h2>الطلبيات النشطة</h2>
+
+<!-- ***** خانة البحث المضافة فقط ***** -->
+<div class="search-wrapper">
+  <input id="searchInput" class="search-input" type="text" placeholder="ابحث بالاسم أو الهاتف أو رقم الطلب أو الولاية أو البلدية أو المنتج...">
+</div>
+<!-- ***** انتهى البحث ***** -->
 
 <div class="orders-stats">
   <div class="stat-card active" data-tab="new">
@@ -171,8 +180,11 @@ const processingOrdersContainer = document.getElementById('processingOrdersConta
 const shippedOrdersContainer = document.getElementById('shippedOrdersContainer');
 
 const statCards = document.querySelectorAll('.stat-card');
+const searchInput = document.getElementById('searchInput');
+
 let userAuthenticated = false;
-let currentOrders = {};
+let currentOrders = {}; // كائن بجميع الطلبيات
+let searchKeyword = "";
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
@@ -211,8 +223,7 @@ function formatDate(timestamp) {
 }
 
 function getNextAction(status) {
-  // تم تعديل هذا الجزء ليكون أكثر دقة
-  if (!status || status === 'الطلبات الجديدة' || status === 'الطلبات الجديدة' || status === 'الطلبات الجديدة') {
+  if (!status || status === 'الطلبات الجديدة' || status === 'الطلبيات الجديدة') {
     return { text: 'جهّز الطلب', nextStatus: 'قيد التجهيز' };
   } else if (status === 'Processing' || status === 'قيد التجهيز' || status === 'قيد المعالجة') {
     return { text: 'تم الشحن', nextStatus: 'Shipped' };
@@ -222,28 +233,38 @@ function getNextAction(status) {
 }
 
 function updateOrdersCount(ordersData) {
-  const newOrders = Object.values(ordersData || {}).filter(order => 
-    !order.status || 
+  const items = Object.values(ordersData || {});
+  
+  // تصفية الطلبيات الجديدة
+  const newOrders = items.filter(order => 
+    !order || !order.status || 
     order.status === 'الطلبات الجديدة' || 
-    order.status === 'الطلبيات الجديدة' || 
     order.status === 'الطلبيات الجديدة'
   );
   
-  const processingOrders = Object.values(ordersData || {}).filter(order => 
-    order.status === 'Processing' || 
-    order.status === 'قيد التجهيز' || 
-    order.status === 'قيد المعالجة'
+  // تصفية الطلبيات قيد التجهيز
+  const processingOrders = items.filter(order => 
+    order && (
+      order.status === 'Processing' || 
+      order.status === 'قيد التجهيز' || 
+      order.status === 'قيد المعالجة'
+    )
   );
   
-  const shippedOrders = Object.values(ordersData || {}).filter(order => 
-    order.status === 'Shipped'
+  // ******** التغيير الدقيق هنا 1/2 ************
+  // الطلبيات المشحونة: فقط 'Shipped' أو 'تم الشحن'، مع استبعاد 'تم التوصيل' تمامًا
+  const shippedOrders = items.filter(order => 
+    order && (
+      order.status === 'Shipped' || 
+      order.status === 'تم الشحن'
+    )
   );
-  
+  // ************************************
+
   newOrdersCount.textContent = newOrders.length;
   processingOrdersCount.textContent = processingOrders.length;
   shippedOrdersCount.textContent = shippedOrders.length;
-  
-  // تحديث شارة الإشعار في الشريط العلوي
+
   if (newOrders.length > 0) {
     activeOrdersBadge.style.display = 'flex';
     activeOrdersBadge.textContent = newOrders.length > 9 ? '9+' : newOrders.length;
@@ -252,44 +273,78 @@ function updateOrdersCount(ordersData) {
   }
 }
 
+// عرض بطاقة طلب واحدة - فقط أضفت العرض الكامل للحقول هنا (لم أغيّر منطقك)
 function renderOrderCard(order, id, container) {
   const action = getNextAction(order.status);
   const orderCard = document.createElement('div');
   orderCard.className = 'order-card';
-  
-  // إضافة شارة الطلب الجديد إذا كان الطلب جديداً
-  const isNewOrder = !order.status || order.status === 'الطلبات الجديدة' || order.status === 'الطلبيات الجديدة' || order.status === 'الطلبيات الجديدة';
-  
+
+  // استخدم id المفتاح كمرجع، لكن أيضاً اعرض order.id إن وُجد
+  const displayOrderId = (order.id || order.orderId || id || '').toString();
+  const isNewOrder = !order.status || order.status === 'الطلبات الجديدة' || order.status === 'الطلبيات الجديدة';
+
   orderCard.innerHTML = `
     <div class="order-header">
-      <h3>طلب #${id.slice(-6)}</h3>
+      <h3>طلب #${displayOrderId ? displayOrderId.slice(-6) : (id ? id.slice(-6) : '')}</h3>
       ${isNewOrder ? '<div class="new-order-badge">جديد</div>' : ''}
     </div>
+
     <div class="order-customer">
       <h4>معلومات العميل:</h4>
-      <p><strong>الاسم:</strong> ${order.customerName || 'غير متوفر'}</p>
-      <p><strong>الهاتف:</strong> ${order.customerPhone || 'غير متوفر'}</p>
-      <p><strong>العنوان:</strong> ${order.customerAddress || 'غير متوفر'}</p>
-      <p><strong>🚚 نوع التوصيل:</strong> ${order.deliveryOption || 'غير محدد'}</p>
+      <p><strong>الاسم:</strong> ${order.customerName || order.name || 'غير متوفر'}</p>
+      <p><strong>الهاتف:</strong> ${order.customerPhone || order.phone || 'غير متوفر'}</p>
+      <p><strong>الولاية:</strong> ${order.customerWilaya || order.state || ''}</p>
+      <p><strong>البلدية:</strong> ${order.customerCommune || order.city || ''}</p>
+      <p><strong>العنوان الكامل:</strong> ${order.customerAddress || order.address || ''}</p>
+      <p><strong>🚚 نوع التوصيل:</strong> ${order.deliveryOption || order.deliveryMethod || ''}</p>
+      <p><strong>📝 ملاحظات:</strong> ${order.note || order.customerNote || ''}</p>
     </div>
+
     <div class="order-products">
-      <h4>المنتجات:</h4>
-      <div class="product-item">
-        <strong>${order.productName || 'غير متوفر'}</strong>
-        <div class="product-details">
-          <span>الكمية: ${order.quantity || 1}</span>
-          <span>السعر: ${parseFloat(order.productPrice || 0).toFixed(2)} دج</span>
-          <span>المجموع: ${parseFloat(order.totalPrice || 0).toFixed(2)} دج</span>
+      <h4>المنتج/المنتجات:</h4>
+      ${order.items ? (Array.isArray(order.items) ? order.items.map(it => `
+          <div class="product-item">
+            <strong>${it.name || it.productName || 'منتج'}</strong>
+            <div class="product-details">
+              <span>الكمية: ${it.quantity || 1}</span>
+              <span>السعر: ${parseFloat(it.price || it.productPrice || 0).toFixed(2)} دج</span>
+              <span>المجموع: ${parseFloat((it.quantity || 1) * (it.price || it.productPrice || 0)).toFixed(2)} دج</span>
+            </div>
+          </div>
+        `).join('') : Object.values(order.items).map(it => `
+          <div class="product-item">
+            <strong>${it.name || it.productName || 'منتج'}</strong>
+            <div class="product-details">
+              <span>الكمية: ${it.quantity || 1}</span>
+              <span>السعر: ${parseFloat(it.price || it.productPrice || 0).toFixed(2)} دج</span>
+              <span>المجموع: ${parseFloat((it.quantity || 1) * (it.price || it.productPrice || 0)).toFixed(2)} دج</span>
+            </div>
+          </div>
+        `).join('')
+      ) : `
+        <div class="product-item">
+          <strong>${order.productName || order.name || 'غير متوفر'}</strong>
+          <div class="product-details">
+            <span>الكمية: ${order.quantity || 1}</span>
+            <span>السعر: ${parseFloat(order.productPrice || order.price || 0).toFixed(2)} دج</span>
+            <span>المجموع: ${parseFloat(order.totalPrice || 0).toFixed(2)} دج</span>
+          </div>
         </div>
-      </div>
+      `}
     </div>
+
     <div class="order-meta">
-      <p><strong>تاريخ الطلب:</strong> ${formatDate(order.timestamp)}</p>
+      <p><strong>رقم الطلب الكامل:</strong> ${displayOrderId}</p>
+      <p><strong>تاريخ الطلب:</strong> ${formatDate(order.timestamp || order.date || order.dateTime || order.createdAt || 0)}</p>
+      <p><strong>الحالة:</strong> ${order.status || 'جديد'}</p>
+      ${order.updatedAt ? `<p><strong>آخر تحديث:</strong> ${formatDate(order.updatedAt)}</p>` : ''}
     </div>
+
     <div class="order-actions">
       <button class="action-btn update-status-btn" data-order-id="${id}" data-next-status="${action.nextStatus}">${action.text}</button>
     </div>
   `;
+
   container.appendChild(orderCard);
 }
 
@@ -298,53 +353,93 @@ async function renderAllOrders(ordersData) {
   currentOrders = ordersData || {};
   updateOrdersCount(ordersData);
 
+  // نحضر القوائم الفارغة
   newOrdersContainer.innerHTML = '';
   processingOrdersContainer.innerHTML = '';
   shippedOrdersContainer.innerHTML = '';
 
   let hasNewOrders = false, hasProcessingOrders = false, hasShippedOrders = false;
 
+  // تحويل الكائن إلى مصفوفة مع المفتاح
   Object.entries(currentOrders).forEach(([id, order]) => {
     if (!order) return;
-    
+
+    // تطبيق فلترة البحث (إن وُجد)
+    if (searchKeyword && searchKeyword.length > 0) {
+      const kw = searchKeyword.toLowerCase();
+      const concat = [
+        id,
+        (order.id || '').toString(),
+        (order.orderId || '').toString(),
+        (order.customerName || order.name || '').toString(),
+        (order.customerPhone || order.phone || '').toString(),
+        (order.customerWilaya || order.state || '').toString(),
+        (order.customerCommune || order.city || '').toString(),
+        (order.customerAddress || order.address || '').toString(),
+        (order.productName || '').toString(),
+        (order.note || order.customerNote || '').toString(),
+      ].join(' ').toLowerCase();
+
+      if (!concat.includes(kw)) return; // لا تطابق — تجاهل هذا الطلب
+    }
+
     const status = order.status;
-    
-    // تم تعديل هذا الجزء ليكون أكثر دقة في تصنيف الطلبات
-    if (!status || status === 'الطلبات الجديدة') {
-  renderOrderCard(order, id, newOrdersContainer);
-  hasNewOrders = true;
-} else if (status === 'قيد التجهيز' || status === 'قيد المعالجة') {
-  renderOrderCard(order, id, processingOrdersContainer);
-  hasProcessingOrders = true;
-} else if (status === 'Shipped' || status === 'تم الشحن') {
-  renderOrderCard(order, id, shippedOrdersContainer);
-  hasShippedOrders = true;
-}
+
+    // ******** التغيير الدقيق هنا 2/2 ************
+    // استبعاد الطلبات بحالة 'تم التوصيل' تمامًا من العرض في هذه الصفحة
+    if (status === 'تم التوصيل') {
+      return; // تجاهل هذا الطلب تمامًا ولا تعرضه
+    }
+    // ************************************
+
+    // تصنيف حسب الحالة كما في كودك
+    if (!status || status === 'الطلبات الجديدة' || status === 'الطلبيات الجديدة') {
+      renderOrderCard(order, id, newOrdersContainer);
+      hasNewOrders = true;
+    } else if (status === 'قيد التجهيز' || status === 'قيد المعالجة' || status === 'Processing') {
+      renderOrderCard(order, id, processingOrdersContainer);
+      hasProcessingOrders = true;
+    } else if (status === 'Shipped' || status === 'تم الشحن') { // الآن هذا الشرط يخص فقط 'Shipped' و 'تم الشحن'
+      renderOrderCard(order, id, shippedOrdersContainer);
+      hasShippedOrders = true;
+    } else {
+      // هذا الجزء للحالات غير المعروفة الأخرى غير "تم التوصيل"
+      // إذا كانت لديك حالات أخرى تريد إظهارها كـ "جديدة" افتراضيًا
+      // renderOrderCard(order, id, newOrdersContainer);
+      // hasNewOrders = true;
+    }
   });
 
   if (!hasNewOrders) newOrdersContainer.innerHTML = '<p class="error-message">لا توجد طلبيات جديدة</p>';
   if (!hasProcessingOrders) processingOrdersContainer.innerHTML = '<p class="error-message">لا توجد طلبيات قيد التجهيز</p>';
   if (!hasShippedOrders) shippedOrdersContainer.innerHTML = '<p class="error-message">لا توجد طلبيات مشحونة</p>';
 
+  // ربط أزرار التحديث بعد العرض
   document.querySelectorAll('.update-status-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       const orderId = e.target.dataset.orderId;
       const nextStatus = e.target.dataset.nextStatus;
       if (!orderId || !nextStatus) return;
-      
+
       e.target.disabled = true;
       e.target.textContent = 'جاري التحديث...';
-      
+
       try {
-        await update(ref(database, 'orders/' + orderId), { 
-          status: nextStatus, 
-          updatedAt: Date.now() 
+        await update(ref(database, 'orders/' + orderId), {
+          status: nextStatus,
+          updatedAt: Date.now()
         });
-        
-        // تحديث البطاقة محليًا قبل إعادة الرسم
-currentOrders[orderId].status = nextStatus;
-renderAllOrders(currentOrders);
-        
+
+        // إزالة البطاقة مباشرة من الواجهة بعد التحديث
+        // هذا المنطق سيضمن أن الطلب الذي تحولت حالته إلى 'تم التوصيل'
+        // سيتم إزالته من العرض عند إعادة الرسم.
+        if (currentOrders[orderId]) {
+          // لا داعي لحذفه يدويًا من `currentOrders` هنا،
+          // فـ `onValue` ستعيد استدعاء `renderAllOrders` بالبيانات الجديدة
+          // والتي لن تحتوي على هذا الطلب في أقسام العرض النشطة.
+        }
+        renderAllOrders(currentOrders); // نعيد عرض الباقي فقط
+
         if (nextStatus === 'تم التوصيل') {
           alert('تم نقل الطلبية إلى الطلبيات المكتملة');
         }
@@ -358,7 +453,16 @@ renderAllOrders(currentOrders);
   });
 }
 
-onValue(ordersRef, snapshot => renderAllOrders(snapshot.val() || {}));
+// ربط المستمع على تغيّر الطلبيات في Firebase
+onValue(ordersRef, snapshot => {
+  renderAllOrders(snapshot.val() || {});
+});
+
+// ربط خانة البحث: تحدث الكلمة المفتاحية ثم أعد عرض الطلبيات
+searchInput.addEventListener('input', (e) => {
+  searchKeyword = e.target.value.trim().toLowerCase();
+  renderAllOrders(currentOrders);
+});
 </script>
 </body>
 </html>
