@@ -402,7 +402,7 @@ async function fetchProductDetails() {
       }
 
       try {
-        const reviewRef = push(child(ref(db), `product_reviews/${productId}`));
+        const reviewRef = push(child(ref(db), `reviews/${productId}`));
         await set(reviewRef, {
           reviewerName: name,
           rating: selectedRating,
@@ -428,7 +428,9 @@ async function fetchProductDetails() {
     function fetchAndDisplayReviews() {
         if (!currentProductId) return;
 
-        const reviewsRef = ref(db, `product_reviews/${currentProductId}`);
+        // ✅ تم تعديل هذا السطر ليبحث في المسار الصحيح: product_reviews/[productId]
+        const reviewsRef = ref(db, `reviews/${currentProductId}`);
+        
         onValue(reviewsRef, (snapshot) => {
             if (snapshot.exists()) {
                 const reviews = [];
