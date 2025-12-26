@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>إعدادات الشحن</title>
+  
+  <!-- ربط الخط والستايل الموحد -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin-style.css" />
+</head>
+<body>
+
+  <nav>
+  <div class="logo">لوحة التحكم</div>
+  <div class="links">
+    <a href="admin-products.html" class="nav-link">المنتجات</a>
+    <a href="admin-orders.html" class="nav-link">الطلبيات النشطة</a>
+    <a href="completed-orders.html" class="nav-link">الطلبيات المكتملة</a>
+    <a href="admin-analytics.html" class="nav-link">التحليلات</a>
+    <a href="admin-settings.html" class="nav-link">الإعدادات</a>
+    <a href="admin-reviews.html" class="nav-link">التعليقات والتقييمات</a>
+    <a href="admin-shipping.html" class="nav-link active">الشحن</a>
+    <a href="#" id="logoutBtn" class="nav-link" style="display: none;">تسجيل الخروج</a>
+  </div>
+</nav>
+
+  <div class="container">
+    <h2>🚚 إدارة مناطق وتسعيرات التوصيل</h2>
+
+    <div class="form-card">
+      <h3 style="margin-top:0;">➕ إضافة تسعيرة جديدة</h3>
+      
+      <div class="price-inputs-row">
+        <div class="price-group">
+          <label>🏠 توصيل للمنزل (دج)</label>
+          <input type="number" id="homePrice" placeholder="600" required>
+        </div>
+        <div class="price-group">
+          <label>🏢 توصيل للمكتب (Stop Desk) (دج)</label>
+          <input type="number" id="deskPrice" placeholder="400" required>
+        </div>
+      </div>
+
+      <div class="wilaya-section">
+        <div class="wilaya-controls">
+          <h4 style="margin:0;">اختر الولايات:</h4>
+          <button type="button" id="selectAllBtn" class="select-all-btn">تحديد الكل</button>
+        </div>
+        <div id="wilayaGrid" class="wilaya-grid"></div>
+      </div>
+
+      <button id="saveZoneBtn">💾 حفظ التسعيرة</button>
+    </div>
+
+    <h3 style="border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-top: 40px;">📋 التسعيرات المحفوظة</h3>
+    
+    <div id="zonesContainer" class="zones-grid">
+      <p class="loading-message">جاري تحميل البيانات...</p>
+    </div>
+  </div>
+
+  <script type="module">
+    const firebaseConfig = {
+      apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
+      authDomain: "myestore-34f65.firebaseapp.com",
+      databaseURL: "https://myestore-34f65-default-rtdb.firebaseio.com",
+      projectId: "myestore-34f65",
+      storageBucket: "myestore-34f65.firebasestorage.app",
+      messagingSenderId: "14078917211",
+      appId: "1:14078917211:web:a48eab2a7396c094f7dd7e",
+      measurementId: "G-9181DX0XNJ"
+    };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+    const zonesRef = ref(db, 'shipping_zones');
+
+    const wilayaGrid = document.getElementById('wilayaGrid');
+    const saveZoneBtn = document.getElementById('saveZoneBtn');
+    const zonesContainer = document.getElementById('zonesContainer');
+    const homePriceInput = document.getElementById('homePrice');
+    const deskPriceInput = document.getElementById('deskPrice');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    const allWilayas = [
+      "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", 
+      "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", 
+      "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", 
+      "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", 
+      "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", 
+      "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", 
+      "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", 
+      "56. جانت", "57. المغير", "58. المنيعة"
+    ];
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        logoutBtn.style.display = 'block';
+        renderWilayaCheckboxes();
+      } else {
+        window.location.href = 'admin-login.html';
+      }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+        await signOut(auth);
+        window.location.href = 'admin-login.html';
+    });
+
+    function renderWilayaCheckboxes() {
+        wilayaGrid.innerHTML = '';
+        allWilayas.forEach(wilaya => {
+            const label = document.createElement('label');
+            label.className = 'wilaya-checkbox-item';
+            // حفظ الاسم فقط بدون الرقم ليطابق قائمة الزبون
+            const cleanName = wilaya.split('. ')[1]; 
+            label.innerHTML = `<input type="checkbox" value="${cleanName}" class="wilaya-check"><span>${wilaya}</span>`;
+            wilayaGrid.appendChild(label);
+        });
+    }
+
+    let allSelected = false;
+    selectAllBtn.addEventListener('click', () => {
+        const checkboxes = document.querySelectorAll('.wilaya-check');
+        allSelected = !allSelected;
+        checkboxes.forEach(cb => cb.checked = allSelected);
+        selectAllBtn.textContent = allSelected ? "إلغاء التحديد" : "تحديد الكل";
+        // تغيير لون الزر عند التحديد الكامل
+        if(allSelected) {
+            selectAllBtn.style.backgroundColor = "var(--error-color)";
+        } else {
+            selectAllBtn.style.backgroundColor = "var(--primary-color)";
+        }
+    });
+
+    saveZoneBtn.addEventListener('click', async () => {
+      const homePrice = parseFloat(homePriceInput.value);
+      const deskPrice = parseFloat(deskPriceInput.value);
+      const selectedWilayas = [];
+      document.querySelectorAll('.wilaya-check:checked').forEach(cb => selectedWilayas.push(cb.value));
+
+      if (!homePrice || !deskPrice) { alert("⚠️ أدخل الأسعار أولاً."); return; }
+      if (selectedWilayas.length === 0) { alert("⚠️ اختر ولاية واحدة على الأقل."); return; }
+
+      try {
+        await push(zonesRef, {
+          homePrice: homePrice,
+          deskPrice: deskPrice,
+          wilayas: selectedWilayas,
+          createdAt: Date.now()
+        });
+        alert("✅ تم الحفظ!");
+        // إعادة تعيين النموذج
+        homePriceInput.value = '';
+        deskPriceInput.value = '';
+        document.querySelectorAll('.wilaya-check').forEach(cb => cb.checked = false);
+        allSelected = false;
+        selectAllBtn.textContent = "تحديد الكل";
+        selectAllBtn.style.backgroundColor = "var(--primary-color)";
+      } catch (error) {
+        alert("❌ خطأ: " + error.message);
+      }
+    });
+
+    onValue(zonesRef, (snapshot) => {
+      zonesContainer.innerHTML = '';
+      if (snapshot.exists()) {
+        const zones = snapshot.val();
+        Object.entries(zones).forEach(([key, zone]) => {
+          const wilayasText = Array.isArray(zone.wilayas) ? zone.wilayas.join('، ') : 'لا يوجد';
+          const count = Array.isArray(zone.wilayas) ? zone.wilayas.length : 0;
+
+          const div = document.createElement('div');
+          div.className = 'zone-card';
+          div.innerHTML = `
+            <div class="zone-header"><strong>مجموعة (${count} ولايات)</strong></div>
+            <div class="zone-prices">
+              <div class="price-tag home">🏠 منزل: ${zone.homePrice} دج</div>
+              <div class="price-tag desk">🏢 مكتب: ${zone.deskPrice} دج</div>
+            </div>
+            <div class="zone-wilayas">${wilayasText}</div>
+            <div class="zone-actions">
+              <!-- استخدام كلاسات CSS الموحدة بدلاً من الستايل المضمن -->
+              <button class="delete-btn" data-id="${key}" style="padding: 6px 12px; font-size: 0.85rem;">🗑️ حذف</button>
+            </div>
+          `;
+          zonesContainer.appendChild(div);
+        });
+        
+        // تفعيل زر الحذف
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            if(confirm("حذف هذه التسعيرة؟")) remove(ref(db, `shipping_zones/${e.target.dataset.id}`));
+          });
+        });
+      } else {
+        zonesContainer.innerHTML = '<p class="loading-message">لا توجد تسعيرات محفوظة.</p>';
+      }
+    });
+  </script>
+</body>
+</html>
