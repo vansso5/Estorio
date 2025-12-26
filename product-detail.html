@@ -3,38 +3,92 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تفاصيل المنتج</title>
+<title>طلب المنتج</title>
 <link rel="stylesheet" href="customer-style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css">
-<!-- Font Awesome لأيقونات النجوم -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    /* 1. تنسيقات صور الوصف */
+    .desc-content img {
+        max-width: 100%; border-radius: 8px; margin: 10px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .desc-content p {
+        margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap;
+    }
+
+    /* 2. ✅ حركة الزر (ويييزززز) */
+    @keyframes wiggle {
+        0%, 100% { transform: scale(1) rotate(0deg); }
+        5% { transform: scale(1.05) rotate(-2deg); }
+        10% { transform: scale(1.05) rotate(2deg); }
+        15% { transform: scale(1.05) rotate(-2deg); }
+        20% { transform: scale(1.05) rotate(2deg); }
+        25% { transform: scale(1) rotate(0deg); }
+    }
+    
+    #confirmOrderBtn {
+        /* تطبيق الحركة: تهتز كل 3 ثواني */
+        animation: wiggle 3s infinite ease-in-out;
+        transition: background 0.3s; 
+    }
+
+    /* 3. تنسيق قسم التعليق المخفي */
+    #postOrderReview {
+        background: #fdfdfd;
+        border: 2px dashed #27ae60;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        display: none; /* مخفي افتراضياً */
+    }
+    .review-input-group { margin-bottom: 10px; }
+    .review-input-group input, .review-input-group textarea {
+        width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
+    }
+    .stars-box { display: flex; gap: 5px; justify-content: center; margin: 10px 0; }
+    .stars-box i { font-size: 24px; color: #ddd; cursor: pointer; transition: 0.2s; }
+    .stars-box i.active { color: #f1c40f; }
+</style>
 </head>
-<!-- شاشة التحميل -->
-<div id="loadingScreen" class="hidden">
-  <div class="spinner"></div>
-  <p>جارٍ تأكيد الطلب...</p>
-</div>
+
 <body>
 
-<!-- ✅ شريط الاتصال الثابت -->
-<div class="top-contact">
-📞 اتصل بنا على
-<a href="tel:0540667186">0540667186</a>
+<div id="loadingScreen" class="hidden">
+  <div class="spinner"></div>
+  <p>جارٍ تسجيل الطلب...</p>
+</div>
+
+<!-- اللوجو -->
+<div class="logo-container">
+    <img id="storeLogo" src="https://via.placeholder.com/500x120?text=جاري+التحميل..." alt="Logo">
 </div>
 
 <div class="container">
-  <div id="productDetailContainer"><p>جاري تحميل تفاصيل المنتج...</p></div>
+  <div id="productDetailContainer"><p style="text-align:center; padding:20px;">جاري تحميل المنتج...</p></div>
 </div>
 
-<!-- ✅ نافذة تكبير الصورة -->
 <div class="image-preview-modal" id="imagePreviewModal">
   <button class="close-preview" id="closePreview">&times;</button>
-  <img id="previewImage" src="" alt="صورة مكبرة">
+  <img id="previewImage" src="" alt="">
+</div>
+
+<div id="thankYouModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="check-icon">✔</div>
+      <h3>تم استلام طلبك!</h3>
+      <p id="thankYouMessage"></p>
+      <div id="orderIdBox"></div>
+      <div class="modal-buttons">
+          <button id="copyOrderId">نسخ الرقم</button>
+          <button id="closeModal">حسناً</button>
+      </div>
+    </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, get, child, push, set, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+// تمت إضافة onDisconnect هنا لتفعيل ميزة تتبع الزوار
+import { getDatabase, ref, get, child, push, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
@@ -49,439 +103,325 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+
+// ============================================================
+// 🟢 كود تتبع الزوار (لكي تعمل الأيقونة في لوحة التحكم)
+// ============================================================
+const presenceRef = ref(db, "site_presence");
+const myCon = push(presenceRef);
+// عند انقطاع الاتصال (غلق الصفحة)، احذف هذا الزائر
+onDisconnect(myCon).remove();
+// تسجيل الدخول الآن
+set(myCon, {
+    startedAt: Date.now(),
+    page: window.location.href
+});
+// ============================================================
+
 const container = document.getElementById('productDetailContainer');
 const previewModal = document.getElementById('imagePreviewModal');
 const previewImage = document.getElementById('previewImage');
 const closePreview = document.getElementById('closePreview');
+const storeLogoImg = document.getElementById('storeLogo');
 
 let currentProductId = null;
+let currentProductPrice = 0;
+let shippingZones = []; 
+
+const shippingRef = ref(db, 'shipping_zones');
+onValue(shippingRef, (snapshot) => {
+    shippingZones = [];
+    if (snapshot.exists()) {
+        snapshot.forEach((childSnapshot) => { shippingZones.push(childSnapshot.val()); });
+    }
+});
 
 function getProductIdFromUrl() {
   return new URLSearchParams(window.location.search).get('id');
 }
 
-// دالة لحساب متوسط التقييمات
-function calculateAverageRating(reviews) {
-  if (!reviews || reviews.length === 0) return 0;
-  
-  const total = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-  return (total / reviews.length).toFixed(1);
-}
-
-// دالة لعرض متوسط التقييم
-function displayAverageRating(averageRating, totalReviews) {
-  const ratingSummary = document.getElementById('ratingSummary');
-  if (ratingSummary) {
-    ratingSummary.innerHTML = `
-      <div class="average-rating">${averageRating}</div>
-      <div class="rating-stars-display">
-        ${generateStarIcons(averageRating)}
-      </div>
-      <div class="total-reviews">(${totalReviews} تقييم)</div>
-    `;
-  }
-}
-
-// دالة لتوليد أيقونات النجوم للتقييم
-function generateStarIcons(rating) {
-  const fullStars = Math.floor(rating);
-  const halfStar = rating % 1 >= 0.5;
-  const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-  
-  let stars = '';
-  
-  // نجوم كاملة
-  for (let i = 0; i < fullStars; i++) {
-    stars += '<i class="fas fa-star"></i>';
-  }
-  
-  // نصف نجمة إن وجدت
-  if (halfStar) {
-    stars += '<i class="fas fa-star-half-alt"></i>';
-  }
-  
-  // نجوم فارغة
-  for (let i = 0; i < emptyStars; i++) {
-    stars += '<i class="far fa-star"></i>';
-  }
-  
-  return stars;
-}
-
 async function fetchProductDetails() {
   const productId = getProductIdFromUrl();
-  if (!productId) {
-    container.innerHTML = '<p class="error-message">لم يتم العثور على معرف المنتج.</p>';
-    return;
-  }
+  if (!productId) { container.innerHTML = '<p class="error-text">المنتج غير موجود.</p>'; return; }
   currentProductId = productId;
 
   try {
     const snapshot = await get(child(ref(db), `products/${productId}`));
-    if (!snapshot.exists()) {
-      container.innerHTML = '<p class="error-message">المنتج غير موجود.</p>';
-      return;
-    }
+    if (!snapshot.exists()) { container.innerHTML = '<p class="error-text">المنتج غير موجود.</p>'; return; }
 
     const product = snapshot.val();
+    currentProductPrice = parseFloat(product.newPrice);
+    
+    if (product.customLogo && product.customLogo.trim() !== "") {
+        storeLogoImg.src = product.customLogo;
+    } else {
+        onValue(ref(db, 'settings/logo'), (snap) => {
+            if(snap.exists()) storeLogoImg.src = snap.val();
+            else storeLogoImg.src = "https://via.placeholder.com/500x120?text=Welcome";
+        });
+    }
+
     const images = Array.isArray(product.images) ? product.images : [product.images || 'default.jpg'];
-    const swiperSlides = images.map(src => `<div class="swiper-slide"><img src="${src}" alt="صورة المنتج"></div>`).join('');
+    const swiperSlides = images.map(src => `<div class="swiper-slide"><img src="${src}" alt="صورة"></div>`).join('');
 
     const wilayas = [
       "أدرار","الشلف","الأغواط","أم البواقي","باتنة","بجاية","بسكرة","بشار","البليدة","البويرة","تمنراست","تبسة","تلمسان","تيارت","تيزي وزو","الجزائر","الجلفة","جيجل","سطيف","سعيدة","سكيكدة","سيدي بلعباس","عنابة","قالمة","قسنطينة","المدية","مستغانم","المسيلة","معسكر","ورقلة","وهران","البيض","إليزي","برج بوعريريج","بومرداس","الطارف","تندوف","تيسمسيلت","الوادي","خنشلة","سوق أهراس","تيبازة","ميلة","عين الدفلى","النعامة","عين تموشنت","غرداية","غليزان","تيميمون","برج باجي مختار","أولاد جلال","بني عباس","إن صالح","إن قزام","تقرت","جانت","المغير","المنيعة"
     ];
-
     const wilayaOptions = wilayas.map(w => `<option value="${w}">${w}</option>`).join('');
+
+    let descriptionHTML = '';
+    if (Array.isArray(product.description)) {
+        product.description.forEach(block => {
+            if (block.type === 'text') {
+                descriptionHTML += `<p>${block.val}</p>`;
+            } else if (block.type === 'image') {
+                descriptionHTML += `<img src="${block.val}" alt="توضيح">`;
+            }
+        });
+    } else {
+        descriptionHTML = `<p>${product.description || 'لا يوجد وصف.'}</p>`;
+    }
 
     container.innerHTML = `
       <div class="swiper mySwiper"><div class="swiper-wrapper">${swiperSlides}</div><div class="swiper-pagination"></div></div>
-      <div class="product-detail-info">
+      
+      <div class="product-header">
         <h2>${product.name}</h2>
-        <p class="product-detail-price">
-          ${product.oldPrice ? `<span style="text-decoration: line-through; color: #999; font-size: 18px; margin-left: 10px;">${Number(product.oldPrice).toLocaleString()} دج</span>` : ''}
-          <span style="color: #e74c3c; font-weight: bold;">${Number(product.newPrice).toLocaleString()} دج</span>
-        </p>
-        <p class="product-description">${product.description || ''}</p>
-        <button id="orderBtn">اطلب الآن</button>
+        <div class="price-badge">
+            ${Number(product.newPrice).toLocaleString()} دج
+            ${product.oldPrice ? `<small>${Number(product.oldPrice).toLocaleString()}</small>` : ''}
+        </div>
       </div>
 
-      <!-- ✅ قسم التعليقات والتقييمات المحسن -->
-      <div class="reviews-section">
-        <h3>التعليقات والتقييمات</h3>
+      <div class="compact-card">
+        <div class="card-header">اطلب الآن 👇</div>
         
-        <!-- ✅ ملخص التقييمات -->
-        <div class="rating-summary" id="ratingSummary">
-          <p>جاري تحميل التقييمات...</p>
+        <div class="input-wrapper">
+            <i class="fas fa-phone input-icon"></i>
+            <input type="tel" id="phone" placeholder="رقم الهاتف" dir="ltr" style="text-align:right;">
         </div>
 
-        <div class="review-form">
-          <input type="text" id="reviewerName" placeholder="اسمك (اختياري)">
-          <div class="rating-stars" id="ratingStars">
-            <i class="far fa-star" data-rating="1"></i>
-            <i class="far fa-star" data-rating="2"></i>
-            <i class="far fa-star" data-rating="3"></i>
-            <i class="far fa-star" data-rating="4"></i>
-            <i class="far fa-star" data-rating="5"></i>
-          </div>
-          <span id="ratingText" style="color: #666; font-size: 14px; display: block; margin-bottom: 10px;">اضغط على النجوم للتقييم</span>
-          <textarea id="reviewText" placeholder="اكتب تعليقك هنا..." rows="4"></textarea>
-          <button id="submitReviewBtn">إرسال التعليق</button>
+        <div class="input-wrapper">
+            <i class="fas fa-user input-icon"></i>
+            <input type="text" id="fullName" placeholder="الاسم واللقب">
         </div>
-        <div class="comments-list" id="commentsList">
-          <p style="text-align: center; color: #777;">جاري تحميل التعليقات...</p>
+
+        <div class="row-dual">
+            <div class="col-half">
+                <select id="wilaya">
+                    <option value="">اختر الولاية</option>
+                    ${wilayaOptions}
+                </select>
+            </div>
+            <div class="col-half">
+                <select id="deliveryType">
+                    <option value="المنزل">🏠 توصيل للمنزل</option>
+                    <option value="مكتب الشركة">🏢 استلام مكتب</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="input-wrapper">
+            <i class="fas fa-map-marker-alt input-icon"></i>
+            <input type="text" id="address" placeholder="البلدية / العنوان">
+        </div>
+
+        <div class="price-summary">
+            <div class="total-row">
+                <span>المجموع:</span>
+                <span id="summaryTotalPrice" class="final-price">0 دج</span>
+            </div>
+            <small id="shippingText" class="ship-note">(الشحن غير محدد)</small>
+        </div>
+
+        <div class="action-bar">
+            <div class="qty-box">
+                <button type="button" id="increaseQty">+</button>
+                <span id="quantityValue">1</span>
+                <button type="button" id="decreaseQty">-</button>
+            </div>
+            <!-- ✅ الزر المتحرك -->
+            <button id="confirmOrderBtn">
+                تأكيد الطلب 🚀
+            </button>
+        </div>
+      </div>
+
+      <div class="desc-section">
+        <h3>تفاصيل المنتج</h3>
+        <div class="desc-content">
+            ${descriptionHTML}
         </div>
       </div>
 
-      <!-- نافذة الطلب (تبقى كما هي) -->
-      <div id="orderModal" class="modal hidden">
-        <div class="modal-content">
-          <h3>أدخل معلومات الطلب</h3>
-          <input type="text" id="fname" placeholder="الاسم">
-          <input type="text" id="lname" placeholder="اللقب">
-          <input type="text" id="phone" placeholder="رقم الهاتف">
+      <div class="reviews-section">
+         <h3>التقييمات</h3>
+         
+         <!-- ✅ خانة التعليق (مخفية افتراضياً وتظهر بعد الطلب) -->
+         <div id="postOrderReview">
+            <h4 style="text-align:center; color:#27ae60; margin:0 0 10px;">🎉 شكراً لطلبك! ما هو تقييمك للمنتج؟</h4>
+            
+            <div class="stars-box" id="reviewStars">
+                <i class="fas fa-star" data-rating="1"></i>
+                <i class="fas fa-star" data-rating="2"></i>
+                <i class="fas fa-star" data-rating="3"></i>
+                <i class="fas fa-star" data-rating="4"></i>
+                <i class="fas fa-star" data-rating="5"></i>
+            </div>
+            
+            <div class="review-input-group">
+                <input type="text" id="reviewName" placeholder="اسمك (سيظهر مع التعليق)">
+            </div>
+            <div class="review-input-group">
+                <textarea id="reviewText" rows="3" placeholder="اكتب رأيك بصراحة..."></textarea>
+            </div>
+            <button id="submitReviewBtn" style="width:100%; padding:10px; background:#27ae60; color:white; border:none; border-radius:50px; cursor:pointer;">إرسال التقييم</button>
+         </div>
 
-          <select id="wilaya">
-            <option value="">اختر الولاية</option>
-            ${wilayaOptions}
-          </select>
-          <input type="text" id="commune" placeholder="البلدية (إجباري)">
-          <input type="text" id="address" placeholder="العنوان الكامل">
-
-          <div class="quantity-selector">
-            <button type="button" id="decreaseQty">-</button>
-            <span id="quantityValue">1</span>
-            <button type="button" id="increaseQty">+</button>
-          </div>
-
-          <select id="deliveryType">
-            <option value="المنزل">توصيل إلى المنزل</option>
-            <option value="مكتب الشركة">إلى مكتب الشركة</option>
-          </select>
-
-          <textarea id="note" placeholder="ملاحظات إضافية (اختياري)" rows="3"></textarea>
-          <button id="confirmOrderBtn">تأكيد الطلب</button>
-        </div>
-      </div>
-<!-- ✅ شاشة التحميل -->
-<div id="loadingScreen" class="hidden">
-  <div class="spinner"></div>
-  <p>جارٍ معالجة الطلب...</p>
-</div>
-      <div id="thankYouModal" class="modal hidden">
-        <div class="modal-content">
-          <h3>شكرًا لطلبك!</h3>
-          <p>تم إرسال طلبك بنجاح ❤️ الرجاء نسخ رقم طلبيتكم و الاحتفاض به الى غاية وصولها</p>
-          <div id="orderIdBox" style="background:#f0f0f0;padding:10px;border-radius:8px;margin-bottom:10px;font-weight:bold;"></div>
-          <button id="copyOrderId" style="background:#4CAF50;color:white;padding:8px 12px;border:none;border-radius:6px;cursor:pointer;margin-bottom:10px;">📋 نسخ الرقم</button>
-          <br>
-          <button id="closeModal" style="background:#e74c3c;color:white;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;">موافق</button>
-        </div>
+         <div id="commentsList">جاري التحميل...</div>
       </div>
     `;
 
-    // تهيئة السويبر
-    const swiper = new Swiper(".mySwiper", { pagination: { el: ".swiper-pagination", clickable: true } });
-
-    // تكبير الصورة
+    new Swiper(".mySwiper", { pagination: { el: ".swiper-pagination", clickable: true } });
+    
     document.querySelectorAll('.swiper-slide img').forEach(img => {
-      img.addEventListener('click', () => {
-        previewImage.src = img.src;
-        previewModal.classList.add('active');
-      });
+      img.addEventListener('click', () => { previewImage.src = img.src; previewModal.classList.add('active'); });
+    });
+    document.querySelectorAll('.desc-content img').forEach(img => {
+      img.addEventListener('click', () => { previewImage.src = img.src; previewModal.classList.add('active'); });
     });
 
     closePreview.addEventListener('click', () => previewModal.classList.remove('active'));
     previewModal.addEventListener('click', e => { if(e.target === previewModal) previewModal.classList.remove('active'); });
 
-    // منطق الطلب (يبقى كما هو)
-    const orderBtn = document.getElementById("orderBtn");
-    const orderModal = document.getElementById("orderModal");
-    const confirmOrderBtn = document.getElementById("confirmOrderBtn");
-    const thankYouModal = document.getElementById("thankYouModal");
-    const decreaseQty = document.getElementById("decreaseQty");
-    const increaseQty = document.getElementById("increaseQty");
-    const quantityValue = document.getElementById("quantityValue");
+    const confirmBtn = document.getElementById("confirmOrderBtn");
+    const qtyVal = document.getElementById("quantityValue");
+    const wilayaSel = document.getElementById("wilaya");
+    const delSel = document.getElementById("deliveryType");
+    let qty = 1;
+    let shipPrice = 0;
 
-    let quantity = 1;
-
-    orderBtn.addEventListener("click", () => orderModal.classList.remove("hidden"));
-    orderModal.addEventListener("click", e => { if(e.target === orderModal) orderModal.classList.add("hidden"); });
-
-    decreaseQty.addEventListener("click", () => { if(quantity>1) quantity--; quantityValue.textContent = quantity; });
-    increaseQty.addEventListener("click", () => { quantity++; quantityValue.textContent = quantity; });
-
-    confirmOrderBtn.addEventListener("click", async () => {
-  const loadingScreen = document.getElementById("loadingScreen");
-  loadingScreen.classList.remove("hidden"); // يظهر شاشة التحميل
-  
-  // نفّذ العملية بعد 3 ثوانٍ (3000ms)
-  setTimeout(async () => {
-    const fname = document.getElementById("fname").value.trim();
-    const lname = document.getElementById("lname").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const wilaya = document.getElementById("wilaya").value.trim();
-    const commune = document.getElementById("commune").value.trim();
-    const address = document.getElementById("address").value.trim();
-    const deliveryType = document.getElementById("deliveryType").value;
-    const note = document.getElementById("note").value.trim();
-    
-    if (!fname || !lname || !phone || !wilaya || !commune || !address) {
-      alert("يرجى ملء جميع الخانات الإجبارية بشكل صحيح.");
-      loadingScreen.classList.add("hidden"); // خفِ التحميل لو البيانات ناقصة
-      return;
+    function updatePrice() {
+        const pPrice = currentProductPrice * qty;
+        
+        const zone = shippingZones.find(z => z.wilayas && z.wilayas.includes(wilayaSel.value));
+        if (zone) {
+            shipPrice = (delSel.value === "المنزل") ? (zone.homePrice || 0) : (zone.deskPrice || 0);
+            document.getElementById("shippingText").textContent = `(+${shipPrice} دج توصيل)`;
+            document.getElementById("shippingText").style.color = "#27ae60";
+        } else {
+            shipPrice = 0;
+            document.getElementById("shippingText").textContent = wilayaSel.value ? "(توصيل غير محدد)" : "(اختر الولاية لحساب التوصيل)";
+            document.getElementById("shippingText").style.color = "#7f8c8d";
+        }
+        
+        document.getElementById("summaryTotalPrice").textContent = (pPrice + shipPrice).toLocaleString() + " دج";
     }
-    
-    orderModal.classList.add("hidden");
-    
-    try {
-      const orderRef = push(ref(db, "orders"));
-      const orderId = orderRef.key;
-      const totalPrice = parseFloat(product.newPrice) * quantity;
-      
-      await set(orderRef, {
-        id: orderId,
-        productId: productId,
-        productName: product.name,
-        productPrice: parseFloat(product.newPrice),
-        quantity,
-        totalPrice,
-        customerName: `${fname} ${lname}`,
-        customerPhone: phone,
-        customerWilaya: wilaya,
-        customerCommune: commune,
-        customerAddress: address,
-        deliveryOption: deliveryType,
-        note,
-        timestamp: Date.now(),
-        status: "الطلبات الجديدة",
-        rating: 0
-      });
-      
-      document.getElementById("orderIdBox").textContent = orderId;
-      loadingScreen.classList.add("hidden"); // إخفاء شاشة التحميل بعد الانتهاء
-      thankYouModal.classList.remove("hidden");
-      
-      document.getElementById("copyOrderId").onclick = () => {
-        navigator.clipboard.writeText(orderId);
-        alert("تم نسخ رقم الطلب!");
-      };
-      
-      document.getElementById("closeModal").onclick = () => {
-        thankYouModal.classList.add("hidden");
-      };
-    } catch (err) {
-      console.error("Error saving order:", err);
-      alert("حدث خطأ أثناء إرسال الطلب. حاول مرة أخرى.");
-      loadingScreen.classList.add("hidden");
-    }
-    
-  }, 3000); // نهاية setTimeout مع المهلة 3000ms
-});
 
-    // --- منطق التعليقات والتقييمات المحسن ---
-    const ratingStarsContainer = document.getElementById('ratingStars');
-    const submitReviewBtn = document.getElementById('submitReviewBtn');
-    const reviewText = document.getElementById('reviewText');
-    const reviewerNameInput = document.getElementById('reviewerName');
-    const commentsList = document.getElementById('commentsList');
-    const ratingText = document.getElementById('ratingText');
+    document.getElementById("decreaseQty").addEventListener("click", () => { if(qty>1) { qty--; qtyVal.textContent = qty; updatePrice(); }});
+    document.getElementById("increaseQty").addEventListener("click", () => { qty++; qtyVal.textContent = qty; updatePrice(); });
+    wilayaSel.addEventListener("change", updatePrice);
+    delSel.addEventListener("change", updatePrice);
+    updatePrice();
 
+    confirmBtn.addEventListener("click", async () => {
+        const load = document.getElementById("loadingScreen");
+        const ph = document.getElementById("phone").value.trim();
+        const nm = document.getElementById("fullName").value.trim();
+        const wl = document.getElementById("wilaya").value;
+        const ad = document.getElementById("address").value.trim();
+
+        if(!ph || !nm || !wl || !ad) { alert("⚠️ يرجى ملء جميع الخانات المطلوبة!"); return; }
+        
+        load.classList.remove("hidden");
+        try {
+            const refOrd = push(ref(db, "orders"));
+            await set(refOrd, {
+                id: refOrd.key,
+                productId: productId,
+                productName: product.name,
+                productPrice: currentProductPrice,
+                quantity: qty,
+                shippingPrice: shipPrice,
+                totalPrice: (currentProductPrice * qty) + shipPrice,
+                customerName: nm,
+                customerPhone: ph,
+                customerWilaya: wl,
+                customerAddress: ad,
+                deliveryOption: delSel.value,
+                timestamp: Date.now(),
+                status: "الطلبات الجديدة"
+            });
+            load.classList.add("hidden");
+            document.getElementById("thankYouModal").classList.remove("hidden");
+            document.getElementById("orderIdBox").textContent = refOrd.key;
+            document.getElementById("thankYouMessage").innerHTML = `شكراً <b>${nm}</b>، تم تسجيل طلبك بنجاح.`;
+            
+            // ✅ عند نجاح الطلب، نقوم بإظهار خانة التعليق تلقائياً ونملأ اسم الزبون
+            document.getElementById("postOrderReview").style.display = "block";
+            document.getElementById("reviewName").value = nm; 
+            document.getElementById("postOrderReview").scrollIntoView({behavior: "smooth"});
+
+            document.getElementById("closeModal").onclick = () => {
+                document.getElementById("thankYouModal").classList.add("hidden");
+            };
+            document.getElementById("copyOrderId").onclick = () => { navigator.clipboard.writeText(refOrd.key); alert("تم النسخ"); };
+        } catch(e) {
+            console.error(e); alert("خطأ في الاتصال"); load.classList.add("hidden");
+        }
+    });
+    
+    // --- منطق التعليقات ---
     let selectedRating = 0;
-
-    // تحسين تفاعل النجوم
-    ratingStarsContainer.querySelectorAll('.fa-star').forEach(star => {
-      star.addEventListener('click', () => {
-  const clickedRating = parseInt(star.dataset.rating);
-  // إذا ضغط على نفس النجمة مرة أخرى → نعيد التقييم إلى 0
-  if (selectedRating === clickedRating) {
-    selectedRating = 0;
-  } else {
-    selectedRating = clickedRating;
-  }
-  updateStarColorsInForm();
-  updateRatingText();
-});
-      
-      star.addEventListener('mouseover', () => {
-        highlightStarsInForm(parseInt(star.dataset.rating));
-      });
-      
-      star.addEventListener('mouseout', () => {
-        updateStarColorsInForm();
-      });
+    const stars = document.querySelectorAll('#reviewStars i');
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            selectedRating = parseInt(star.dataset.rating);
+            stars.forEach(s => {
+                if(parseInt(s.dataset.rating) <= selectedRating) s.classList.add('active');
+                else s.classList.remove('active');
+            });
+        });
     });
 
-    function highlightStarsInForm(rating) {
-        ratingStarsContainer.querySelectorAll('.fa-star').forEach(star => {
-            if (parseInt(star.dataset.rating) <= rating) {
-                star.classList.remove('far');
-                star.classList.add('fas', 'checked');
-            } else {
-                star.classList.remove('fas', 'checked');
-                star.classList.add('far');
-            }
-        });
-    }
-
-    function updateStarColorsInForm() {
-        ratingStarsContainer.querySelectorAll('.fa-star').forEach(star => {
-            if (parseInt(star.dataset.rating) <= selectedRating) {
-                star.classList.remove('far');
-                star.classList.add('fas', 'checked');
-            } else {
-                star.classList.remove('fas', 'checked');
-                star.classList.add('far');
-            }
-        });
-    }
-
-    function updateRatingText() {
-      const ratingLabels = {
-        1: "سيء",
-        2: "ليس جيد",
-        3: "جيد",
-        4: "جيد جداً",
-        5: "ممتاز"
-      };
-      ratingText.textContent = ratingLabels[selectedRating] || "اضغط على النجوم للتقييم";
-    }
-
-    // إرسال التعليق إلى Firebase
-    submitReviewBtn.addEventListener('click', async () => {
-      const name = reviewerNameInput.value.trim() || "مجهول";
-      const comment = reviewText.value.trim();
-
-      if (selectedRating === 0) {
-        alert("يرجى اختيار تقييم بالنجوم قبل الإرسال.");
-        return;
-      }
-
-      if (!comment) {
-        alert("يرجى كتابة تعليق قبل الإرسال.");
-        return;
-      }
-
-      try {
-        const reviewRef = push(child(ref(db), `reviews/${productId}`));
-        await set(reviewRef, {
-          reviewerName: name,
-          rating: selectedRating,
-          comment: comment,
-          timestamp: Date.now()
-        });
-
-        // مسح النموذج بعد الإرسال
-        reviewerNameInput.value = '';
-        reviewText.value = '';
-        selectedRating = 0;
-        updateStarColorsInForm();
-        updateRatingText();
+    document.getElementById('submitReviewBtn').addEventListener('click', async () => {
+        const rName = document.getElementById('reviewName').value.trim() || "زبون";
+        const rText = document.getElementById('reviewText').value.trim();
         
-        alert("تم إرسال تعليقك بنجاح!");
-      } catch (error) {
-        console.error("Error submitting review:", error);
-        alert("حدث خطأ أثناء إرسال التعليق. يرجى المحاولة مرة أخرى.");
-      }
+        if(selectedRating === 0) { alert("يرجى اختيار عدد النجوم ⭐"); return; }
+        if(!rText) { alert("يرجى كتابة تعليق"); return; }
+
+        try {
+            await push(child(ref(db), `reviews/${productId}`), {
+                reviewerName: rName,
+                rating: selectedRating,
+                comment: rText,
+                timestamp: Date.now()
+            });
+            alert("تم إرسال تقييمك، شكراً لك! ❤️");
+            document.getElementById("postOrderReview").style.display = "none";
+        } catch(e) {
+            alert("حدث خطأ، حاول مرة أخرى.");
+        }
     });
 
-    // جلب وعرض التعليقات من Firebase
-    function fetchAndDisplayReviews() {
-        if (!currentProductId) return;
+    onValue(ref(db, `reviews/${productId}`), (snap) => {
+        const list = document.getElementById('commentsList');
+        if(snap.exists()) {
+            list.innerHTML = '';
+            snap.forEach(c => {
+                 const r = c.val();
+                 list.innerHTML += `
+                 <div class="review-item" style="border-bottom:1px solid #eee; padding:10px 0;">
+                    <b>${r.reviewerName}</b> 
+                    <span style="color:#f1c40f">${'★'.repeat(r.rating)}</span>
+                    <br><span style="color:#555;">${r.comment}</span>
+                 </div>`;
+            });
+        } else { list.innerHTML = '<p style="text-align:center;color:#999">لا توجد تعليقات بعد.</p>'; }
+    });
 
-        // ✅ تم تعديل هذا السطر ليبحث في المسار الصحيح: product_reviews/[productId]
-        const reviewsRef = ref(db, `reviews/${currentProductId}`);
-        
-        onValue(reviewsRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const reviews = [];
-                snapshot.forEach((childSnapshot) => {
-                    reviews.push({ id: childSnapshot.key, ...childSnapshot.val() });
-                });
-                
-                // ترتيب التعليقات من الأحدث للأقدم
-                reviews.sort((a, b) => b.timestamp - a.timestamp);
-
-                // حساب متوسط التقييمات
-                const averageRating = calculateAverageRating(reviews);
-                displayAverageRating(averageRating, reviews.length);
-
-                // عرض التعليقات
-                commentsList.innerHTML = '';
-                if (reviews.length === 0) {
-                    commentsList.innerHTML = '<p style="text-align: center; color: #777;">لا توجد تعليقات حتى الآن. كن أول من يعلق!</p>';
-                } else {
-                    reviews.forEach(review => {
-                        const date = new Date(review.timestamp).toLocaleDateString('ar-DZ', {
-                            year: 'numeric', month: 'long', day: 'numeric',
-                            hour: '2-digit', minute: '2-digit'
-                        });
-                        commentsList.innerHTML += `
-                            <div class="comment-item">
-                                <strong>${review.reviewerName}</strong>
-                                <div class="comment-rating">
-                                    ${Array(review.rating).fill('<i class="fas fa-star"></i>').join('')}
-                                    ${Array(5 - review.rating).fill('<i class="far fa-star"></i>').join('')}
-                                </div>
-                                <p>${review.comment}</p>
-                                <span class="comment-date">${date}</span>
-                            </div>
-                        `;
-                    });
-                }
-            } else {
-                commentsList.innerHTML = '<p style="text-align: center; color: #777;">لا توجد تعليقات حتى الآن. كن أول من يعلق!</p>';
-                displayAverageRating(0, 0);
-            }
-        });
-    }
-
-    // استدعاء جلب التعليقات بعد تحميل تفاصيل المنتج
-    fetchAndDisplayReviews();
-
-  } catch(err) {
-    console.error("Error fetching product details:", err);
-    container.innerHTML = '<p class="error-message">حدث خطأ أثناء تحميل تفاصيل المنتج.</p>';
-  }
+  } catch(err) { container.innerHTML = 'حدث خطأ غير متوقع.'; console.log(err); }
 }
 
 fetchProductDetails();
