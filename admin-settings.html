@@ -4,30 +4,71 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>الإعدادات</title>
+  
+  <!-- ربط الخط والستايل الموحد -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin-style.css" />
 </head>
 <body>
+
   <nav>
-    <div class="logo">لوحة التحكم</div>
-    <div class="links">
-      <a href="admin-products.html">المنتجات</a>
-      <a href="admin-orders.html">الطلبيات النشطة</a>
-      <a href="completed-orders.html">الطلبيات المكتملة</a>
-      <a href="admin-analytics.html">التحليلات</a>
-      <a href="admin-settings.html">الإعدادات</a>
-      <a href="admin-reviews.html" class="active">التعليقات والتقييمات</a>
-      <a href="#" id="logoutBtn" style="display: none;">تسجيل الخروج</a>
+  <div class="logo">لوحة التحكم</div>
+  <div class="links">
+    <a href="admin-products.html" class="nav-link">المنتجات</a>
+    <a href="admin-orders.html" class="nav-link">الطلبيات النشطة</a>
+    <a href="completed-orders.html" class="nav-link">الطلبيات المكتملة</a>
+    <a href="admin-analytics.html" class="nav-link">التحليلات</a>
+    <a href="admin-settings.html" class="nav-link active">الإعدادات</a>
+    <a href="admin-reviews.html" class="nav-link">التعليقات والتقييمات</a>
+    <a href="admin-shipping.html" class="nav-link">الشحن</a>
+    <a href="#" id="logoutBtn" class="nav-link" style="display: none;">تسجيل الخروج</a>
+  </div>
+</nav>
+
+  <!-- أيقونة الزوار -->
+  <div class="visitors-wrapper">
+    <div id="liveVisitors" class="live-visitors-badge inactive">
+      <span class="live-dot"></span>
+      <span style="margin-right:5px">عدد الزوار الآن: </span>
+      <strong id="visitorsCount" style="margin:0 4px">0</strong>
     </div>
-  </nav>
+  </div>
 
   <div class="container">
     <h2>⚙️ الإعدادات</h2>
     
-    <div class="analytics-grid">
-      <!-- مسح الطلبيات المكتملة -->
-      <div class="stat-card danger-zone">
-        <h3>🗑️ مسح الطلبيات المكتملة</h3>
+    <div class="analytics-grid" style="display: flex; flex-direction: column; gap: 30px;">
+      
+      <!-- 1. بطاقة إدارة المسؤولين (الجديدة) -->
+      <div class="stat-card" style="text-align: right; align-items: stretch;">
+        <h3 style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0;">👥 إدارة المسؤولين (Admins)</h3>
+        
         <div class="setting-item">
+          <!-- نموذج الإضافة -->
+          <div style="background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+            <h4 style="margin-top:0; color:var(--primary-color);">➕ إضافة مسؤول جديد</h4>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <input type="email" id="newAdminEmail" placeholder="البريد الإلكتروني" style="flex:1; margin-bottom:0;">
+              <input type="password" id="newAdminPass" placeholder="كلمة المرور (6 أرقام)" style="flex:1; margin-bottom:0;">
+              <button onclick="addNewAdmin()" style="flex:0 0 100px; padding:10px;">إضافة</button>
+            </div>
+            <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">* سيتمكن هذا الشخص من الدخول للوحة التحكم كاملة.</p>
+          </div>
+
+          <!-- قائمة المسؤولين -->
+          <h4 style="margin-bottom:10px;">📋 قائمة المسؤولين المصرح لهم:</h4>
+          <div id="adminsList" class="wilaya-grid" style="display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y: auto; background: none; border: none; padding: 0;">
+            <p class="loading-message">جاري تحميل القائمة...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. بطاقة منطقة الخطر (مسح الطلبيات) -->
+      <div class="stat-card danger-zone" style="text-align: right; align-items: stretch;">
+        <h3 style="border-bottom: 1px solid #ffcccc; padding-bottom: 10px; margin-top: 0;">🗑️ مسح الطلبيات المكتملة</h3>
+        
+        <div class="setting-item">
+          <!-- إحصائيات سريعة -->
           <div class="orders-stats">
             <div class="stat-card">
               <h3>الطلبيات المكتملة</h3>
@@ -41,51 +82,52 @@
           
           <!-- خيارات الفترة الزمنية -->
           <div class="time-period-selector">
-            <label>اختر الفترة الزمنية:</label>
+            <label>اختر الفترة الزمنية للمسح:</label>
             <select id="timePeriod" onchange="updatePeriodSelection()">
-              <option value="all">جميع الطلبيات</option>
-              <option value="month">هذا الشهر</option>
+              <option value="all">جميع الطلبيات (مسح كامل)</option>
+              <option value="month">هذا الشهر فقط</option>
               <option value="last_month">الشهر الماضي</option>
               <option value="last_3_months">آخر 3 أشهر</option>
-              <option value="custom">تحديد مخصص</option>
+              <option value="custom">تحديد فترة مخصصة</option>
             </select>
           </div>
 
-          <!-- تحديد تاريخ مخصص -->
-          <div id="customDateRange" style="display: none; margin-top: 15px;">
+          <!-- تحديد تاريخ مخصص (مخفي افتراضياً) -->
+          <div id="customDateRange" style="display: none;">
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <div>
+              <div style="flex: 1;">
                 <label>من تاريخ:</label>
-                <input type="date" id="startDate" style="margin-top: 5px;">
+                <input type="date" id="startDate">
               </div>
-              <div>
+              <div style="flex: 1;">
                 <label>إلى تاريخ:</label>
-                <input type="date" id="endDate" style="margin-top: 5px;">
+                <input type="date" id="endDate">
               </div>
             </div>
           </div>
 
           <!-- عرض ملخص الفترة -->
-          <div id="periodSummary" class="period-summary" style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-            <p>سيتم مسح <strong id="periodCount">0</strong> طلبية</p>
+          <div id="periodSummary" class="period-summary">
+            <p>سيتم مسح <strong id="periodCount">0</strong> طلبية بشكل نهائي.</p>
           </div>
           
-          <p class="error-message">⚠️ هذا الإجراء لا يمكن التراجع عنه</p>
+          <p class="warning-message">⚠️ تحذير: هذا الإجراء لا يمكن التراجع عنه!</p>
           
           <div class="product-actions">
-            <button class="delete-btn" onclick="clearCompletedOrders()">
-              🗑️ مسح الطلبيات المحددة
+            <button class="delete-btn" onclick="clearCompletedOrders()" style="width: 100%; padding: 12px; font-size: 1rem;">
+              🗑️ تأكيد مسح الطلبيات
             </button>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue, get, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getDatabase, ref, onValue, get, update, set, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getAuth, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
@@ -101,14 +143,22 @@
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
     const auth = getAuth(app);
+    const visitorsRef = ref(database, 'site_presence');
 
     const logoutBtn = document.getElementById('logoutBtn');
+    const liveVisitorsBadge = document.getElementById('liveVisitors');
+    const visitorsCountSpan = document.getElementById('visitorsCount');
+
     let allOrders = {};
+    let currentUserData = null;
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
+        currentUserData = user;
         logoutBtn.style.display = 'block';
-        loadStatistics();
+        loadStatistics();    // إحصائيات الطلبيات
+        loadAdminsList();    // قائمة الأدمن
+        ensureCurrentAdminExists(user); // تأكد من تسجيلك
       } else {
         logoutBtn.style.display = 'none';
         alert("يرجى تسجيل الدخول للوصول إلى الإعدادات");
@@ -125,29 +175,151 @@
       }
     });
 
-    // تحميل الإحصائيات
+    // =========================================================
+    // 1. كود إدارة المسؤولين (Admins Logic)
+    // =========================================================
+    
+    // إضافة أدمن جديد (باستخدام تطبيق ثانوي)
+    async function addNewAdmin() {
+        const email = document.getElementById('newAdminEmail').value;
+        const password = document.getElementById('newAdminPass').value;
+
+        if(!email || !password) { alert("يرجى ملء البيانات"); return; }
+        if(password.length < 6) { alert("كلمة المرور يجب أن تكون 6 أحرف على الأقل"); return; }
+
+        try {
+            // إنشاء تطبيق ثانوي لعدم التأثير على الجلسة الحالية
+            const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+            const secondaryAuth = getAuth(secondaryApp);
+
+            const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+            const newUser = userCredential.user;
+
+            // حفظه في قاعدة البيانات
+            await set(ref(database, 'admins/' + newUser.uid), {
+                email: email,
+                createdAt: Date.now()
+            });
+
+            // تسجيل الخروج من التطبيق الثانوي (لتنظيف الذاكرة)
+            await signOut(secondaryAuth);
+            
+            alert(`✅ تم إنشاء الأدمن بنجاح:\n${email}`);
+            document.getElementById('newAdminEmail').value = '';
+            document.getElementById('newAdminPass').value = '';
+
+        } catch (error) {
+            console.error(error);
+            alert("خطأ: " + error.message);
+        }
+    }
+
+    // عرض القائمة
+    function loadAdminsList() {
+        const adminsRef = ref(database, 'admins');
+        onValue(adminsRef, (snapshot) => {
+            const list = document.getElementById('adminsList');
+            list.innerHTML = '';
+            
+            if(snapshot.exists()) {
+                const admins = snapshot.val();
+                Object.entries(admins).forEach(([uid, data]) => {
+                    const isMe = (auth.currentUser && uid === auth.currentUser.uid);
+                    
+                    const div = document.createElement('div');
+                    div.style = "background:#fff; padding:12px; border-radius:10px; border:1px solid #eee; display:flex; justify-content:space-between; align-items:center;";
+                    
+                    div.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="background:#e2e8f0; width:35px; height:35px; border-radius:50%; display:flex; align-items:center; justify-content:center;">👤</div>
+                            <div>
+                                <div style="font-weight:bold; color:#333;">${data.email}</div>
+                                <div style="font-size:0.8rem; color:#888;">ID: ${uid.slice(0,5)}...</div>
+                            </div>
+                        </div>
+                        ${isMe ? '<span style="color:var(--success-color); font-weight:bold; font-size:0.85rem;">(أنت)</span>' : 
+                        `<button onclick="removeAdmin('${uid}')" style="background:#fff0f0; color:#e53e3e; border:1px solid #feb2b2; padding:5px 12px; border-radius:6px; cursor:pointer;">حظر 🚫</button>`}
+                    `;
+                    list.appendChild(div);
+                });
+            } else {
+                list.innerHTML = '<p>لا يوجد مسؤولين.</p>';
+            }
+        });
+    }
+
+    // حذف أدمن
+    async function removeAdmin(uid) {
+        if(confirm("⚠️ هل أنت متأكد من حظر هذا المسؤول؟\nلن يتمكن من الدخول للوحة التحكم.")) {
+            try {
+                await remove(ref(database, 'admins/' + uid));
+                alert("تم الحذف بنجاح");
+            } catch(e) {
+                alert("خطأ: " + e.message);
+            }
+        }
+    }
+
+    // ضمان وجودك أنت في القائمة
+    function ensureCurrentAdminExists(user) {
+        const myRef = ref(database, 'admins/' + user.uid);
+        get(myRef).then((snap) => {
+            if(!snap.exists()) {
+                set(myRef, { email: user.email, role: 'owner' });
+            }
+        });
+    }
+
+    // =========================================================
+    // 2. كود الزوار (Visitor Logic)
+    // =========================================================
+    onValue(visitorsRef, (snapshot) => {
+        if (!snapshot.exists()) {
+            updateVisitorsUI(0);
+            return;
+        }
+        const data = snapshot.val();
+        const count = Object.keys(data).length;
+        updateVisitorsUI(count);
+    });
+
+    function updateVisitorsUI(count) {
+        visitorsCountSpan.textContent = count;
+        if (count > 0) {
+            liveVisitorsBadge.classList.remove('inactive');
+            liveVisitorsBadge.classList.add('active');
+        } else {
+            liveVisitorsBadge.classList.remove('active');
+            liveVisitorsBadge.classList.add('inactive');
+        }
+    }
+
+    // =========================================================
+    // 3. كود مسح الطلبيات (Delete Orders Logic)
+    // =========================================================
+    function isOrderCompleted(order) {
+        const status = (order.status || '').toLowerCase().trim();
+        return status === 'delivered' || status === 'تم التوصيل';
+    }
+
     function loadStatistics() {
       const ordersRef = ref(database, 'orders');
-      
       onValue(ordersRef, (snapshot) => {
         allOrders = snapshot.val() || {};
-        const completedOrders = Object.values(allOrders).filter(order => order.status === 'تم التوصيل' || order.status === 'تم التوصيل');
+        const completedOrders = Object.values(allOrders).filter(order => isOrderCompleted(order));
         
         document.getElementById('completedOrdersCount').textContent = completedOrders.length;
         document.getElementById('totalOrdersCount').textContent = Object.keys(allOrders).length;
-        
         updatePeriodCount();
       });
     }
 
-    // تحديث اختيار الفترة
     function updatePeriodSelection() {
       const period = document.getElementById('timePeriod').value;
       const customRange = document.getElementById('customDateRange');
       
       if (period === 'custom') {
         customRange.style.display = 'block';
-        // تعيين التواريخ الافتراضية
         const endDate = new Date();
         const startDate = new Date();
         startDate.setMonth(startDate.getMonth() - 1);
@@ -157,37 +329,32 @@
       } else {
         customRange.style.display = 'none';
       }
-      
       updatePeriodCount();
     }
 
-    // تحديث عدد الطلبيات في الفترة المحددة
     function updatePeriodCount() {
       const period = document.getElementById('timePeriod').value;
-      const completedOrders = Object.values(allOrders).filter(order => order.status === 'تم التوصيل');
-      
+      const completedOrders = Object.values(allOrders).filter(order => isOrderCompleted(order));
       let filteredOrders = completedOrders;
       
       if (period !== 'all') {
         filteredOrders = filterOrdersByPeriod(completedOrders, period);
       }
-      
       document.getElementById('periodCount').textContent = filteredOrders.length;
     }
 
-    // تصفية الطلبيات حسب الفترة
     function filterOrdersByPeriod(orders, period) {
       const now = new Date();
       let startDate = new Date();
       
       switch(period) {
         case 'month':
-          startDate.setDate(1); // أول يوم من الشهر الحالي
+          startDate.setDate(1); 
           break;
         case 'last_month':
           startDate.setMonth(now.getMonth() - 1);
           startDate.setDate(1);
-          const endDate = new Date(now.getFullYear(), now.getMonth(), 0); // آخر يوم من الشهر الماضي
+          const endDate = new Date(now.getFullYear(), now.getMonth(), 0); 
           return orders.filter(order => {
             const orderDate = new Date(order.timestamp);
             return orderDate >= startDate && orderDate <= endDate;
@@ -206,14 +373,12 @@
           }
           return orders;
       }
-      
       return orders.filter(order => new Date(order.timestamp) >= startDate);
     }
 
-    // مسح الطلبيات المكتملة
     async function clearCompletedOrders() {
       const period = document.getElementById('timePeriod').value;
-      const completedOrders = Object.values(allOrders).filter(order => order.status === 'تم التوصيل');
+      const completedOrders = Object.values(allOrders).filter(order => isOrderCompleted(order));
       const ordersToDelete = period === 'all' ? completedOrders : filterOrdersByPeriod(completedOrders, period);
       
       if (ordersToDelete.length === 0) {
@@ -237,24 +402,16 @@
       if (!confirm(`⚠️ هل أنت متأكد من مسح ${ordersToDelete.length} طلبيات مكتملة؟\n\nالفترة: ${periodText}\nهذا الإجراء لا يمكن التراجع عنه!`)) return;
       
       try {
-        const ordersRef = ref(database, 'orders');
-        const snapshot = await get(ordersRef);
-        const orders = snapshot.val() || {};
-        
         const updates = {};
-        
-        // البحث عن معرفات الطلبيات المكتملة في الفترة المحددة
-        Object.keys(orders).forEach(orderId => {
-          const order = orders[orderId];
-          if (order.status === 'تم التوصيل' || order.status === 'تم التوصيل') {
-            // التحقق إذا كانت الطلبية ضمن الفترة المحددة
+        Object.keys(allOrders).forEach(orderId => {
+          const order = allOrders[orderId];
+          if (isOrderCompleted(order)) {
             if (period === 'all' || isOrderInPeriod(order, period)) {
-              updates[orderId] = null; // هذا سيحذف الطلبية
+              updates[orderId] = null;
             }
           }
         });
         
-        // تنفيذ الحذف
         await update(ref(database, 'orders'), updates);
         alert(`✅ تم مسح الطلبيات المكتملة بنجاح\nالفترة: ${periodText}`);
         
@@ -264,52 +421,38 @@
       }
     }
 
-    // التحقق إذا كانت الطلبية ضمن الفترة المحددة
     function isOrderInPeriod(order, period) {
       const orderDate = new Date(order.timestamp);
-      
+      // نفس منطق التصفية ولكن للاستخدام داخل الحذف
       switch(period) {
         case 'month':
-          const startOfMonth = new Date();
-          startOfMonth.setDate(1);
-          startOfMonth.setHours(0, 0, 0, 0);
+          const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
           return orderDate >= startOfMonth;
-          
         case 'last_month':
-          const startOfLastMonth = new Date();
-          startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1);
-          startOfLastMonth.setDate(1);
-          startOfLastMonth.setHours(0, 0, 0, 0);
-          
-          const endOfLastMonth = new Date();
-          endOfLastMonth.setDate(0); // آخر يوم من الشهر الماضي
-          endOfLastMonth.setHours(23, 59, 59, 999);
-          return orderDate >= startOfLastMonth && orderDate <= endOfLastMonth;
-          
+          const startOfLast = new Date(); startOfLast.setMonth(startOfLast.getMonth()-1); startOfLast.setDate(1); startOfLast.setHours(0,0,0,0);
+          const endOfLast = new Date(); endOfLast.setDate(0); endOfLast.setHours(23,59,59,999);
+          return orderDate >= startOfLast && orderDate <= endOfLast;
         case 'last_3_months':
-          const threeMonthsAgo = new Date();
-          threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-          threeMonthsAgo.setHours(0, 0, 0, 0);
+          const threeMonthsAgo = new Date(); threeMonthsAgo.setMonth(threeMonthsAgo.getMonth()-3); threeMonthsAgo.setHours(0,0,0,0);
           return orderDate >= threeMonthsAgo;
-          
         case 'custom':
-          const customStart = new Date(document.getElementById('startDate').value);
-          const customEnd = new Date(document.getElementById('endDate').value);
-          customEnd.setHours(23, 59, 59, 999);
-          return orderDate >= customStart && orderDate <= customEnd;
-          
-        default:
-          return true;
+          const cs = new Date(document.getElementById('startDate').value);
+          const ce = new Date(document.getElementById('endDate').value); ce.setHours(23,59,59,999);
+          return orderDate >= cs && orderDate <= ce;
+        default: return true;
       }
     }
 
-    // جعل الدوال متاحة globally
+    // نشر الدوال لـ HTML
+    window.addNewAdmin = addNewAdmin;
+    window.removeAdmin = removeAdmin;
     window.clearCompletedOrders = clearCompletedOrders;
     window.updatePeriodSelection = updatePeriodSelection;
 
-    // تحديث العدد عند تغيير التواريخ المخصصة
-    document.getElementById('startDate')?.addEventListener('change', updatePeriodCount);
-    document.getElementById('endDate')?.addEventListener('change', updatePeriodCount);
+    const startInput = document.getElementById('startDate');
+    const endInput = document.getElementById('endDate');
+    if(startInput) startInput.addEventListener('change', updatePeriodCount);
+    if(endInput) endInput.addEventListener('change', updatePeriodCount);
 
   </script>
 </body>
