@@ -4,9 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>تسجيل دخول المسؤول</title>
+  
+  <!-- ربط الخط -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- ربط ملف الستايل -->
   <link rel="stylesheet" href="admin-style.css" /> 
 </head>
 <body class="login-layout">
+  
   <div class="login-container">
     <h2>تسجيل دخول المسؤول</h2>
     <form id="loginForm">
@@ -45,10 +51,9 @@
     const errorMessage = document.getElementById('errorMessage');
     const submitBtn = loginForm.querySelector('button[type="submit"]');
 
-    // إذا كان المستخدم مسجل الدخول بالفعل، توجيهه مباشرة
+    // إذا كان المستخدم مسجل الدخول بالفعل
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("المستخدم مسجل بالفعل، يتم التوجيه...");
         window.location.href = 'admin-products.html';
       }
     });
@@ -60,67 +65,34 @@
       const email = emailInput.value.trim();
       const password = passwordInput.value.trim();
 
-      // التحقق من المدخلات
       if (!email || !password) {
         errorMessage.textContent = 'يرجى ملء جميع الحقول';
         return;
       }
 
-      // عرض حالة التحميل
       const originalText = submitBtn.textContent;
       submitBtn.textContent = 'جاري التسجيل...';
       submitBtn.disabled = true;
       errorMessage.textContent = '';
 
       try {
-        console.log("جاري تسجيل الدخول...", email);
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        
-        console.log("تم تسجيل الدخول بنجاح:", user.email);
-        alert("تم تسجيل الدخول بنجاح!");
-        
-        // التوجيه إلى صفحة المنتجات
+        // التوجيه التلقائي سيحدث عبر onAuthStateChanged أو هنا
         window.location.href = 'admin-products.html';
         
       } catch (error) {
-        console.error("خطأ في تسجيل الدخول:", error.code, error.message);
-        
-        // رسائل خطأ محددة
         let errorText = 'خطأ في تسجيل الدخول';
         switch(error.code) {
-          case 'auth/invalid-email':
-            errorText = 'البريد الإلكتروني غير صحيح';
-            break;
-          case 'auth/user-not-found':
-            errorText = 'المستخدم غير موجود';
-            break;
-          case 'auth/wrong-password':
-            errorText = 'كلمة المرور غير صحيحة';
-            break;
-          case 'auth/too-many-requests':
-            errorText = 'محاولات تسجيل دخول كثيرة، حاول لاحقاً';
-            break;
-          case 'auth/network-request-failed':
-            errorText = 'خطأ في الاتصال بالإنترنت';
-            break;
-          default:
-            errorText = `خطأ في التسجيل: ${error.message}`;
+          case 'auth/invalid-email': errorText = 'البريد الإلكتروني غير صحيح'; break;
+          case 'auth/user-not-found': errorText = 'المستخدم غير موجود'; break;
+          case 'auth/wrong-password': errorText = 'كلمة المرور غير صحيحة'; break;
+          case 'auth/too-many-requests': errorText = 'محاولات كثيرة، حاول لاحقاً'; break;
+          case 'auth/network-request-failed': errorText = 'تأكد من اتصالك بالإنترنت'; break;
+          default: errorText = `خطأ: ${error.message}`;
         }
-        
         errorMessage.textContent = errorText;
-        
-      } finally {
-        // إعادة تعيين الزر
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
-      }
-    });
-
-    // إمكانية استخدام Enter لتسجيل الدخول
-    passwordInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        loginForm.dispatchEvent(new Event('submit'));
       }
     });
   </script>
