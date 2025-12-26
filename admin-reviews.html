@@ -1,117 +1,35 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>إدارة التعليقات - لوحة الأدمن</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<link rel="stylesheet" href="admin-style.css">
-<style>
-/* تعديل حجم بطاقات التعليقات */
-.container {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 0 15px;
-}
-
-.product-summary-card, .comment-card {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    padding: 10px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.product-summary-card img, .product-detail-header img {
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 6px;
-}
-
-.comment-card {
-    flex-direction: column;
-    align-items: flex-start;
-    font-size: 0.85rem;
-}
-
-.comment-meta {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    margin-bottom: 4px;
-}
-
-.comment-meta strong {
-    font-size: 0.9rem;
-}
-
-.comment-rating i {
-    color: #f5a623;
-    margin-left: 2px;
-    font-size: 0.8rem;
-}
-
-.comment-text {
-    font-size: 0.85rem;
-    color: #555;
-}
-
-.comment-date {
-    font-size: 0.75rem;
-    color: #888;
-    margin-top: 3px;
-}
-
-.delete-review-btn {
-    background-color: #e74c3c;
-    color: #fff;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 5px;
-    font-size: 0.8rem;
-}
-
-.delete-review-btn:hover {
-    background-color: #c0392b;
-}
-
-.back-to-list {
-    background: none;
-    border: none;
-    color: #3498db;
-    font-size: 0.85rem;
-    cursor: pointer;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-.back-to-list:hover { color: #2980b9; }
-.back-to-list i { transform: rotate(180deg); }
-
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إدارة التعليقات</title>
+  
+  <!-- ربط الخطوط والأيقونات -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <!-- ربط ملف الستايل الموحد -->
+  <link rel="stylesheet" href="admin-style.css">
 </head>
 <body>
+
 <nav>
   <div class="logo">لوحة التحكم</div>
   <div class="links">
-    <a href="admin-products.html">المنتجات</a>
-    <a href="admin-orders.html">الطلبيات النشطة</a>
-    <a href="completed-orders.html">الطلبيات المكتملة</a>
-    <a href="admin-analytics.html">التحليلات</a>
-    <a href="admin-settings.html">الإعدادات</a>
-    <a href="admin-reviews.html" class="active">التعليقات والتقييمات</a>
-    <a href="#" id="logoutBtn">تسجيل الخروج</a>
+    <a href="admin-products.html" class="nav-link">المنتجات</a>
+    <a href="admin-orders.html" class="nav-link">الطلبيات النشطة</a>
+    <a href="completed-orders.html" class="nav-link">الطلبيات المكتملة</a>
+    <a href="admin-analytics.html" class="nav-link">التحليلات</a>
+    <a href="admin-settings.html" class="nav-link">الإعدادات</a>
+    <a href="admin-reviews.html" class="nav-link active">التعليقات والتقييمات</a>
+    <a href="admin-shipping.html" class="nav-link">الشحن</a>
+    <a href="#" id="logoutBtn" class="nav-link" style="display: none;">تسجيل الخروج</a>
   </div>
 </nav>
 
 <div class="container">
+    <h2>💬 إدارة التعليقات</h2>
     <div id="adminContent">
         <p class="loading-message">جاري تحميل المنتجات والتعليقات...</p>
     </div>
@@ -142,7 +60,9 @@ const logoutBtn = document.getElementById('logoutBtn');
 
 // التحقق من تسجيل الدخول
 onAuthStateChanged(auth, (user) => {
-  if(!user){
+  if(user){
+    logoutBtn.style.display = 'block';
+  } else {
     window.location.href='admin-login.html';
   }
 });
@@ -173,71 +93,114 @@ function generateStarIconsForDisplay(rating){
   return stars;
 }
 
-// عرض المنتجات
+// المتغيرات العامة
 let currentView='list';
 let currentProductId=null;
 
+// 1. دالة عرض قائمة المنتجات التي لها تعليقات
 async function fetchAndRenderProductSummaries(){
   currentView='list';
   adminContent.innerHTML='<p class="loading-message">جاري التحميل...</p>';
   try{
     const productsSnap = await get(ref(db,'products'));
     const reviewsSnap = await get(ref(db,'reviews'));
+    
     if(!productsSnap.exists()){
-      adminContent.innerHTML='<p>لا توجد منتجات.</p>'; return;
+      adminContent.innerHTML='<p class="loading-message">لا توجد منتجات.</p>'; return;
     }
+    
     const products = productsSnap.val();
     const reviewsByProduct = reviewsSnap.exists()?reviewsSnap.val():{};
+    
     let html='';
+    let hasReviews = false;
+
     Object.keys(products).forEach(pid=>{
       const product=products[pid];
       const count = reviewsByProduct[pid]?Object.keys(reviewsByProduct[pid]).length:0;
+      
       if(count>0){
-        const img=product.images && product.images[0]?product.images[0]:'https://via.placeholder.com/60';
+        hasReviews = true;
+        // معالجة صورة المنتج
+        let img = 'https://via.placeholder.com/70';
+        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+            img = product.images[0];
+        } else if (product.image) {
+            img = product.image;
+        }
+
         html+=`
           <div class="product-summary-card" data-product-id="${pid}">
             <img src="${escapeHtml(img)}" alt="${escapeHtml(product.name)}">
             <div>
               <h2>${escapeHtml(product.name)}</h2>
-              <p>عدد التعليقات: ${count}</p>
+              <p>عدد التعليقات: <strong>${count}</strong></p>
             </div>
+            <i class="fas fa-chevron-left" style="margin-right:auto; color:#ccc;"></i>
           </div>
         `;
       }
     });
-    adminContent.innerHTML=html || '<p>لا توجد منتجات تحتوي على تعليقات.</p>';
-    document.querySelectorAll('.product-summary-card').forEach(card=>{
-      card.addEventListener('click',()=>renderProductDetails(card.dataset.productId));
-    });
+
+    if (!hasReviews) {
+        adminContent.innerHTML = '<p class="loading-message">لا توجد أي تعليقات حالياً.</p>';
+    } else {
+        adminContent.innerHTML = html;
+        // تفعيل النقر على البطاقات
+        document.querySelectorAll('.product-summary-card').forEach(card=>{
+          card.addEventListener('click',()=>renderProductDetails(card.dataset.productId));
+        });
+    }
+    
   } catch(err){
     console.error(err);
-    adminContent.innerHTML='<p>خطأ أثناء التحميل.</p>';
+    adminContent.innerHTML='<p class="error-message">خطأ أثناء التحميل.</p>';
   }
 }
 
+// 2. دالة عرض تفاصيل التعليقات لمنتج معين
 async function renderProductDetails(pid){
   currentView='detail';
   currentProductId=pid;
   adminContent.innerHTML='<p class="loading-message">جاري تحميل التعليقات...</p>';
+  
   try{
     const productSnap = await get(ref(db,`products/${pid}`));
     const reviewsSnap = await get(ref(db,`reviews/${pid}`));
+    
     if(!productSnap.exists()){ adminContent.innerHTML='<p>المنتج غير موجود.</p>'; return; }
+    
     const product = productSnap.val();
     const reviews = reviewsSnap.exists()?reviewsSnap.val():{};
+    
+    // تحويل التعليقات لمصفوفة وترتيبها
     const reviewsArr = Object.keys(reviews).map(k=>({id:k,...reviews[k]}));
     reviewsArr.sort((a,b)=>b.timestamp-a.timestamp);
-    const img=product.images && product.images[0]?product.images[0]:'https://via.placeholder.com/120';
+    
+    // صورة المنتج
+    let img = 'https://via.placeholder.com/120';
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+        img = product.images[0];
+    } else if (product.image) {
+        img = product.image;
+    }
+
     let html=`
-      <button class="back-to-list" id="backToListBtn"><i class="fas fa-arrow-left"></i> العودة</button>
+      <button class="back-to-list" id="backToListBtn">
+        <i class="fas fa-arrow-right"></i> العودة للقائمة
+      </button>
+      
       <div class="product-detail-header">
         <img src="${escapeHtml(img)}" alt="${escapeHtml(product.name)}">
-        <h2>${escapeHtml(product.name)}</h2>
-        <p>عدد التعليقات: ${reviewsArr.length}</p>
+        <div>
+            <h2>${escapeHtml(product.name)}</h2>
+            <p style="color:#666;">إجمالي التعليقات: ${reviewsArr.length}</p>
+        </div>
       </div>
+      
       <div class="comments-section">
         ${reviewsArr.map(r=>{
-          const date=new Date(r.timestamp).toLocaleDateString('ar-DZ',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+          const date=new Date(r.timestamp).toLocaleDateString('ar-DZ',{year:'numeric',month:'long',day:'numeric'});
           return `
             <div class="comment-card">
               <div class="comment-meta">
@@ -245,31 +208,44 @@ async function renderProductDetails(pid){
                 <div class="comment-rating">${generateStarIconsForDisplay(parseFloat(r.rating)||0)}</div>
               </div>
               <p class="comment-text">${escapeHtml(r.comment)}</p>
-              <span class="comment-date">${date}</span>
-              <button class="delete-review-btn" data-product-id="${pid}" data-review-id="${r.id}"><i class="fas fa-trash-alt"></i> حذف</button>
+              <span class="comment-date"><i class="far fa-clock"></i> ${date}</span>
+              <button class="delete-review-btn" data-product-id="${pid}" data-review-id="${r.id}">
+                <i class="fas fa-trash-alt"></i> حذف التعليق
+              </button>
             </div>
           `;
         }).join('')}
-        ${reviewsArr.length===0?'<p>لا توجد تعليقات لهذا المنتج.</p>':''}
+        ${reviewsArr.length===0?'<p class="loading-message">تم حذف جميع التعليقات لهذا المنتج.</p>':''}
       </div>
     `;
+    
     adminContent.innerHTML=html;
 
+    // زر العودة
     document.getElementById('backToListBtn').addEventListener('click', fetchAndRenderProductSummaries);
 
+    // أزرار الحذف
     document.querySelectorAll('.delete-review-btn').forEach(btn=>{
       btn.addEventListener('click', async ()=>{
-        if(confirm('هل تريد حذف هذا التعليق؟')){
-          await remove(ref(db,`reviews/${pid}/${btn.dataset.reviewId}`));
-          renderProductDetails(pid);
+        if(confirm('⚠️ هل أنت متأكد من حذف هذا التعليق نهائياً؟')){
+          try {
+              await remove(ref(db,`reviews/${pid}/${btn.dataset.reviewId}`));
+              // إعادة تحميل التفاصيل لتحديث القائمة
+              renderProductDetails(pid);
+          } catch(e) {
+              alert("حدث خطأ أثناء الحذف");
+          }
         }
       });
     });
 
-  } catch(err){ console.error(err); adminContent.innerHTML='<p>حدث خطأ.</p>'; }
+  } catch(err){ 
+      console.error(err); 
+      adminContent.innerHTML='<p class="error-message">حدث خطأ غير متوقع.</p>'; 
+  }
 }
 
-// تحميل أول مرة
+// بدء التحميل عند فتح الصفحة
 fetchAndRenderProductSummaries();
 
 </script>
