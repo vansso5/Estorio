@@ -48,6 +48,60 @@
     .stars-box { display: flex; gap: 5px; justify-content: center; margin: 10px 0; }
     .stars-box i { font-size: 24px; color: #ddd; cursor: pointer; transition: 0.2s; }
     .stars-box i.active { color: #f1c40f; }
+    /* ================== قسم الأيقونات في أسفل الصفحة (محسّن للتمركز في RTL) ================== */
+    .product-icons-section {
+        margin: 35px auto 25px;
+        padding: 25px 15px;
+        background: #f8f9fa;
+        border-radius: 16px;
+        max-width: 95%;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .product-icons-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 2 أيقونات في السطر على الهاتف */
+        gap: 25px;
+        justify-content: center;     /* يركز الشبكة أفقيًا */
+        justify-items: center;       /* يركز كل عنصر داخل خليته */
+        align-items: center;
+        padding: 0 10px;
+    }
+
+    @media (min-width: 768px) {
+        .product-icons-grid {
+            grid-template-columns: repeat(4, 1fr); /* 4 أيقونات في السطر على الحاسوب */
+            gap: 35px;
+        }
+    }
+
+    .icon-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        font-size: 15px;
+        color: #2c3e50;
+        font-weight: 600;
+        min-width: 80px;
+    }
+
+    .icon-item img {
+        width: 55px;
+        height: 55px;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+        transition: transform 0.3s ease;
+    }
+
+    .icon-item img:hover {
+        transform: scale(1.12);
+    }
 </style>
 </head>
 
@@ -84,7 +138,10 @@
       </div>
     </div>
 </div>
-
+<!-- الزر الثابت في أسفل الشاشة -->
+<div id="floatingOrderBtn">
+    <button id="floatingConfirmBtn">تأكيد الطلب 🚀</button>
+</div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 // تمت إضافة onDisconnect هنا لتفعيل ميزة تتبع الزوار
@@ -193,7 +250,7 @@ async function fetchProductDetails() {
         </div>
       </div>
 
-      <div class="compact-card">
+      <div class="compact-card" id="orderCard">
         <div class="card-header">اطلب الآن 👇</div>
         
         <div class="input-wrapper">
@@ -254,9 +311,22 @@ async function fetchProductDetails() {
         </div>
       </div>
 
+      <!-- قسم الأيقونات (شحن سريع، ضمان، إلخ) - يظهر فقط إذا كان هناك أيقونات -->
+      ${product.icons && Array.isArray(product.icons) && product.icons.length > 0 ? `
+      <div class="product-icons-section">
+        <div class="product-icons-grid">
+          ${product.icons.map(ic => `
+            <div class="icon-item">
+              <img src="${ic.icon || ''}" alt="أيقونة">
+              <span>${ic.text || ''}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      ` : ''}
+
       <div class="reviews-section">
          <h3>التقييمات</h3>
-         
          <!-- ✅ خانة التعليق (مخفية افتراضياً وتظهر بعد الطلب) -->
          <div id="postOrderReview">
             <h4 style="text-align:center; color:#27ae60; margin:0 0 10px;">🎉 شكراً لطلبك! ما هو تقييمك للمنتج؟</h4>
@@ -420,7 +490,38 @@ async function fetchProductDetails() {
             });
         } else { list.innerHTML = '<p style="text-align:center;color:#999">لا توجد تعليقات بعد.</p>'; }
     });
+// ================== كود الزر الثابت في الأسفل ==================
+    const orderCard = document.getElementById('orderCard');
+    const floatingBtn = document.getElementById('floatingOrderBtn');
 
+    function checkScroll() {
+        if (!orderCard) return;
+        const rect = orderCard.getBoundingClientRect();
+        if (rect.bottom < 100) { // عندما تختفي البطاقة
+            floatingBtn.classList.add('visible');
+        } else {
+            floatingBtn.classList.remove('visible');
+        }
+    }
+
+    // عند الضغط على الزر الثابت → يصعد إلى بطاقة الطلب
+    document.getElementById('floatingConfirmBtn').addEventListener('click', () => {
+        orderCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    // تفعيل عند التمرير
+    window.addEventListener('scroll', checkScroll);
+    window.addEventListener('resize', checkScroll);
+
+    // تشغيل التحقق بعد تحميل المحتوى (مهم!)
+    const waitForCard = setInterval(() => {
+        if (document.getElementById('orderCard')) {
+            checkScroll();
+            clearInterval(waitForCard);
+        }
+    }, 300);
+
+    setTimeout(checkScroll, 1500); // احتياطي
   } catch(err) { container.innerHTML = 'حدث خطأ غير متوقع.'; console.log(err); }
 }
 
