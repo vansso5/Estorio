@@ -178,4 +178,54 @@ body {
 .desc-content img {
     display: block;
     margin: 15px auto;    /* الصور في المنتصف تمامًا */
+}/* ================== الزر الثابت في أسفل الشاشة (أزرق + زوايا حادة) ================== */
+#floatingOrderBtn {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 420px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+    pointer-events: none;
+}
+
+#floatingOrderBtn.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+#floatingConfirmBtn {
+    width: 100%;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: bold;
+    background: #3498db;                  /* لون أزرق أنيق */
+    color: white;
+    border: none;
+    border-radius: 4px;                   /* زوايا حادة جدًا (تقريبًا مربع) */
+    box-shadow: 0 6px 18px rgba(52, 152, 219, 0.35);
+    cursor: pointer;
+    animation: wiggle 3s infinite ease-in-out; /* يحتفظ بالتهزيز */
+    transition: all 0.3s ease;
+}
+
+#floatingConfirmBtn:hover {
+    background: #2980b9;                  /* أزرق أغمق عند التمرير */
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(52, 152, 219, 0.45);
+}
+
+#floatingConfirmBtn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+/* مساحة إضافية في الأسفل حتى لا يغطي الزر المحتوى */
+body {
+    padding-bottom: 100px;
 }
