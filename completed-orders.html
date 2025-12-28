@@ -12,18 +12,19 @@
 <body>
 
   <nav>
-  <div class="logo">لوحة التحكم</div>
-  <div class="links">
-    <a href="admin-products.html" class="nav-link">المنتجات</a>
-    <a href="admin-orders.html" class="nav-link">الطلبيات النشطة</a>
-    <a href="completed-orders.html" class="nav-link active">الطلبيات المكتملة</a>
-    <a href="admin-analytics.html" class="nav-link">التحليلات</a>
-    <a href="admin-settings.html" class="nav-link">الإعدادات</a>
-    <a href="admin-reviews.html" class="nav-link">التعليقات والتقييمات</a>
-    <a href="admin-shipping.html" class="nav-link">الشحن</a>
-    <a href="#" id="logoutBtn" class="nav-link" style="display: none;">تسجيل الخروج</a>
-  </div>
-</nav>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <div class="logo">لوحة التحكم</div>
+    <div class="links">
+      <a href="admin-products.html" class="nav-link">المنتجات</a>
+      <a href="admin-orders.html" class="nav-link">الطلبيات النشطة</a>
+      <a href="completed-orders.html" class="nav-link active">الطلبيات المكتملة</a>
+      <a href="admin-analytics.html" class="nav-link">التحليلات</a>
+      <a href="admin-settings.html" class="nav-link">الإعدادات</a>
+      <a href="admin-reviews.html" class="nav-link">التعليقات والتقييمات</a>
+      <a href="admin-shipping.html" class="nav-link">الشحن</a>
+      <a href="#" id="logoutBtn" class="nav-link" style="display: none;">تسجيل الخروج</a>
+    </div>
+  </nav>
 
   <div class="container">
     <h2>✅ الطلبيات المكتملة</h2>
@@ -127,7 +128,6 @@
       });
     }
 
-    // فتح تفاصيل الطلب (عرض فقط)
     function openOrderDetails(order, id) {
       currentOpenOrderId = id;
       detailModal.classList.remove('hidden');
@@ -180,10 +180,8 @@
       `;
     }
 
-    // إنشاء سطر الطلب
     function renderOrderRow(order, id) {
       const row = document.createElement('div');
-      // استخدام الكلاس الموحد + كلاس الحالة المكتملة
       row.className = 'order-row status-completed';
       row.dataset.orderId = id;
       
@@ -200,7 +198,6 @@
         <div class="row-arrow completed-text">❮</div>
       `;
 
-      // النقر على السطر لعرض التفاصيل
       row.addEventListener('click', () => {
         openOrderDetails(order, id);
       });
@@ -208,7 +205,6 @@
       return row;
     }
 
-    // عرض الطلبيات المفلترة
     function renderOrders(ordersData) {
       if (!userAuthenticated) return;
 
@@ -235,7 +231,6 @@
         return;
       }
 
-      // ترتيب حسب التاريخ (الأحدث أولاً)
       Object.entries(filteredCompletedOrders)
         .sort((a, b) => (b[1]?.updatedAt || b[1]?.timestamp) - (a[1]?.updatedAt || a[1]?.timestamp))
         .forEach(([id, order]) => {
@@ -244,7 +239,6 @@
         });
     }
 
-    // تحميل البيانات
     onValue(ordersRef, (snapshot) => {
       if (userAuthenticated) {
         currentOrdersData = snapshot.val() || {};
@@ -252,11 +246,18 @@
       }
     });
 
-    // البحث
     searchInput.addEventListener('input', (e) => {
       searchKeyword = e.target.value.trim();
       renderOrders(currentOrdersData);
     });
+  </script>
+
+  <!-- سكربت القائمة الجانبية للموبايل -->
+  <script>
+    function toggleMenu() {
+      const links = document.querySelector('nav .links');
+      links.classList.toggle('open');
+    }
   </script>
 </body>
 </html>
