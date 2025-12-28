@@ -763,90 +763,7 @@ form textarea {
 
 .back-to-list:hover { text-decoration: underline; }
 .back-to-list i { transform: rotate(180deg); /* عكس السهم للعربية */ }
-/* ===========================
-   تنسيقات صفحة الإعدادات (Settings Page)
-=========================== */
 
-/* منطقة الخطر (لحذف البيانات) */
-.danger-zone {
-  border: 1px solid #ffcccc;
-  background-color: #fff5f5; /* خلفية حمراء فاتحة جداً */
-}
-
-.danger-zone h3 {
-  color: #c0392b; /* أحمر داكن */
-  border-bottom: 1px solid #ffcccc;
-  padding-bottom: 10px;
-  margin-top: 0;
-}
-
-.setting-item {
-  padding: 10px 0;
-}
-
-/* تنسيق القوائم المنسدلة وتحديد التاريخ */
-select, input[type="date"] {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-family: 'Cairo', sans-serif;
-  background-color: #fff;
-  margin-bottom: 15px;
-  box-sizing: border-box;
-}
-
-select:focus, input[type="date"]:focus {
-  border-color: var(--primary-color);
-  outline: none;
-}
-
-.time-period-selector label, 
-#customDateRange label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: bold;
-  color: #555;
-  font-size: 0.95rem;
-}
-
-/* صندوق ملخص الحذف */
-.period-summary {
-  background-color: #fff;
-  padding: 15px;
-  border-radius: 6px;
-  text-align: center;
-  margin: 15px 0;
-  border: 1px dashed #ccc;
-}
-
-.period-summary strong {
-  color: var(--primary-color);
-  font-size: 1.3rem;
-}
-
-/* رسائل التحذير */
-.warning-message {
-  color: var(--error-color);
-  font-weight: bold;
-  font-size: 0.9rem;
-  margin-bottom: 15px;
-  display: block;
-  text-align: center;
-}
-
-/* تنسيق خاص لشبكة الإحصائيات داخل الإعدادات */
-.setting-item .orders-stats {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.setting-item .stat-card {
-  background: #fff;
-  border: 1px solid #eee;
-  box-shadow: none;
-}
 /* ===========================
    تنسيقات صفحة الشحن (Shipping Settings)
 =========================== */
@@ -993,4 +910,448 @@ select:focus, input[type="date"]:focus {
 #saveZoneBtn {
   width: 100%;
   margin-top: 20px;
- 
+  padding: 12px;
+  font-size: 1rem;
+  background: var(--success-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+#saveZoneBtn:hover { background-color: #27ae60; }
+
+@media (max-width: 600px) {
+  .price-inputs-row { flex-direction: column; gap: 10px; }
+}
+/* ===========================
+   تنسيقات الطلبيات المكتملة (Completed Orders)
+=========================== */
+
+/* سطر الطلب المكتمل */
+.order-row.status-completed {
+  border-right-color: var(--success-color);
+  background: linear-gradient(to left, #fff, #f8fff9);
+}
+
+.order-row.status-completed:hover {
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
+}
+
+/* رقم الطلب المكتمل */
+.row-id.completed-badge {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+/* نصوص الطلب المكتمل */
+.row-date.completed-text,
+.row-arrow.completed-text {
+  color: var(--success-color);
+}
+
+/* نافذة التفاصيل المكتملة */
+.modal-header-completed {
+  text-align: center;
+  margin-bottom: 15px;
+  border-bottom: 2px solid var(--success-color);
+  padding-bottom: 10px;
+  color: var(--success-color);
+}
+
+/* أقسام التفاصيل */
+.details-section h4.completed-title {
+  color: var(--success-color);
+  border-right: 3px solid var(--success-color);
+}
+
+/* ===========================
+   تنسيقات صفحة الإعدادات (Admin Settings)
+=========================== */
+
+/* شارة الزوار */
+.visitors-wrapper {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 999;
+}
+
+.live-visitors-badge {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  padding: 8px 14px;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border: 1px solid #eee;
+  transition: all 0.3s ease;
+}
+
+.live-visitors-badge.inactive {
+  opacity: 0.6;
+}
+
+.live-visitors-badge.active {
+  border-color: var(--success-color);
+}
+
+.live-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--success-color);
+  border-radius: 50%;
+  margin-left: 6px;
+  animation: pulseDot 1.5s infinite;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* بطاقة الإعدادات */
+.analytics-grid .stat-card {
+  align-items: stretch;
+}
+
+/* منطقة الخطر */
+.danger-zone {
+  border: 2px solid #ffd6d6;
+  background: #fff5f5;
+}
+
+.danger-zone h3 {
+  color: var(--error-color);
+}
+
+/* إحصائيات الطلبيات داخل الإعدادات */
+.orders-stats {
+  margin-bottom: 20px;
+}
+
+.orders-stats .stat-card span {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+/* اختيار الفترة */
+.time-period-selector {
+  margin: 15px 0;
+}
+
+.time-period-selector label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.time-period-selector select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-family: 'Cairo', sans-serif;
+}
+
+/* التاريخ المخصص */
+#customDateRange label {
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+  display: block;
+}
+
+#customDateRange input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* ملخص الفترة */
+.period-summary {
+  background: #f8f9ff;
+  border: 1px dashed var(--primary-color);
+  padding: 12px;
+  border-radius: 8px;
+  margin: 15px 0;
+  text-align: center;
+}
+
+/* رسالة التحذير */
+.warning-message {
+  color: var(--error-color);
+  font-weight: bold;
+  margin: 15px 0;
+  text-align: center;
+}
+/* ===========================
+   توحيد شكل الخانات (Inputs & Selects)
+   Shipping + Settings فقط
+=========================== */
+
+/* كل الخانات العامة داخل لوحة التحكم */
+.admin-content input,
+.admin-content select,
+.admin-content textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #dcdcdc;
+  background: #fff;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.9rem;
+  transition: all 0.25s ease;
+  outline: none;
+}
+
+/* التركيز */
+.admin-content input:focus,
+.admin-content select:focus,
+.admin-content textarea:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+}
+
+/* select سهم أنيق */
+.admin-content select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--primary-color) 50%),
+    linear-gradient(135deg, var(--primary-color) 50%, transparent 50%);
+  background-position:
+    calc(100% - 20px) calc(1em + 2px),
+    calc(100% - 15px) calc(1em + 2px);
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+/* textarea */
+.admin-content textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+/* مجموعات الأسعار */
+.price-inputs-row input {
+  text-align: center;
+  font-weight: bold;
+}
+
+/* خانات الولايات */
+.wilaya-checkbox-item {
+  border-radius: 10px;
+}
+
+/* خانات التاريخ */
+input[type="date"] {
+  padding: 10px 12px;
+}
+
+/* موبايل */
+@media (max-width: 600px) {
+  .admin-content input,
+  .admin-content select,
+  .admin-content textarea {
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+}
+/* ===========================
+   إصلاح نهائي لشكل الخانات
+   Shipping + Settings
+=========================== */
+
+/* جميع الخانات داخل لوحة التحكم */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+select,
+textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.95rem;
+  transition: all 0.25s ease;
+  outline: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* عند التركيز */
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(102,126,234,0.18);
+}
+
+/* تحسين select */
+select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--primary-color) 50%),
+    linear-gradient(135deg, var(--primary-color) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(1em + 2px),
+    calc(100% - 13px) calc(1em + 2px);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+}
+
+/* أزرار الإدخال داخل بطاقات */
+.form-card input,
+.form-card select {
+  background-color: #fafafa;
+}
+
+/* خانات الأسعار */
+.price-inputs-row input {
+  text-align: center;
+  font-weight: bold;
+}
+
+/* خانات الولايات */
+.wilaya-checkbox-item {
+  border-radius: 12px;
+}
+
+/* موبايل */
+@media (max-width: 600px) {
+  input,
+  select,
+  textarea {
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+}
+/* ===========================
+   إصلاح تخطيط صفحة الإعدادات فقط
+   (الخانات عمودية)
+=========================== */
+
+/* بطاقة إضافة مسؤول */
+.settings-page .form-card form,
+.settings-page .form-card {
+  display: block;
+}
+
+/* الخانات داخل الإعدادات */
+.settings-page input,
+.settings-page select {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+/* زر الإضافة */
+.settings-page button {
+  display: inline-block;
+  width: auto;
+  margin-top: 10px;
+}
+
+/* منع flex الذي جمعهم في سطر */
+.settings-page .form-actions,
+.settings-page .input-group {
+  display: block !important;
+}
+.stat-card div[style*="display:flex"] {
+  display: block !important;
+}
+
+.stat-card div[style*="display:flex"] input,
+.stat-card div[style*="display:flex"] button {
+  width: 100% !important;
+  margin-bottom: 10px;
+}
+/* ===========================
+   تصميم ريسبونسيف للشريط العلوي - إصلاح نهائي لكل الصفحات (بما فيها الطلبيات المكتملة)
+   - القائمة تنزل تحت الشريط بشكل طبيعي
+   - ما تغطيش الشاشة كلها
+   - الشكل يفضل جذاب زي الأصلي
+=========================== */
+@media (max-width: 768px) {
+  nav {
+    flex-wrap: wrap;
+    padding: 0.8rem 1rem;
+    position: relative;
+  }
+
+  nav .logo {
+    font-size: 1.1rem;
+    flex: 1;
+  }
+
+  .menu-toggle {
+    display: block;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.6rem;
+    cursor: pointer;
+  }
+
+  nav .links {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    background: var(--primary-color);
+    position: absolute;
+    top: 100%; /* تبدأ مباشرة تحت الـ navbar */
+    left: 0;
+    right: 0;
+    z-index: 999;
+    padding: 15px 0;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    max-height: calc(100vh - 80px); /* زيادة المساحة عشان الـ navbar أعلى شوية */
+    overflow-y: auto; /* سكرول داخلي مهم جدًا */
+  }
+
+  nav .links.open {
+    display: flex;
+  }
+
+  nav .links a {
+    font-size: 1rem;
+    padding: 14px 25px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    text-align: center;
+    margin: 0 20px;
+    transition: background 0.2s;
+  }
+
+  nav .links a:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+@media (min-width: 769px) {
+  .menu-toggle {
+    display: none;
+  }
+
+  nav .links {
+    display: flex !important;
+    flex-direction: row;
+    position: static;
+    width: auto;
+    background: none;
+    padding: 0;
+    gap: 1rem;
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+  }
+}
