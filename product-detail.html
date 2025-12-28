@@ -169,8 +169,9 @@ const myCon = push(presenceRef);
 // عند انقطاع الاتصال (غلق الصفحة)، احذف هذا الزائر
 onDisconnect(myCon).remove();
 // تسجيل الدخول الآن
+onDisconnect(myCon).remove();
 set(myCon, {
-    startedAt: Date.now(),
+    timestamp: Date.now(),
     page: window.location.href
 });
 // ============================================================
