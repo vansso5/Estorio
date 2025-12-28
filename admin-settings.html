@@ -12,6 +12,7 @@
 <body>
 
   <nav>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
   <div class="logo">لوحة التحكم</div>
   <div class="links">
     <a href="admin-products.html" class="nav-link">المنتجات</a>
@@ -454,6 +455,14 @@
     if(startInput) startInput.addEventListener('change', updatePeriodCount);
     if(endInput) endInput.addEventListener('change', updatePeriodCount);
 
+  </script>
+
+  <!-- سكربت القائمة الجانبية للموبايل -->
+  <script>
+    function toggleMenu() {
+      const links = document.querySelector('nav .links');
+      links.classList.toggle('open');
+    }
   </script>
 </body>
 </html>
