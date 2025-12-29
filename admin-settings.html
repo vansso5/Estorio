@@ -40,30 +40,6 @@
     
     <div class="analytics-grid" style="display: flex; flex-direction: column; gap: 30px;">
       
-      <!-- 1. بطاقة إدارة المسؤولين (الجديدة) -->
-      <div class="stat-card" style="text-align: right; align-items: stretch;">
-        <h3 style="border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0;">👥 إدارة المسؤولين (Admins)</h3>
-        
-        <div class="setting-item">
-          <!-- نموذج الإضافة -->
-          <div style="background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
-            <h4 style="margin-top:0; color:var(--primary-color);">➕ إضافة مسؤول جديد</h4>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-              <input type="email" id="newAdminEmail" placeholder="البريد الإلكتروني" style="flex:1; margin-bottom:0;">
-              <input type="password" id="newAdminPass" placeholder="كلمة المرور (6 أرقام)" style="flex:1; margin-bottom:0;">
-              <button onclick="addNewAdmin()" style="flex:0 0 100px; padding:10px;">إضافة</button>
-            </div>
-            <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">* سيتمكن هذا الشخص من الدخول للوحة التحكم كاملة.</p>
-          </div>
-
-          <!-- قائمة المسؤولين -->
-          <h4 style="margin-bottom:10px;">📋 قائمة المسؤولين المصرح لهم:</h4>
-          <div id="adminsList" class="wilaya-grid" style="display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y: auto; background: none; border: none; padding: 0;">
-            <p class="loading-message">جاري تحميل القائمة...</p>
-          </div>
-        </div>
-      </div>
-
       <!-- 2. بطاقة منطقة الخطر (مسح الطلبيات) -->
       <div class="stat-card danger-zone" style="text-align: right; align-items: stretch;">
         <h3 style="border-bottom: 1px solid #ffcccc; padding-bottom: 10px; margin-top: 0;">🗑️ مسح الطلبيات المكتملة</h3>
@@ -128,7 +104,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getDatabase, ref, onValue, get, update, set, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-    import { getAuth, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
