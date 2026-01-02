@@ -229,3 +229,72 @@ body {
 body {
     padding-bottom: 100px;
 }
+.policy-item {
+  margin-bottom: 10px;
+}
+
+.policies-section {
+    margin: 30px 15px;
+    padding: 20px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    text-align: center;
+}
+
+.policy-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.policy-titles button {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.policy-titles button:hover {
+    background: #219150;
+}
+
+.policy-content p {
+    text-align: center;
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0 auto;
+    max-width: 90%;
+}
+/* ===== شريط التنويه العلوي ===== */
+.top-marquee {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #27ae60; /* خلفية خضراء */
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+    overflow: hidden;
+    z-index: 9999;
+    height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.marquee-content {
+    display: inline-block;
+    white-space: nowrap;
+    padding-left: 100%;
+    animation: marquee 15s linear infinite;
+}
+
+@keyframes marquee {
+    0% { transform: translateX(-100%); } /* يبدأ من اليسار خارج الشاشة */
+    100% { transform: translateX(100%); } /* يصل إلى اليمين خارج الشاشة */
+}
