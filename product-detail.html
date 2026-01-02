@@ -137,6 +137,12 @@
 </head>
 
 <body>
+    <!-- شريط تنويه الخصوصية المتحرك -->
+<div class="top-marquee">
+  <div class="marquee-content">
+    🔒 بياناتك الشخصية تُستخدم فقط لمعالجة طلبك ولن تُشارك مع أي طرف ثالث.
+  </div>
+</div>
 
 <div id="loadingScreen" class="hidden">
   <div class="spinner"></div>
@@ -507,6 +513,7 @@ async function fetchProductDetails() {
         }
     });
     
+      
     // --- منطق التعليقات ---
     let selectedRating = 0;
     const stars = document.querySelectorAll('#reviewStars i');
