@@ -5,14 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>طلب المنتج</title>
 <link rel="stylesheet" href="customer-style.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css ">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css ">
 <style>
     /* 1. تنسيقات صور الوصف */
     .desc-content img {
         max-width: 100%; border-radius: 8px; margin: 10px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .desc-content p {
+    .desc-content p,
+    .policy-content p {
         margin-bottom: 10px; line-height: 1.6; white-space: pre-wrap;
     }
 
@@ -102,6 +103,36 @@
     .icon-item img:hover {
         transform: scale(1.12);
     }
+
+    /* تنسيق سياسات المتجر */
+    .store-policy-section {
+        margin-top: 25px;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 12px;
+        border: 1px solid #eee;
+    }
+    .store-policy-section h3 {
+        margin-top: 0;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 8px;
+        color: #2c3e50;
+    }
+    .policy-item {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed #eee;
+    }
+    .policy-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    .policy-item h4 {
+        margin: 0 0 8px;
+        color: #2980b9;
+        font-size: 18px;
+    }
 </style>
 </head>
 
@@ -114,7 +145,7 @@
 
 <!-- اللوجو -->
 <div class="logo-container">
-    <img id="storeLogo" src="https://via.placeholder.com/500x120?text=جاري+التحميل..." alt="Logo">
+    <img id="storeLogo" src="https://via.placeholder.com/500x120?text =جاري+التحميل..." alt="Logo">
 </div>
 
 <div class="container">
@@ -143,9 +174,9 @@
     <button id="floatingConfirmBtn">تأكيد الطلب 🚀</button>
 </div>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js ";
 // تمت إضافة onDisconnect هنا لتفعيل ميزة تتبع الزوار
-import { getDatabase, ref, get, child, push, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+import { getDatabase, ref, get, child, push, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js ";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
@@ -166,9 +197,6 @@ const db = getDatabase(app);
 // ============================================================
 const presenceRef = ref(db, "site_presence");
 const myCon = push(presenceRef);
-// عند انقطاع الاتصال (غلق الصفحة)، احذف هذا الزائر
-onDisconnect(myCon).remove();
-// تسجيل الدخول الآن
 onDisconnect(myCon).remove();
 set(myCon, {
     timestamp: Date.now(),
@@ -204,7 +232,7 @@ async function fetchProductDetails() {
   currentProductId = productId;
 
   try {
-    const snapshot = await get(child(ref(db), `products/${productId}`));
+    const snapshot = await get(child(ref(db, 'products'), productId));
     if (!snapshot.exists()) { container.innerHTML = '<p class="error-text">المنتج غير موجود.</p>'; return; }
 
     const product = snapshot.val();
@@ -215,7 +243,7 @@ async function fetchProductDetails() {
     } else {
         onValue(ref(db, 'settings/logo'), (snap) => {
             if(snap.exists()) storeLogoImg.src = snap.val();
-            else storeLogoImg.src = "https://via.placeholder.com/500x120?text=Welcome";
+            else storeLogoImg.src = "https://via.placeholder.com/500x120?text=Welcome ";
         });
     }
 
@@ -312,6 +340,12 @@ async function fetchProductDetails() {
         </div>
       </div>
 
+      <!-- ✅ قسم سياسات المتجر (يُعرض فقط إذا وُجدت سياسات) -->
+      <div id="storePolicySection" class="store-policy-section" style="display:none;">
+        <h3>📜 سياسات المتجر</h3>
+        <div id="policyContent" class="policy-content"></div>
+      </div>
+
       <!-- قسم الأيقونات (شحن سريع، ضمان، إلخ) - يظهر فقط إذا كان هناك أيقونات -->
       ${product.icons && Array.isArray(product.icons) && product.icons.length > 0 ? `
       <div class="product-icons-section">
@@ -364,6 +398,37 @@ async function fetchProductDetails() {
 
     closePreview.addEventListener('click', () => previewModal.classList.remove('active'));
     previewModal.addEventListener('click', e => { if(e.target === previewModal) previewModal.classList.remove('active'); });
+
+    // ================== ✅ جلب سياسات المتجر من Firebase ==================
+    const policySection = document.getElementById('storePolicySection');
+    const policyContent = document.getElementById('policyContent');
+
+    onValue(ref(db, 'policies'), (snapshot) => {
+      if (snapshot.exists()) {
+        const policies = snapshot.val();
+        let policyHTML = '';
+        for (const id in policies) {
+          const p = policies[id];
+          if (p.title && p.content) {
+            policyHTML += `
+              <div class="policy-item">
+                <h4>${p.title}</h4>
+                <p>${p.content}</p>
+              </div>
+            `;
+          }
+        }
+        if (policyHTML) {
+          policyContent.innerHTML = policyHTML;
+          policySection.style.display = 'block';
+        } else {
+          policySection.style.display = 'none';
+        }
+      } else {
+        policySection.style.display = 'none';
+      }
+    });
+    // ===================================================================
 
     const confirmBtn = document.getElementById("confirmOrderBtn");
     const qtyVal = document.getElementById("quantityValue");
@@ -528,6 +593,6 @@ async function fetchProductDetails() {
 
 fetchProductDetails();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js "></script>
 </body>
 </html>
