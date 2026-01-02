@@ -8,6 +8,12 @@
   <!-- ربط الخط والستايل الموحد -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin-style.css" />
+  <style>
+    .policy-section { border: 1px solid #ddd; padding: 15px; border-radius: 8px; background: #f9f9f9; }
+    .policy-section h3 { margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    .policy-section textarea { width: 100%; min-height: 100px; margin-top: 5px; resize: vertical; }
+    .policy-section button { margin-top: 10px; }
+  </style>
 </head>
 <body>
 
@@ -30,12 +36,13 @@
     <h2>⚙️ الإعدادات</h2>
     
     <div class="analytics-grid" style="display: flex; flex-direction: column; gap: 30px;">
-      
+
+      <!-- قسم مسح الطلبيات المكتملة -->
       <div class="stat-card danger-zone" style="text-align: right; align-items: stretch;">
         <h3 style="border-bottom: 1px solid #ffcccc; padding-bottom: 10px; margin-top: 0;">🗑️ مسح الطلبيات المكتملة</h3>
         
         <div class="setting-item">
-          <div class="orders-stats">
+          <div class="orders-stats" style="display: flex; gap: 10px; flex-wrap: wrap;">
             <div class="stat-card">
               <h3>الطلبيات المكتملة</h3>
               <span id="completedOrdersCount">0</span>
@@ -57,7 +64,7 @@
             </select>
           </div>
 
-          <div id="customDateRange" style="display: none;">
+          <div id="customDateRange" style="display: none; margin-top: 10px;">
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
               <div style="flex: 1;">
                 <label>من تاريخ:</label>
@@ -70,7 +77,7 @@
             </div>
           </div>
 
-          <div id="periodSummary" class="period-summary">
+          <div id="periodSummary" class="period-summary" style="margin-top: 10px;">
             <p>سيتم مسح <strong id="periodCount">0</strong> طلبية بشكل نهائي.</p>
           </div>
           
@@ -84,12 +91,20 @@
         </div>
       </div>
 
+      <!-- قسم إدارة السياسات -->
+      <div class="policy-section">
+    <h3>📜 إدارة السياسات</h3>
+    <div id="policiesContainer"></div>
+    <button onclick="addPolicyField()" class="add-btn">➕ إضافة سياسة جديدة</button>
+    <button onclick="saveAllPolicies()" class="save-btn">💾 حفظ كل السياسات</button>
+</div>
+
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, onValue, update, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
     import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -114,6 +129,7 @@
       if (user) {
         logoutBtn.style.display = 'block';
         loadStatistics();
+        loadPolicies();
       } else {
         logoutBtn.style.display = 'none';
         alert("يرجى تسجيل الدخول للوصول إلى الإعدادات");
@@ -238,7 +254,74 @@
     const endInput = document.getElementById('endDate');
     if(startInput) startInput.addEventListener('change', updatePeriodCount);
     if(endInput) endInput.addEventListener('change', updatePeriodCount);
+// ===== إدارة السياسات (ديناميكية) =====
+const policiesContainer = document.getElementById('policiesContainer');
 
+// إضافة سياسة جديدة (ديناميكية)
+function addPolicyField(title = '', content = '') {
+  const id = Date.now();
+  const div = document.createElement('div');
+  div.className = 'policy-item';
+  div.dataset.id = id;
+  
+  div.innerHTML = `
+    <input type="text" placeholder="عنوان السياسة" value="${title}" style="width:100%;margin-bottom:5px;padding:8px" />
+    <textarea placeholder="محتوى السياسة" style="width:100%;min-height:100px;padding:8px">${content}</textarea>
+    <button class="delete-btn" style="margin-top:5px" onclick="this.parentElement.remove()">🗑️ حذف</button>
+  `;
+  policiesContainer.appendChild(div);
+}
+
+// إضافة سياسة مع ID محدد (لتحميل السياسات من Firebase)
+function addPolicyFieldWithId(id, title = '', content = '') {
+  const div = document.createElement('div');
+  div.className = 'policy-item';
+  div.dataset.id = id;
+  
+  div.innerHTML = `
+    <input type="text" placeholder="عنوان السياسة" value="${title}" style="width:100%;margin-bottom:5px;padding:8px" />
+    <textarea placeholder="محتوى السياسة" style="width:100%;min-height:100px;padding:8px">${content}</textarea>
+    <button class="delete-btn" style="margin-top:5px" onclick="this.parentElement.remove()">🗑️ حذف</button>
+  `;
+  policiesContainer.appendChild(div);
+}
+
+// تحميل السياسات من Firebase
+function loadPolicies() {
+  const policiesRef = ref(database, 'policies');
+  onValue(policiesRef, snapshot => {
+    policiesContainer.innerHTML = '';
+    const data = snapshot.val();
+    if (!data) return;
+    
+    Object.entries(data).forEach(([id, p]) => addPolicyFieldWithId(id, p.title, p.content));
+  });
+}
+
+// حفظ كل السياسات في Firebase
+async function saveAllPolicies() {
+  const items = document.querySelectorAll('.policy-item');
+  const policies = {};
+  
+  items.forEach(item => {
+    const title = item.querySelector('input').value.trim();
+    const content = item.querySelector('textarea').value.trim();
+    if (title && content) {
+      policies[item.dataset.id] = { title, content };
+    }
+  });
+  
+  await set(ref(database, 'policies'), policies);
+  alert('✅ تم حفظ السياسات بنجاح');
+}
+
+// ربط الدوال بالواجهة
+window.addPolicyField = addPolicyField;
+window.saveAllPolicies = saveAllPolicies;
+window.loadPolicies = loadPolicies;
+
+// تحميل السياسات فور فتح الصفحة
+loadPolicies();
     window.clearCompletedOrders = clearCompletedOrders;
     window.updatePeriodSelection = updatePeriodSelection;
 
