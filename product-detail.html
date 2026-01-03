@@ -439,17 +439,17 @@ async function fetchProductDetails() {
           policyContent.innerHTML = policyHTML;
           
           policySection.style.display = 'block';
-const titles = policyContent.querySelectorAll('.policy-title');
-          titles.forEach(title => {
-            title.addEventListener('click', () => {
-                const body = title.nextElementSibling;
-                if (body.style.display === "none") {
-                    body.style.display = "block";
-                } else {
-                    body.style.display = "none";
-                }
-            });
-          });
+          const titles = policyContent.querySelectorAll('.policy-title');
+titles.forEach(title => {
+    title.addEventListener('click', () => {
+        const body = title.nextElementSibling;
+        if (body.style.display === "none") {
+            body.style.display = "block";
+        } else {
+            body.style.display = "none";
+        }
+    });
+});
         } else {
           policySection.style.display = 'none';
         }
@@ -521,7 +521,6 @@ const titles = policyContent.querySelectorAll('.policy-title');
             document.getElementById("thankYouModal").classList.remove("hidden");
             document.getElementById("orderIdBox").textContent = refOrd.key;
             document.getElementById("thankYouMessage").innerHTML = `شكراً <b>${nm}</b>، تم تسجيل طلبك بنجاح.`;
-            
             
             // ✅ عند نجاح الطلب، نقوم بإظهار خانة التعليق تلقائياً ونملأ اسم الزبون
             document.getElementById("postOrderReview").style.display = "block";
