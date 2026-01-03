@@ -333,7 +333,7 @@
     const phoneSaveMsg = document.getElementById('phoneSaveMsg');
 
     // تحميل الرقم عند فتح الصفحة من Firebase
-    const phoneRef = ref(database, 'contactPhone');
+    const phoneRef = ref(database, 'settings/contactPhone');
     onValue(phoneRef, snapshot => {
       const num = snapshot.val();
       if(num) phoneInput.value = num;
