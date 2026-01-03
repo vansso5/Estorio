@@ -439,6 +439,17 @@ async function fetchProductDetails() {
           policyContent.innerHTML = policyHTML;
           
           policySection.style.display = 'block';
+const titles = policyContent.querySelectorAll('.policy-title');
+          titles.forEach(title => {
+            title.addEventListener('click', () => {
+                const body = title.nextElementSibling;
+                if (body.style.display === "none") {
+                    body.style.display = "block";
+                } else {
+                    body.style.display = "none";
+                }
+            });
+          });
         } else {
           policySection.style.display = 'none';
         }
