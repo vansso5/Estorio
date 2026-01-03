@@ -13,6 +13,13 @@
     .policy-section h3 { margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
     .policy-section textarea { width: 100%; min-height: 100px; margin-top: 5px; resize: vertical; }
     .policy-section button { margin-top: 10px; }
+
+    /* قسم رقم الهاتف */
+    .contact-section { border: 1px solid #ddd; padding: 15px; border-radius: 8px; background: #f1f1f1; margin-top: 30px; }
+    .contact-section h3 { margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    .contact-section input { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; }
+    .contact-section button { padding: 10px 15px; font-size: 1rem; }
+    .contact-section .success-msg { color: green; margin-top: 10px; display: none; }
   </style>
 </head>
 <body>
@@ -93,11 +100,19 @@
 
       <!-- قسم إدارة السياسات -->
       <div class="policy-section">
-    <h3>📜 إدارة السياسات</h3>
-    <div id="policiesContainer"></div>
-    <button onclick="addPolicyField()" class="add-btn">➕ إضافة سياسة جديدة</button>
-    <button onclick="saveAllPolicies()" class="save-btn">💾 حفظ كل السياسات</button>
-</div>
+        <h3>📜 إدارة السياسات</h3>
+        <div id="policiesContainer"></div>
+        <button onclick="addPolicyField()" class="add-btn">➕ إضافة سياسة جديدة</button>
+        <button onclick="saveAllPolicies()" class="save-btn">💾 حفظ كل السياسات</button>
+      </div>
+
+      <!-- قسم التحكم في رقم الهاتف (اتصل بنا) -->
+      <div class="contact-section">
+        <h3>📞 رقم الهاتف - اتصل بنا</h3>
+        <input type="text" id="contactPhone" placeholder="أدخل رقم الهاتف">
+        <button id="savePhoneBtn">💾 حفظ الرقم</button>
+        <div id="phoneSaveMsg" class="success-msg">✅ تم حفظ الرقم بنجاح</div>
+      </div>
 
     </div>
   </div>
@@ -254,76 +269,94 @@
     const endInput = document.getElementById('endDate');
     if(startInput) startInput.addEventListener('change', updatePeriodCount);
     if(endInput) endInput.addEventListener('change', updatePeriodCount);
-// ===== إدارة السياسات (ديناميكية) =====
-const policiesContainer = document.getElementById('policiesContainer');
 
-// إضافة سياسة جديدة (ديناميكية)
-function addPolicyField(title = '', content = '') {
-  const id = Date.now();
-  const div = document.createElement('div');
-  div.className = 'policy-item';
-  div.dataset.id = id;
-  
-  div.innerHTML = `
-    <input type="text" placeholder="عنوان السياسة" value="${title}" style="width:100%;margin-bottom:5px;padding:8px" />
-    <textarea placeholder="محتوى السياسة" style="width:100%;min-height:100px;padding:8px">${content}</textarea>
-    <button class="delete-btn" style="margin-top:5px" onclick="this.parentElement.remove()">🗑️ حذف</button>
-  `;
-  policiesContainer.appendChild(div);
-}
+    // ===== إدارة السياسات (ديناميكية) =====
+    const policiesContainer = document.getElementById('policiesContainer');
 
-// إضافة سياسة مع ID محدد (لتحميل السياسات من Firebase)
-function addPolicyFieldWithId(id, title = '', content = '') {
-  const div = document.createElement('div');
-  div.className = 'policy-item';
-  div.dataset.id = id;
-  
-  div.innerHTML = `
-    <input type="text" placeholder="عنوان السياسة" value="${title}" style="width:100%;margin-bottom:5px;padding:8px" />
-    <textarea placeholder="محتوى السياسة" style="width:100%;min-height:100px;padding:8px">${content}</textarea>
-    <button class="delete-btn" style="margin-top:5px" onclick="this.parentElement.remove()">🗑️ حذف</button>
-  `;
-  policiesContainer.appendChild(div);
-}
-
-// تحميل السياسات من Firebase
-function loadPolicies() {
-  const policiesRef = ref(database, 'policies');
-  onValue(policiesRef, snapshot => {
-    policiesContainer.innerHTML = '';
-    const data = snapshot.val();
-    if (!data) return;
-    
-    Object.entries(data).forEach(([id, p]) => addPolicyFieldWithId(id, p.title, p.content));
-  });
-}
-
-// حفظ كل السياسات في Firebase
-async function saveAllPolicies() {
-  const items = document.querySelectorAll('.policy-item');
-  const policies = {};
-  
-  items.forEach(item => {
-    const title = item.querySelector('input').value.trim();
-    const content = item.querySelector('textarea').value.trim();
-    if (title && content) {
-      policies[item.dataset.id] = { title, content };
+    function addPolicyField(title = '', content = '') {
+      const id = Date.now();
+      const div = document.createElement('div');
+      div.className = 'policy-item';
+      div.dataset.id = id;
+      
+      div.innerHTML = `
+        <input type="text" placeholder="عنوان السياسة" value="${title}" style="width:100%;margin-bottom:5px;padding:8px" />
+        <textarea placeholder="محتوى السياسة" style="width:100%;min-height:100px;padding:8px">${content}</textarea>
+        <button class="delete-btn" style="margin-top:5px" onclick="this.parentElement.remove()">🗑️ حذف</button>
+      `;
+      policiesContainer.appendChild(div);
     }
-  });
-  
-  await set(ref(database, 'policies'), policies);
-  alert('✅ تم حفظ السياسات بنجاح');
-}
 
-// ربط الدوال بالواجهة
-window.addPolicyField = addPolicyField;
-window.saveAllPolicies = saveAllPolicies;
-window.loadPolicies = loadPolicies;
+    function addPolicyFieldWithId(id, title = '', content = '') {
+      const div = document.createElement('div');
+      div.className = 'policy-item';
+      div.dataset.id = id;
+      
+      div.innerHTML = `
+        <input type="text" placeholder="عنوان السياسة" value="${title}" style="width:100%;margin-bottom:5px;padding:8px" />
+        <textarea placeholder="محتوى السياسة" style="width:100%;min-height:100px;padding:8px">${content}</textarea>
+        <button class="delete-btn" style="margin-top:5px" onclick="this.parentElement.remove()">🗑️ حذف</button>
+      `;
+      policiesContainer.appendChild(div);
+    }
 
-// تحميل السياسات فور فتح الصفحة
-loadPolicies();
+    function loadPolicies() {
+      const policiesRef = ref(database, 'policies');
+      onValue(policiesRef, snapshot => {
+        policiesContainer.innerHTML = '';
+        const data = snapshot.val();
+        if (!data) return;
+        
+        Object.entries(data).forEach(([id, p]) => addPolicyFieldWithId(id, p.title, p.content));
+      });
+    }
+
+    async function saveAllPolicies() {
+      const items = document.querySelectorAll('.policy-item');
+      const policies = {};
+      
+      items.forEach(item => {
+        const title = item.querySelector('input').value.trim();
+        const content = item.querySelector('textarea').value.trim();
+        if (title && content) {
+          policies[item.dataset.id] = { title, content };
+        }
+      });
+      
+      await set(ref(database, 'policies'), policies);
+      alert('✅ تم حفظ السياسات بنجاح');
+    }
+
+    // ===== التحكم في رقم الهاتف =====
+    const phoneInput = document.getElementById('contactPhone');
+    const phoneSaveBtn = document.getElementById('savePhoneBtn');
+    const phoneSaveMsg = document.getElementById('phoneSaveMsg');
+
+    // تحميل الرقم عند فتح الصفحة من Firebase
+    const phoneRef = ref(database, 'contactPhone');
+    onValue(phoneRef, snapshot => {
+      const num = snapshot.val();
+      if(num) phoneInput.value = num;
+    });
+
+    phoneSaveBtn.addEventListener('click', async () => {
+      const number = phoneInput.value.trim();
+      if(!number) return alert('⚠️ يرجى إدخال رقم الهاتف أولاً');
+
+      await set(ref(database, 'settings/contactPhone'), number);
+      phoneSaveMsg.style.display = 'block';
+      setTimeout(() => phoneSaveMsg.style.display = 'none', 3000);
+    });
+
+    // ربط الدوال بالواجهة
+    window.addPolicyField = addPolicyField;
+    window.saveAllPolicies = saveAllPolicies;
+    window.loadPolicies = loadPolicies;
     window.clearCompletedOrders = clearCompletedOrders;
     window.updatePeriodSelection = updatePeriodSelection;
+
+    // تحميل السياسات فور فتح الصفحة
+    loadPolicies();
 
   </script>
 
