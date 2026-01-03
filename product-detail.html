@@ -197,7 +197,17 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const contactFooter = document.querySelector('.contact-footer .contact-container');
 
+onValue(ref(db, 'settings/contactPhone'), (snapshot) => {
+    if (snapshot.exists()) {
+        const phone = snapshot.val();
+        contactFooter.innerHTML = `
+            <span>📞 اتصل بنا: </span>
+            <a href="tel:${phone}">${phone}</a>
+        `;
+    }
+});
 // ============================================================
 // 🟢 كود تتبع الزوار (لكي تعمل الأيقونة في لوحة التحكم)
 // ============================================================
@@ -417,15 +427,16 @@ async function fetchProductDetails() {
           const p = policies[id];
           if (p.title && p.content) {
             policyHTML += `
-              <div class="policy-item">
-                <h4>${p.title}</h4>
-                <p>${p.content}</p>
-              </div>
-            `;
+  <div class="policy-item">
+    <h4 class="policy-title">${p.title}</h4>
+    <p class="policy-body" style="display:none;">${p.content}</p>
+  </div>
+`;policyContent.innerHTML
           }
         }
         if (policyHTML) {
           policyContent.innerHTML = policyHTML;
+          
           policySection.style.display = 'block';
         } else {
           policySection.style.display = 'none';
@@ -499,6 +510,7 @@ async function fetchProductDetails() {
             document.getElementById("orderIdBox").textContent = refOrd.key;
             document.getElementById("thankYouMessage").innerHTML = `شكراً <b>${nm}</b>، تم تسجيل طلبك بنجاح.`;
             
+            
             // ✅ عند نجاح الطلب، نقوم بإظهار خانة التعليق تلقائياً ونملأ اسم الزبون
             document.getElementById("postOrderReview").style.display = "block";
             document.getElementById("reviewName").value = nm; 
@@ -513,7 +525,7 @@ async function fetchProductDetails() {
         }
     });
     
-      
+    
     // --- منطق التعليقات ---
     let selectedRating = 0;
     const stars = document.querySelectorAll('#reviewStars i');
@@ -563,6 +575,7 @@ async function fetchProductDetails() {
             });
         } else { list.innerHTML = '<p style="text-align:center;color:#999">لا توجد تعليقات بعد.</p>'; }
     });
+    
 // ================== كود الزر الثابت في الأسفل ==================
     const orderCard = document.getElementById('orderCard');
     const floatingBtn = document.getElementById('floatingOrderBtn');
@@ -601,5 +614,10 @@ async function fetchProductDetails() {
 fetchProductDetails();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js "></script>
+
 </body>
+<!-- قسم التواصل أسفل الصفحة -->
+<div class="contact-footer">
+    <div class="contact-container"></div>
+</div>
 </html>
