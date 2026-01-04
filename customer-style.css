@@ -299,15 +299,17 @@ body {
 
 /* ========= TOP MARQUEE ========= */
 .top-marquee {
-    position: fixed; top:0; left:0; width:100%;
-    background:#27ae60;
-    color:white;
-    font-size:14px;
-    font-weight:600;
-    padding:8px 0;
-    z-index:9999;
-    overflow:hidden;
-    text-align:center;
+    position: relative; /* لجعل الشريط ثابتاً فوق اللوجو */
+    width: 100%;
+    background: rgba(255, 255, 255, 0.9); /* خلفية بيضاء شفافة */
+    color: #333; /* لون النص أسود ليظهر بوضوح */
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 0;
+    z-index: 10;
+    overflow: hidden;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* ظل خفيف */
 }
 .marquee-content { display:inline-block; white-space:nowrap; animation:marquee 15s linear infinite; }
 @keyframes marquee { 0%{transform:translateX(-100%);} 100%{transform:translateX(100%);} }
