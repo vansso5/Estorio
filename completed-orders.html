@@ -47,7 +47,7 @@
     </div>
   </div>
 
-  <!-- نافذة التفاصيل (عرض فقط) -->
+  <!-- نافذة التفاصيل -->
   <div id="orderDetailsModal" class="modal hidden">
     <div class="modal-content">
       <button class="close-modal-btn" id="closeDetailModal">&times;</button>
@@ -89,7 +89,6 @@
     let userAuthenticated = false;
     let currentOrdersData = {};
     let searchKeyword = "";
-    let currentOpenOrderId = null;
 
     // التحقق من المصادقة
     onAuthStateChanged(auth, (user) => {
@@ -113,7 +112,7 @@
       }
     });
 
-    // إغلاق النافذة
+    // إغلاق نافذة التفاصيل
     closeDetailModal.addEventListener('click', () => detailModal.classList.add('hidden'));
     window.addEventListener('click', (e) => { 
       if(e.target === detailModal) detailModal.classList.add('hidden'); 
@@ -129,7 +128,6 @@
     }
 
     function openOrderDetails(order, id) {
-      currentOpenOrderId = id;
       detailModal.classList.remove('hidden');
 
       let productsHtml = '';
@@ -198,10 +196,7 @@
         <div class="row-arrow completed-text">❮</div>
       `;
 
-      row.addEventListener('click', () => {
-        openOrderDetails(order, id);
-      });
-
+      row.addEventListener('click', () => openOrderDetails(order, id));
       return row;
     }
 
@@ -210,16 +205,19 @@
 
       const filteredCompletedOrders = {};
       Object.entries(ordersData || {}).forEach(([id, order]) => {
-        if (order && (order.status === 'Delivered' || order.status === 'تم التوصيل')) {
-          if (searchKeyword) {
-            const kw = searchKeyword.toLowerCase();
-            const searchText = [
-              id, order.customerName, order.customerPhone, 
-              order.productName, order.customerAddress
-            ].join(' ').toLowerCase();
-            if (!searchText.includes(kw)) return;
+        if (order && order.status) {
+          const status = (order.status + '').toLowerCase();
+          if (status.includes('deliver') || status.includes('تم التوصيل')) {
+            if (searchKeyword) {
+              const kw = searchKeyword.toLowerCase();
+              const searchText = [
+                id, order.customerName, order.customerPhone, 
+                order.productName, order.customerAddress
+              ].join(' ').toLowerCase();
+              if (!searchText.includes(kw)) return;
+            }
+            filteredCompletedOrders[id] = order;
           }
-          filteredCompletedOrders[id] = order;
         }
       });
 
@@ -250,6 +248,7 @@
       searchKeyword = e.target.value.trim();
       renderOrders(currentOrdersData);
     });
+
   </script>
 
   <!-- سكربت القائمة الجانبية للموبايل -->
