@@ -101,7 +101,14 @@
         <button id="savePhoneBtn">💾 حفظ الرقم</button>
         <div id="phoneSaveMsg" class="success-msg">✅ تم حفظ الرقم بنجاح</div>
       </div>
-
+<!-- قسم فيسبوك بيكسل (الجديد) -->
+<div class="pixel-section contact-section"> <!-- استخدمنا نفس كلاس contact-section ليأخذ نفس الستايل -->
+  <h3>📊 تتبع فيسبوك (Facebook Pixel)</h3>
+  <p style="font-size: 13px; color: #666; margin-bottom: 10px;">أدخل رقم البيكسل (ID) فقط لربط المتجر بالإعلانات.</p>
+  <input type="text" id="pixelIdInput" placeholder="أدخل Pixel ID (مثال: 1234567890)">
+  <button id="savePixelBtn" style="background-color: #1877f2;">💾 حفظ البيكسل</button>
+  <div id="pixelSaveMsg" class="success-msg">✅ تم حفظ البيكسل بنجاح</div>
+</div>
     </div>
   </div>
 
@@ -336,7 +343,27 @@
       setTimeout(() => phoneSaveMsg.style.display = 'none', 3000);
     });
 
-    // ربط الدوال بالواجهة
+    // ===== التحكم في فيسبوك بيكسل (Facebook Pixel) =====
+    // 🟢 تم نقل الكود إلى هنا داخل الـ Module ليعمل بشكل صحيح
+    const pixelInput = document.getElementById('pixelIdInput');
+    const pixelSaveBtn = document.getElementById('savePixelBtn');
+    const pixelSaveMsg = document.getElementById('pixelSaveMsg');
+
+    const pixelRef = ref(database, 'settings/pixel_id');
+    onValue(pixelRef, snapshot => {
+      const pid = snapshot.val();
+      if (pid) pixelInput.value = pid;
+    });
+
+    pixelSaveBtn.addEventListener('click', async () => {
+      const pixelId = pixelInput.value.trim();
+      await set(ref(database, 'settings/pixel_id'), pixelId);
+      
+      pixelSaveMsg.style.display = 'block';
+      setTimeout(() => pixelSaveMsg.style.display = 'none', 3000);
+    });
+    // 🟢 انتهى كود البيكسل
+لا، **ليس تماماً بعد**.. هناك خطأ واحد // ربط الدوال بالواجهة
     window.addPolicyField = addPolicyField;
     window.saveAllPolicies = saveAllPolicies;
     window.loadPolicies = loadPolicies;
@@ -348,6 +375,7 @@
 
   </script>
 
+  <!-- السكربت السفلي يجب أن يحتوي على القائمة فقط -->
   <script>
     function toggleMenu() {
       const links = document.querySelector('nav .links');
