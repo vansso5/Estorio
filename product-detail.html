@@ -1,599 +1,389 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>طلب المنتج</title>
-<link rel="stylesheet" href="customer-style.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css ">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css ">
-<meta name="google-site-verification" content="lgCRZS6OSalJssBPY7QkuciuXfNh6Uf_nfvWLKNvmQg" />
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>إدارة المنتجات</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin-style.css" />
+  
 </head>
-
 <body>
-    <!-- شريط تنويه الخصوصية المتحرك -->
-<div class="top-marquee">
-  <div class="marquee-content">
-    🔒 بياناتك الشخصية تُستخدم فقط لمعالجة طلبك ولن تُشارك مع أي طرف ثالث.
-  </div>
-</div>
 
-<div id="loadingScreen" class="hidden">
-  <div class="spinner"></div>
-  <p>جارٍ تسجيل الطلب...</p>
-</div>
-
-<!-- اللوجو -->
-<div class="logo-container">
-    <img id="storeLogo" src="https://via.placeholder.com/500x120?text =جاري+التحميل..." alt="Logo">
-</div>
-
-<div class="container">
-    <div class="left-side">
-        <div id="productDetailContainer">
-            <p style="text-align:center; padding:20px;">جاري تحميل المنتج...</p>
-        </div>
+  <nav>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <div class="logo">لوحة التحكم</div>
+    <div class="links">
+      <a href="admin-products.html" class="nav-link active">المنتجات</a>
+      <a href="admin-orders.html" class="nav-link">الطلبيات النشطة</a>
+      <a href="completed-orders.html" class="nav-link">الطلبيات المكتملة</a>
+      <a href="admin-analytics.html" class="nav-link">التحليلات</a>
+      <a href="admin-settings.html" class="nav-link">الإعدادات</a>
+      <a href="admin-reviews.html" class="nav-link">التعليقات والتقييمات</a>
+      <a href="admin-shipping.html" class="nav-link">الشحن</a>
+      <a href="#" id="logoutBtn" class="nav-link" style="display: none;">تسجيل الخروج</a>
     </div>
-    
-    <div class="right-side">
-        <!-- لا تغير شيء هنا، يمكن أن يبقى فارغ أو يملأ تلقائياً بالوصف الموجود -->
+  </nav>
+
+  <div class="container page-products"> 
+    <h2>📦 إدارة المنتجات</h2>
+
+    <button id="openAddProductModal" class="floating-btn" title="إضافة منتج جديد">+</button>
+
+    <div class="search-wrapper">
+      <input id="searchInput" class="search-input" type="text" placeholder="🔍 ابحث باسم المنتج أو الوصف...">
     </div>
-</div>
 
-<div class="image-preview-modal" id="imagePreviewModal">
-  <button class="close-preview" id="closePreview">&times;</button>
-  <img id="previewImage" src="" alt="">
-</div>
+    <div id="addProductModal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close-modal-btn" id="closeModal">&times;</span>
+        <h3 style="text-align: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-top: 0;">إضافة / تعديل منتج</h3>
 
-<div id="thankYouModal" class="modal hidden">
-    <div class="modal-content">
-      <div class="check-icon">✔</div>
-      <h3>تم استلام طلبك!</h3>
-      <p id="thankYouMessage"></p>
-      <div id="orderIdBox"></div>
-      <div class="modal-buttons">
-          <button id="copyOrderId">نسخ الرقم</button>
-          <button id="closeModal">حسناً</button>
+        <form id="addProductForm">
+          <label>اسم المنتج:</label>
+          <input type="text" id="productName" placeholder="اكتب اسم المنتج" required />
+
+          <label>لوجو المنتج الخاص (اختياري):</label>
+          <input type="url" id="productCustomLogo" placeholder="رابط اللوجو (يظهر في صفحة الزبون)" />
+
+          <label>وصف المنتج (قطع نصية وصور):</label>
+          <div id="descBuilder">
+             <div id="descBlocksContainer"></div>
+             <div class="builder-controls">
+                <button type="button" id="addDescTextBtn">+ نص</button>
+                <button type="button" id="addDescImgBtn">+ صورة</button>
+             </div>
+          </div>
+
+          <label>أيقونات المنتج:</label>
+          <div id="iconBuilder">
+            <div id="iconBlocksContainer"></div>
+            <div class="builder-controls">
+              <button type="button" id="addIconBtn">+ إضافة أيقونة</button>
+            </div>
+          </div>
+
+          <label>أسعار المنتج:</label>
+          <div style="display: flex; gap: 10px;">
+              <input type="number" id="productPurchasePrice" placeholder="سعر الشراء" step="0.01" required />
+              <input type="number" id="productOldPrice" placeholder="السعر القديم" step="0.01" />
+          </div>
+          <input type="number" id="productNewPrice" placeholder="السعر الجديد (سعر البيع)" step="0.01" style="margin-top: 10px;" required />
+          
+          <label>صور المعرض (السلايدر):</label>
+          <div id="imagesContainer"></div>
+          <button type="button" id="addImageBtn">➕ صورة إضافية</button>
+          
+          <button type="submit" id="addProductButton">💾 حفظ المنتج</button>
+        </form>
       </div>
     </div>
-</div>
-<!-- الزر الثابت في أسفل الشاشة -->
-<div id="floatingOrderBtn">
-    <button id="floatingConfirmBtn">تأكيد الطلب 🚀</button>
-</div>
+
+    <div id="productsContainer" class="products-grid">
+      <p class="loading-message">جاري تحميل المنتجات...</p>
+    </div>
+  </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js ";
-import { getDatabase, ref, get, child, push, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js ";
+  const firebaseConfig = {
+    apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
+    authDomain: "myestore-34f65.firebaseapp.com",
+    databaseURL: "https://myestore-34f65-default-rtdb.firebaseio.com",
+    projectId: "myestore-34f65",
+    storageBucket: "myestore-34f65.firebasestorage.app",
+    messagingSenderId: "14078917211",
+    appId: "1:14078917211:web:a48eab2a7396c094f7dd7e",
+    measurementId: "G-9181DX0XNJ"
+  };
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
-  authDomain: "myestore-34f65.firebaseapp.com",
-  databaseURL: "https://myestore-34f65-default-rtdb.firebaseio.com",
-  projectId: "myestore-34f65",
-  storageBucket: "myestore-34f65.appspot.com",
-  messagingSenderId: "14078917211",
-  appId: "1:14078917211:web:a48eab2a7396c094f7dd7e",
-  measurementId: "G-9181DX0XNJ"
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+  import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+  const auth = getAuth(app);
+  const productsRef = ref(database, 'products');
+
+  const form = document.getElementById('addProductForm');
+  const productsContainer = document.getElementById('productsContainer');
+  const nameInput = document.getElementById('productName');
+  const customLogoInput = document.getElementById('productCustomLogo'); 
+  const descBlocksContainer = document.getElementById('descBlocksContainer'); 
+  const addDescTextBtn = document.getElementById('addDescTextBtn'); 
+  const addDescImgBtn = document.getElementById('addDescImgBtn'); 
+  const purchasePriceInput = document.getElementById('productPurchasePrice');
+  const oldPriceInput = document.getElementById('productOldPrice');
+  const newPriceInput = document.getElementById('productNewPrice');
+  const imagesContainer = document.getElementById('imagesContainer');
+  const addImageBtn = document.getElementById('addImageBtn');
+  const addProductButton = document.getElementById('addProductButton');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const modal = document.getElementById('addProductModal');
+  const openModalBtn = document.getElementById('openAddProductModal');
+  const closeModal = document.getElementById('closeModal');
+  const searchInput = document.getElementById('searchInput');
+  const iconBlocksContainer = document.getElementById('iconBlocksContainer');
+  const addIconBtn = document.getElementById('addIconBtn');
+
+  let currentProductsData = {};
+  let searchKeyword = "";
+  let editingProductId = null;
+  let userAuthenticated = false;
+
+  // --- وصف المنتج ---
+  function addDescBlock(type, value = '') {
+      const div = document.createElement('div');
+      div.className = 'desc-block';
+      div.dataset.type = type;
+      let inputHtml = '';
+      if (type === 'text') {
+          inputHtml = `<textarea placeholder="فقرة نصية..." rows="2" style="resize:vertical;">${value}</textarea>`;
+      } else {
+          inputHtml = `<input type="url" placeholder="رابط صورة الوصف..." value="${value}">`;
+      }
+      div.innerHTML = `
+          <span style="font-size:20px;">${type === 'text' ? '📝' : '🖼️'}</span>
+          ${inputHtml}
+          <button type="button" class="remove-block" title="حذف هذه الفقرة">×</button>
+      `;
+      div.querySelector('.remove-block').addEventListener('click', () => div.remove());
+      descBlocksContainer.appendChild(div);
+  }
+  addDescTextBtn.addEventListener('click', () => addDescBlock('text'));
+  addDescImgBtn.addEventListener('click', () => addDescBlock('image'));
+
+  // --- أيقونات المنتج ---
+  function addIconBlock(iconUrl = '', text = '') {
+    const div = document.createElement('div');
+    div.className = 'icon-block';
+    div.innerHTML = `
+      <input type="url" class="icon-url" placeholder="رابط الأيقونة" value="${iconUrl}" required style="width:150px;">
+      <input type="text" class="icon-text" placeholder="النص المرافق" value="${text}">
+      <button type="button" class="remove-icon" title="حذف الأيقونة">×</button>
+      <img src="${iconUrl}" class="icon-preview" style="height:30px; margin-left:5px;">
+    `;
+    const urlInput = div.querySelector('.icon-url');
+    const imgPreview = div.querySelector('.icon-preview');
+    urlInput.addEventListener('input', () => { imgPreview.src = urlInput.value; });
+    div.querySelector('.remove-icon').addEventListener('click', () => div.remove());
+    iconBlocksContainer.appendChild(div);
+  }
+  addIconBtn.addEventListener('click', () => addIconBlock());
+
+  // --- صور المعرض مع زر حذف ---
+  function addImageInput(value = '') {
+    const row = document.createElement('div');
+    row.className = 'image-row';
+    row.innerHTML = `
+      <input type="url" class="productImageInput" placeholder="رابط الصورة" value="${value}" required>
+      <button type="button" class="remove-image">×</button>
+    `;
+    row.querySelector('.remove-image').addEventListener('click', () => row.remove());
+    imagesContainer.appendChild(row);
+  }
+
+  addImageBtn.addEventListener('click', () => { if (!userAuthenticated) return; addImageInput(); });
+
+  // --- فتح وغلق المودال ---
+  openModalBtn.addEventListener('click', () => { resetForm(); modal.classList.remove('hidden'); });
+  closeModal.addEventListener('click', () => modal.classList.add('hidden'));
+  window.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+
+  // --- التحقق من تسجيل الدخول ---
+  onAuthStateChanged(auth, (user) => {
+    if (user) { userAuthenticated = true; logoutBtn.style.display = 'block'; } 
+    else { userAuthenticated = false; logoutBtn.style.display = 'none'; window.location.href = 'admin-login.html'; }
+  });
+  logoutBtn.addEventListener('click', async () => { await signOut(auth); window.location.href = 'admin-login.html'; });
+
+  // --- عرض المنتجات ---
+  const renderProducts = (productsData) => {
+    if (!userAuthenticated) return;
+    productsContainer.innerHTML = '';
+    currentProductsData = productsData || {};
+    const filteredProducts = {};
+    Object.entries(currentProductsData).forEach(([id, product]) => {
+      if (!product) return;
+      if (searchKeyword && searchKeyword.length > 0) {
+        let descText = Array.isArray(product.description) ? product.description.map(b => b.val).join(' ') : product.description || '';
+        const concat = [(product.name||''), descText, (product.oldPrice||''), (product.newPrice||'')].join(' ').toLowerCase();
+        if (!concat.includes(searchKeyword.toLowerCase())) return;
+      }
+      filteredProducts[id] = product;
+    });
+
+    if (Object.keys(filteredProducts).length > 0) {
+      Object.entries(filteredProducts).forEach(([id, product]) => {
+        const div = document.createElement('div');
+        div.className = 'product-card';
+        div.setAttribute('data-id', id);
+        const productLink = `product-detail.html?id=${id}`;
+        const images = Array.isArray(product.images) && product.images.length > 0 ? product.images : (product.image?[product.image]:['https://via.placeholder.com/150']);
+        const imageGallery = images.map(src => `<img src="${src}" class="product-image" alt="img">`).join('');
+        let shortDesc = "";
+        if(Array.isArray(product.description)) { const firstText = product.description.find(b => b.type==='text'); shortDesc = firstText?firstText.val:"(وصف مصور)"; } 
+        else { shortDesc = product.description||'لا يوجد وصف.'; }
+        if(shortDesc.length>50) shortDesc=shortDesc.substring(0,50)+"...";
+        const oldPrice = product.oldPrice?`${parseFloat(product.oldPrice).toFixed(2)} دج`:'';
+        const newPrice = product.newPrice?`${parseFloat(product.newPrice).toFixed(2)} دج`:'';
+        const purchasePrice = product.purchasePrice?`${parseFloat(product.purchasePrice).toFixed(2)} دج`:'';
+        const logoHtml = product.customLogo?`<img src="${product.customLogo}" style="height:30px; display:block; margin:0 auto 5px;" title="لوجو مخصص">`:'';
+        div.innerHTML = `
+          ${logoHtml}
+          <div class="product-gallery">${imageGallery}</div>
+          <div class="product-info">
+            <h3>${product.name||'منتج'}</h3>
+            <p style="font-size:0.9em; color:#666;">${shortDesc}</p>
+            <p class="price">
+              ${oldPrice?`<span class="old-price">${oldPrice}</span>`:''}
+              <span class="new-price">${newPrice}</span>
+            </p>
+            ${product.purchasePrice?`<p style="font-size:0.8em; color:#555;">سعر الشراء: ${purchasePrice}</p>`:''}
+            <p class="share-link"><a href="${productLink}" target="_blank">🔗 معاينة الصفحة</a></p>
+          </div>
+          <div class="product-actions">
+            <button class="edit-btn" data-id="${id}">تعديل</button>
+            <button class="delete-btn" data-id="${id}">حذف</button>
+          </div>
+        `;
+        productsContainer.appendChild(div);
+      });
+
+      document.querySelectorAll('.edit-btn').forEach(btn =>
+        btn.addEventListener('click', e => {
+          const id = e.target.dataset.id;
+          editProduct(id, currentProductsData[id]);
+          modal.classList.remove('hidden');
+        })
+      );
+
+      document.querySelectorAll('.delete-btn').forEach(btn =>
+        btn.addEventListener('click', e => deleteProduct(e.target.dataset.id))
+      );
+    } else { productsContainer.innerHTML='<p class="loading-message">لا توجد منتجات.</p>'; }
+  };
+
+  onValue(productsRef, snapshot => { if(userAuthenticated) renderProducts(snapshot.val()); });
+
+  // --- حفظ / تعديل المنتج ---
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!userAuthenticated) return;
+    const name = nameInput.value.trim();
+    const customLogo = customLogoInput.value.trim();
+
+    const descBlocks = [];
+    const blocks = descBlocksContainer.querySelectorAll('.desc-block');
+    blocks.forEach(blk => {
+        const type = blk.dataset.type;
+        const val = type==='text'?blk.querySelector('textarea').value:blk.querySelector('input').value;
+        if(val.trim()) descBlocks.push({ type, val });
+    });
+    if(descBlocks.length===0) descBlocks.push({type:'text', val:''});
+
+    const iconBlocks = iconBlocksContainer.querySelectorAll('.icon-block');
+    const iconsData = Array.from(iconBlocks).map(b=>({
+      icon: b.querySelector('.icon-url').value,
+      text: b.querySelector('.icon-text').value
+    }));
+
+    const purchasePrice = purchasePriceInput.value.trim();
+    const oldPrice = oldPriceInput.value.trim();
+    const newPrice = newPriceInput.value.trim();
+    const imageInputs = document.querySelectorAll('.productImageInput');
+    const images = Array.from(imageInputs).map(i => i.value.trim()).filter(Boolean);
+
+    if(!name || !purchasePrice || !newPrice || images.length===0){
+      alert("يرجى ملء الحقول الأساسية (الاسم، السعر، وصورة واحدة)");
+      return;
+    }
+
+    const productData = {
+      name,
+      customLogo: customLogo || null,
+      description: descBlocks,
+      icons: iconsData,
+      purchasePrice: parseFloat(purchasePrice),
+      oldPrice: oldPrice || null,
+      newPrice: parseFloat(newPrice),
+      images,
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      if(editingProductId) { await update(ref(database,'products/'+editingProductId), productData); alert("تم التعديل!"); }
+      else { await push(productsRef, productData); alert("تم الحفظ!"); }
+      modal.classList.add('hidden');
+      resetForm();
+    } catch(error){ alert("خطأ: "+error.message); }
+  });
+
+  // تعديل المنتج
+const editProduct = (id, product) => {
+  editingProductId = id;
+  nameInput.value = product.name || '';
+  customLogoInput.value = product.customLogo || '';
+  
+  // إعادة بناء وصف المنتج
+  descBlocksContainer.innerHTML = '';
+  if (Array.isArray(product.description)) {
+    product.description.forEach(blk => addDescBlock(blk.type, blk.val));
+  } else if (product.description) {
+    addDescBlock('text', product.description);
+  }
+  
+  // إعادة بناء أيقونات المنتج
+  iconBlocksContainer.innerHTML = '';
+  if (Array.isArray(product.icons)) {
+    product.icons.forEach(ic => addIconBlock(ic.icon, ic.text));
+  }
+  
+  // إعادة بناء صور المعرض
+  imagesContainer.innerHTML = '';
+  const imgs = Array.isArray(product.images) ? product.images : (product.image ? [product.image] : []);
+  imgs.forEach(url => addImageInput(url));
+  
+  addProductButton.textContent = '💾 حفظ التعديلات';
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const contactFooter = document.querySelector('.contact-footer .contact-container');
-
-// ============================================================
-// 🟢 1. إعداد فيسبوك بيكسل (Facebook Pixel Setup)
-// ============================================================
-
-// تعريف الدالة الأساسية (Loader)
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-
-let globalPixelId = null; // متغير لحفظ الآيدي
-
-// جلب Pixel ID من قاعدة البيانات وتشغيله
-onValue(ref(db, 'settings/pixel_id'), (snapshot) => {
-    if (snapshot.exists()) {
-        const pixelId = snapshot.val();
-        if(pixelId && pixelId.trim() !== "") {
-            globalPixelId = pixelId;
-            fbq('init', pixelId);
-            fbq('track', 'PageView');
-            console.log("✅ Facebook Pixel initialized: " + pixelId);
-        }
-    }
-});
-// ============================================================
-
-
-// جلب رقم الهاتف
-onValue(ref(db, 'settings/contactPhone'), (snapshot) => {
-    if (snapshot.exists()) {
-        const phone = snapshot.val();
-        contactFooter.innerHTML = `
-            <span>📞 اتصل بنا: </span>
-            <a href="tel:${phone}">${phone}</a>
-        `;
-    }
-});
-
-// ============================================================
-// 🟢 كود تتبع الزوار (الجزء الأول: التسجيل في قاعدة البيانات)
-// ============================================================
-const presenceRef = ref(db, "site_presence");
-const myCon = push(presenceRef);
-onDisconnect(myCon).remove();
-set(myCon, {
-    timestamp: Date.now(),
-    page: window.location.href
-});
-// ============================================================
-
-const container = document.getElementById('productDetailContainer');
-const previewModal = document.getElementById('imagePreviewModal');
-const previewImage = document.getElementById('previewImage');
-const closePreview = document.getElementById('closePreview');
-const storeLogoImg = document.getElementById('storeLogo');
-
-let currentProductId = null;
-let currentProductPrice = 0;
-let shippingZones = []; 
-
-const shippingRef = ref(db, 'shipping_zones');
-onValue(shippingRef, (snapshot) => {
-    shippingZones = [];
-    if (snapshot.exists()) {
-        snapshot.forEach((childSnapshot) => { shippingZones.push(childSnapshot.val()); });
-    }
-});
-
-function getProductIdFromUrl() {
-  return new URLSearchParams(window.location.search).get('id');
-}
-
-async function fetchProductDetails() {
-  const productId = getProductIdFromUrl();
-  if (!productId) { container.innerHTML = '<p class="error-text">المنتج غير موجود.</p>'; return; }
-  currentProductId = productId;
-
+// حذف المنتج
+const deleteProduct = async (id) => {
+  if (!confirm("هل تريد حذف هذا المنتج؟")) return;
   try {
-    const snapshot = await get(child(ref(db, 'products'), productId));
-    if (!snapshot.exists()) { container.innerHTML = '<p class="error-text">المنتج غير موجود.</p>'; return; }
+    await remove(ref(database, 'products/' + id));
+  } catch (error) {
+    alert("فشل الحذف: " + error.message);
+  }
+};
 
-    const product = snapshot.val();
-    currentProductPrice = parseFloat(product.newPrice);
-    
-    // 🟢 2. إرسال حدث مشاهدة المحتوى (ViewContent) للبيكسل
-    // نستخدم Timeout بسيط لضمان أن الآيدي قد تم جلبه من القاعدة
-    setTimeout(() => {
-        if (typeof fbq !== 'undefined' && globalPixelId) {
-            fbq('track', 'ViewContent', { 
-                content_name: product.name,
-                content_ids: [productId],
-                content_type: 'product',
-                value: currentProductPrice,
-                currency: 'DZD'
-            });
-        }
-    }, 1500);
-    // ----------------------------------------------------
+// إعادة ضبط النموذج
+const resetForm = () => {
+  form.reset();
+  editingProductId = null;
+  descBlocksContainer.innerHTML = '';
+  iconBlocksContainer.innerHTML = '';
+  addProductButton.textContent = '💾 حفظ المنتج';
+  imagesContainer.innerHTML = '';
+  addImageInput(); // إضافة حقل الصورة الأول الافتراضي
+};
 
-    if (product.customLogo && product.customLogo.trim() !== "") {
-        storeLogoImg.src = product.customLogo;
-    } else {
-        onValue(ref(db, 'settings/logo'), (snap) => {
-            if(snap.exists()) storeLogoImg.src = snap.val();
-            else storeLogoImg.src = "https://via.placeholder.com/500x120?text=Welcome ";
-        });
-    }
+// البحث في المنتجات
+searchInput.addEventListener('input', (e) => {
+  searchKeyword = e.target.value.trim().toLowerCase();
+  renderProducts(currentProductsData);
+});
 
-    const images = Array.isArray(product.images) ? product.images : [product.images || 'default.jpg'];
-    const swiperSlides = images.map(src => `<div class="swiper-slide"><img src="${src}" alt="صورة"></div>`).join('');
+document.addEventListener('DOMContentLoaded', resetForm);
 
-    const wilayas = [
-      "أدرار","الشلف","الأغواط","أم البواقي","باتنة","بجاية","بسكرة","بشار","البليدة","البويرة","تمنراست","تبسة","تلمسان","تيارت","تيزي وزو","الجزائر","الجلفة","جيجل","سطيف","سعيدة","سكيكدة","سيدي بلعباس","عنابة","قالمة","قسنطينة","المدية","مستغانم","المسيلة","معسكر","ورقلة","وهران","البيض","إليزي","برج بوعريريج","بومرداس","الطارف","تندوف","تيسمسيلت","الوادي","خنشلة","سوق أهراس","تيبازة","ميلة","عين الدفلى","النعامة","عين تموشنت","غرداية","غليزان","تيميمون","برج باجي مختار","أولاد جلال","بني عباس","إن صالح","إن قزام","تقرت","جانت","المغير","المنيعة"
-    ];
-    const wilayaOptions = wilayas.map(w => `<option value="${w}">${w}</option>`).join('');
-
-    let descriptionHTML = '';
-    if (Array.isArray(product.description)) {
-        product.description.forEach(block => {
-            if (block.type === 'text') {
-                descriptionHTML += `<p>${block.val}</p>`;
-            } else if (block.type === 'image') {
-                descriptionHTML += `<img src="${block.val}" alt="توضيح">`;
-            }
-        });
-    } else {
-        descriptionHTML = `<p>${product.description || 'لا يوجد وصف.'}</p>`;
-    }
-
-    container.innerHTML = `
-      <div class="swiper mySwiper"><div class="swiper-wrapper">${swiperSlides}</div><div class="swiper-pagination"></div></div>
-      
-      <div class="product-header">
-        <h2>${product.name}</h2>
-        <div class="price-badge">
-            ${Number(product.newPrice).toLocaleString()} دج
-            ${product.oldPrice ? `<small>${Number(product.oldPrice).toLocaleString()}</small>` : ''}
-        </div>
-        
-        <!-- 🟢 مكان ظهور العداد -->
-        <div id="liveViewersWrapper" style="display: none; text-align: center; margin-top: 10px; color: #c0392b; font-weight: bold;">
-            <span style="animation: pulse 1.5s infinite;">●</span> 
-            يشاهد المنتج الآن: <span id="liveViewersCount">0</span> أشخاص
-        </div>
-        <!-- ------------------------------ -->
-
-      </div>
-
-      <div class="compact-card" id="orderCard">
-        <div class="card-header">اطلب الآن 👇</div>
-        
-        <div class="input-wrapper">
-            <i class="fas fa-phone input-icon"></i>
-            <input type="tel" id="phone" placeholder="رقم الهاتف" dir="ltr" style="text-align:right;">
-        </div>
-
-        <div class="input-wrapper">
-            <i class="fas fa-user input-icon"></i>
-            <input type="text" id="fullName" placeholder="الاسم واللقب">
-        </div>
-
-        <div class="row-dual">
-            <div class="col-half">
-                <select id="wilaya">
-                    <option value="">اختر الولاية</option>
-                    ${wilayaOptions}
-                </select>
-            </div>
-            <div class="col-half">
-                <select id="deliveryType">
-                    <option value="المنزل">🏠 توصيل للمنزل</option>
-                    <option value="مكتب الشركة">🏢 استلام مكتب</option>
-                </select>
-            </div>
-        </div>
-        
-        <div class="input-wrapper">
-            <i class="fas fa-map-marker-alt input-icon"></i>
-            <input type="text" id="address" placeholder="البلدية / العنوان">
-        </div>
-
-        <div class="price-summary">
-            <div class="total-row">
-                <span>المجموع:</span>
-                <span id="summaryTotalPrice" class="final-price">0 دج</span>
-            </div>
-            <small id="shippingText" class="ship-note">(الشحن غير محدد)</small>
-        </div>
-
-        <div class="action-bar">
-            <div class="qty-box">
-                <button type="button" id="increaseQty">+</button>
-                <span id="quantityValue">1</span>
-                <button type="button" id="decreaseQty">-</button>
-            </div>
-            <!-- ✅ الزر المتحرك -->
-            <button id="confirmOrderBtn">
-                تأكيد الطلب 🚀
-            </button>
-        </div>
-      </div>
-
-      <div class="desc-section">
-        <h3>تفاصيل المنتج</h3>
-        <div class="desc-content">
-            ${descriptionHTML}
-        </div>
-      </div>
-
-      <!-- ✅ قسم سياسات المتجر -->
-      <div id="storePolicySection" class="store-policy-section" style="display:none;">
-        <h3>📜 سياسات المتجر</h3>
-        <div id="policyContent" class="policy-content"></div>
-      </div>
-
-      <!-- قسم الأيقونات -->
-      ${product.icons && Array.isArray(product.icons) && product.icons.length > 0 ? `
-      <div class="product-icons-section">
-        <div class="product-icons-grid">
-          ${product.icons.map(ic => `
-            <div class="icon-item">
-              <img src="${ic.icon || ''}" alt="أيقونة">
-              <span>${ic.text || ''}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-      ` : ''}
-
-      <div class="reviews-section">
-         <h3>التقييمات</h3>
-         <!-- ✅ خانة التعليق -->
-         <div id="postOrderReview">
-            <h4 style="text-align:center; color:#27ae60; margin:0 0 10px;">🎉 شكراً لطلبك! ما هو تقييمك للمنتج؟</h4>
-            
-            <div class="stars-box" id="reviewStars">
-                <i class="fas fa-star" data-rating="1"></i>
-                <i class="fas fa-star" data-rating="2"></i>
-                <i class="fas fa-star" data-rating="3"></i>
-                <i class="fas fa-star" data-rating="4"></i>
-                <i class="fas fa-star" data-rating="5"></i>
-            </div>
-            
-            <div class="review-input-group">
-                <input type="text" id="reviewName" placeholder="اسمك (سيظهر مع التعليق)">
-            </div>
-            <div class="review-input-group">
-                <textarea id="reviewText" rows="3" placeholder="اكتب رأيك بصراحة..."></textarea>
-            </div>
-            <button id="submitReviewBtn" style="width:100%; padding:10px; background:#27ae60; color:white; border:none; border-radius:50px; cursor:pointer;">إرسال التقييم</button>
-         </div>
-
-         <div id="commentsList">جاري التحميل...</div>
-      </div>
-    `;
-
-    new Swiper(".mySwiper", { pagination: { el: ".swiper-pagination", clickable: true } });
-    
-    document.querySelectorAll('.swiper-slide img').forEach(img => {
-      img.addEventListener('click', () => { previewImage.src = img.src; previewModal.classList.add('active'); });
-    });
-    document.querySelectorAll('.desc-content img').forEach(img => {
-      img.addEventListener('click', () => { previewImage.src = img.src; previewModal.classList.add('active'); });
-    });
-
-    closePreview.addEventListener('click', () => previewModal.classList.remove('active'));
-    previewModal.addEventListener('click', e => { if(e.target === previewModal) previewModal.classList.remove('active'); });
-
-    // ================== ✅ جلب سياسات المتجر ==================
-    const policySection = document.getElementById('storePolicySection');
-    const policyContent = document.getElementById('policyContent');
-
-    onValue(ref(db, 'policies'), (snapshot) => {
-      if (snapshot.exists()) {
-        const policies = snapshot.val();
-        let policyHTML = '';
-        for (const id in policies) {
-          const p = policies[id];
-          if (p.title && p.content) {
-            policyHTML += `
-  <div class="policy-item">
-    <h4 class="policy-title">${p.title}</h4>
-    <p class="policy-body" style="display:none;">${p.content}</p>
-  </div>
-`;
-          }
-        }
-        if (policyHTML) {
-          policyContent.innerHTML = policyHTML;
-          policySection.style.display = 'block';
-          const titles = policyContent.querySelectorAll('.policy-title');
-          titles.forEach(title => {
-              title.addEventListener('click', () => {
-                  const body = title.nextElementSibling;
-                  body.style.display = (body.style.display === "none") ? "block" : "none";
-              });
-          });
-        } else {
-          policySection.style.display = 'none';
-        }
-      } else {
-        policySection.style.display = 'none';
-      }
-    });
-
-    const confirmBtn = document.getElementById("confirmOrderBtn");
-    const qtyVal = document.getElementById("quantityValue");
-    const wilayaSel = document.getElementById("wilaya");
-    const delSel = document.getElementById("deliveryType");
-    let qty = 1;
-    let shipPrice = 0;
-
-    function updatePrice() {
-        const pPrice = currentProductPrice * qty;
-        
-        const zone = shippingZones.find(z => z.wilayas && z.wilayas.includes(wilayaSel.value));
-        if (zone) {
-            shipPrice = (delSel.value === "المنزل") ? (zone.homePrice || 0) : (zone.deskPrice || 0);
-            document.getElementById("shippingText").textContent = `(+${shipPrice} دج توصيل)`;
-            document.getElementById("shippingText").style.color = "#27ae60";
-        } else {
-            shipPrice = 0;
-            document.getElementById("shippingText").textContent = wilayaSel.value ? "(توصيل غير محدد)" : "(اختر الولاية لحساب التوصيل)";
-            document.getElementById("shippingText").style.color = "#7f8c8d";
-        }
-        
-        document.getElementById("summaryTotalPrice").textContent = (pPrice + shipPrice).toLocaleString() + " دج";
-    }
-
-    document.getElementById("decreaseQty").addEventListener("click", () => { if(qty>1) { qty--; qtyVal.textContent = qty; updatePrice(); }});
-    document.getElementById("increaseQty").addEventListener("click", () => { qty++; qtyVal.textContent = qty; updatePrice(); });
-    wilayaSel.addEventListener("change", updatePrice);
-    delSel.addEventListener("change", updatePrice);
-    updatePrice();
-
-    confirmBtn.addEventListener("click", async () => {
-        const load = document.getElementById("loadingScreen");
-        const ph = document.getElementById("phone").value.trim();
-        const nm = document.getElementById("fullName").value.trim();
-        const wl = document.getElementById("wilaya").value;
-        const ad = document.getElementById("address").value.trim();
-
-        if(!ph || !nm || !wl || !ad) { alert("⚠️ يرجى ملء جميع الخانات المطلوبة!"); return; }
-        
-        load.classList.remove("hidden");
-        try {
-            const refOrd = push(ref(db, "orders"));
-            
-            // حساب السعر النهائي لإرساله للبيكسل وقاعدة البيانات
-            const finalTotal = (currentProductPrice * qty) + shipPrice;
-
-            await set(refOrd, {
-                id: refOrd.key,
-                productId: productId,
-                productName: product.name,
-                productPrice: currentProductPrice,
-                quantity: qty,
-                shippingPrice: shipPrice,
-                totalPrice: finalTotal,
-                customerName: nm,
-                customerPhone: ph,
-                customerWilaya: wl,
-                customerAddress: ad,
-                deliveryOption: delSel.value,
-                timestamp: Date.now(),
-                status: "الطلبات الجديدة"
-            });
-            
-            // 🟢 3. إرسال حدث الشراء (Purchase) للبيكسل
-            if (typeof fbq !== 'undefined' && globalPixelId) {
-                fbq('track', 'Purchase', {
-                    value: finalTotal,      // القيمة الإجمالية
-                    currency: 'DZD',
-                    content_name: product.name,
-                    content_ids: [productId],
-                    content_type: 'product',
-                    num_items: qty
-                });
-                console.log("✅ Purchase event sent to Pixel");
-            }
-            // -------------------------------------------
-
-            load.classList.add("hidden");
-            document.getElementById("thankYouModal").classList.remove("hidden");
-            document.getElementById("orderIdBox").textContent = refOrd.key;
-            document.getElementById("thankYouMessage").innerHTML = `شكراً <b>${nm}</b>، تم تسجيل طلبك بنجاح.`;
-            
-            document.getElementById("postOrderReview").style.display = "block";
-            document.getElementById("reviewName").value = nm; 
-            document.getElementById("postOrderReview").scrollIntoView({behavior: "smooth"});
-
-            document.getElementById("closeModal").onclick = () => {
-                document.getElementById("thankYouModal").classList.add("hidden");
-            };
-            document.getElementById("copyOrderId").onclick = () => { navigator.clipboard.writeText(refOrd.key); alert("تم النسخ"); };
-        } catch(e) {
-            console.error(e); alert("خطأ في الاتصال"); load.classList.add("hidden");
-        }
-    });
-    
-    
-    // --- منطق التعليقات ---
-    let selectedRating = 0;
-    const stars = document.querySelectorAll('#reviewStars i');
-    stars.forEach(star => {
-        star.addEventListener('click', () => {
-            selectedRating = parseInt(star.dataset.rating);
-            stars.forEach(s => {
-                if(parseInt(s.dataset.rating) <= selectedRating) s.classList.add('active');
-                else s.classList.remove('active');
-            });
-        });
-    });
-
-    document.getElementById('submitReviewBtn').addEventListener('click', async () => {
-        const rName = document.getElementById('reviewName').value.trim() || "زبون";
-        const rText = document.getElementById('reviewText').value.trim();
-        
-        if(selectedRating === 0) { alert("يرجى اختيار عدد النجوم ⭐"); return; }
-        if(!rText) { alert("يرجى كتابة تعليق"); return; }
-
-        try {
-            await push(child(ref(db), `reviews/${productId}`), {
-                reviewerName: rName,
-                rating: selectedRating,
-                comment: rText,
-                timestamp: Date.now()
-            });
-            alert("تم إرسال تقييمك، شكراً لك! ❤️");
-            document.getElementById("postOrderReview").style.display = "none";
-        } catch(e) {
-            alert("حدث خطأ، حاول مرة أخرى.");
-        }
-    });
-
-    onValue(ref(db, `reviews/${productId}`), (snap) => {
-        const list = document.getElementById('commentsList');
-        if(snap.exists()) {
-            list.innerHTML = '';
-            snap.forEach(c => {
-                 const r = c.val();
-                 list.innerHTML += `
-                 <div class="review-item" style="border-bottom:1px solid #eee; padding:10px 0;">
-                    <b>${r.reviewerName}</b> 
-                    <span style="color:#f1c40f">${'★'.repeat(r.rating)}</span>
-                    <br><span style="color:#555;">${r.comment}</span>
-                 </div>`;
-            });
-        } else { list.innerHTML = '<p style="text-align:center;color:#999">لا توجد تعليقات بعد.</p>'; }
-    });
-    
-// ================== كود الزر الثابت في الأسفل ==================
-    const orderCard = document.getElementById('orderCard');
-    const floatingBtn = document.getElementById('floatingOrderBtn');
-
-    function checkScroll() {
-        if (!orderCard) return;
-        const rect = orderCard.getBoundingClientRect();
-        if (rect.bottom < 100) { 
-            floatingBtn.classList.add('visible');
-        } else {
-            floatingBtn.classList.remove('visible');
-        }
-    }
-
-    document.getElementById('floatingConfirmBtn').addEventListener('click', () => {
-        orderCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    window.addEventListener('scroll', checkScroll);
-    window.addEventListener('resize', checkScroll);
-
-    const waitForCard = setInterval(() => {
-        if (document.getElementById('orderCard')) {
-            checkScroll();
-            clearInterval(waitForCard);
-        }
-    }, 300);
-
-    setTimeout(checkScroll, 1500); 
-
-    // ============================================================
-    // 🟢 كود تشغيل العداد 
-    // ============================================================
-    onValue(presenceRef, (snapshot) => {
-        let count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
-        if (count < 1) { count = 1; }
-        
-        const wrapper = document.getElementById("liveViewersWrapper");
-        const countSpan = document.getElementById("liveViewersCount");
-        
-        if (wrapper && countSpan) {
-            countSpan.innerText = count;
-            wrapper.style.display = "inline-flex";
-        }
-    });
-    // ============================================================
-
-  } catch(err) { container.innerHTML = 'حدث خطأ غير متوقع.'; console.log(err); }
-}
-
-fetchProductDetails();
+// --- سكربت القائمة الجانبية للموبايل ---
+</script> 
+<script>
+  document.querySelector('.menu-toggle').addEventListener('click', () => {
+    const links = document.querySelector('nav .links');
+    links.classList.toggle('open');
+  });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js "></script>
-
 </body>
-<!-- قسم التواصل أسفل الصفحة -->
-<div class="contact-footer">
-    <div class="contact-container"></div>
-</div>
 </html>
