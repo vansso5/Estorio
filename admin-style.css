@@ -331,7 +331,13 @@ button { font-family: 'Cairo', sans-serif; }
 /* تفاصيل المودال */
 .details-section { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
 .details-section h4 { color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 5px; margin-bottom: 10px; font-size: 1rem; }
-.details-row { margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 0.95rem; }
+.details-row { 
+  margin-bottom: 8px; 
+  display: flex; 
+  justify-content: flex-start; /* هذا التغيير يجعل المعلومات تبدأ من اليمين */
+  gap: 20px; /* هذه المسافة بين العنوان والمعلومة لكي لا يلتصقا ببعض */
+  font-size: 0.95rem; 
+}
 .details-label { color: #7f8c8d; font-weight: 600; }
 
 .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
