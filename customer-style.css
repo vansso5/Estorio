@@ -496,70 +496,72 @@ body {
     box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 /* ================================================= */
-/* 🔴 ستايل عداد الزوار العائم (مثبت في أعلى اليسار) */
+/* 🟢 ستايل عداد الزوار (الوضع الثابت - أسفل السعر) */
 /* ================================================= */
 
 #liveViewersWrapper {
-    /* التثبيت فوق كل العناصر */
-    position: fixed !important;
-    top: 15px !important;       /* المسافة من الأعلى */
-    left: 15px !important;      /* المسافة من اليسار */
-    z-index: 99999 !important;  /* لضمان ظهوره فوق الصور والمنتجات */
-    margin: 0 !important;       /* إلغاء الهوامش القديمة */
+    /* 1. التموضع: نسبي ليظهر في مكانه الطبيعي تحت السعر */
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
     
-    /* تصميم البطاقة */
-    background: rgba(255, 255, 255, 0.95); /* خلفية بيضاء شبه شفافة */
-    backdrop-filter: blur(5px); /* تأثير الزجاج الضبابي */
-    padding: 6px 12px;          /* حشوة صغيرة ليكون الحجم صغيراً وأنيقاً */
-    border-radius: 50px;        /* حواف دائرية بالكامل */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15); /* ظل ناعم */
-    border: 1px solid #ffebee;  /* إطار أحمر خفيف جداً */
-
-    /* تنسيق النص والمحتوى */
-    display: flex !important;   /* لضمان استقامة الأيقونة مع النص */
+    /* توسيط العنصر مع مسافة من الأعلى والأسفل */
+    margin: 10px auto 20px auto !important;
+    width: fit-content !important; /* العرض على قدر المحتوى */
+    
+    /* 2. التصميم: خلفية خضراء باهتة جداً */
+    background-color: #e8f5e9 !important; 
+    border: 1px solid #a5d6a7 !important; /* إطار أخضر ناعم */
+    border-radius: 50px;      /* حواف دائرية بالكامل */
+    padding: 6px 18px !important;
+    
+    /* 3. تنسيق المحتوى */
+    display: inline-flex !important; /* لترتيب النقطة والنص بجانب بعض */
     align-items: center;
-    gap: 6px;
-    font-family: 'Cairo', sans-serif;
-    font-size: 12px;            /* خط صغير ومناسب */
-    color: #333 !important;     /* لون النص أسود غامق */
+    justify-content: center;
+    gap: 8px; /* مسافة بين اللمبة والنص */
     
-    /* حركة ناعمة عند الظهور */
-    animation: slideInDown 0.5s ease-out;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333 !important;
+    z-index: 5;
 }
 
 /* تنسيق الرقم */
 #liveViewersCount {
-    color: #d32f2f;      /* لون أحمر للرقم */
-    font-weight: 800;    /* خط عريض جداً للرقم */
-    font-size: 14px;     /* حجم الرقم أكبر قليلاً من النص */
+    color: #2e7d32 !important; /* أخضر غامق */
+    font-weight: 900;
+    font-size: 15px;
 }
 
-/* تنسيق الأيقونة (العين) وجعلها تنبض */
-#liveViewersWrapper i {
-    color: #d32f2f;
-    font-size: 12px;
-    animation: livePulse 2s infinite; /* تشغيل حركة النبض */
+/* تصميم النقطة المضيئة (LED) */
+#liveViewersWrapper span:first-child {
+    font-size: 0 !important; /* إخفاء الرمز النصي القديم */
+    display: block;
+    width: 10px;
+    height: 10px;
+    background-color: #00e676; /* لون اللمبة أخضر مشع */
+    border-radius: 50%;
+    
+    /* الظل المشع للحالة النشطة */
+    box-shadow: 0 0 6px rgba(0, 230, 118, 0.6);
+    
+    /* حركة النبض */
+    animation: ledBlink 1.2s infinite alternate;
 }
 
-/* حركة نبض العين الحمراء */
-@keyframes livePulse {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.2); opacity: 0.7; }
-    100% { transform: scale(1); opacity: 1; }
+/* حركة النبض للمبة */
+@keyframes ledBlink {
+    from { opacity: 1; transform: scale(1); box-shadow: 0 0 8px #00e676; }
+    to { opacity: 0.6; transform: scale(0.9); box-shadow: 0 0 0 transparent; }
 }
 
-/* حركة دخول العداد من الأعلى */
-@keyframes slideInDown {
-    from { transform: translateY(-50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-/* 📱 تحسين للموبايل (شاشات صغيرة) */
+/* تحسين للموبايل */
 @media (max-width: 480px) {
     #liveViewersWrapper {
-        top: 10px !important;
-        left: 10px !important;
-        padding: 5px 10px;
-        font-size: 11px; /* تصغير الخط قليلاً في الموبايل */
+        font-size: 12px;
+        padding: 5px 14px !important;
+        margin-top: 5px !important;
     }
 }
