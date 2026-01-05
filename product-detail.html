@@ -54,10 +54,9 @@
 <div id="floatingOrderBtn">
     <button id="floatingConfirmBtn">تأكيد الطلب 🚀</button>
 </div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js ";
-
-// تمت إضافة onDisconnect هنا لتفعيل ميزة تتبع الزوار
 import { getDatabase, ref, get, child, push, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js ";
 
 const firebaseConfig = {
@@ -75,6 +74,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const contactFooter = document.querySelector('.contact-footer .contact-container');
 
+// جلب رقم الهاتف
 onValue(ref(db, 'settings/contactPhone'), (snapshot) => {
     if (snapshot.exists()) {
         const phone = snapshot.val();
@@ -84,8 +84,9 @@ onValue(ref(db, 'settings/contactPhone'), (snapshot) => {
         `;
     }
 });
+
 // ============================================================
-// 🟢 كود تتبع الزوار (لكي تعمل الأيقونة في لوحة التحكم)
+// 🟢 كود تتبع الزوار (الجزء الأول: التسجيل في قاعدة البيانات)
 // ============================================================
 const presenceRef = ref(db, "site_presence");
 const myCon = push(presenceRef);
@@ -94,19 +95,7 @@ set(myCon, {
     timestamp: Date.now(),
     page: window.location.href
 });
-onValue(presenceRef, (snapshot) => {
-    const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
-    
-    // محاولة العثور على المكان المخصص للعداد وتحديث الرقم
-    const wrapper = document.getElementById("liveViewersWrapper");
-    const countSpan = document.getElementById("liveViewersCount");
-    
-    if (wrapper && countSpan) {
-        countSpan.innerText = count;
-        // إظهار العداد إذا كان هناك زوار
-        wrapper.style.display = "block";
-    }
-});
+// (تم نقل جزء القراءة onValue للأسفل ليعمل بشكل صحيح)
 // ============================================================
 
 const container = document.getElementById('productDetailContainer');
@@ -182,10 +171,14 @@ async function fetchProductDetails() {
             ${Number(product.newPrice).toLocaleString()} دج
             ${product.oldPrice ? `<small>${Number(product.oldPrice).toLocaleString()}</small>` : ''}
         </div>
+        
+        <!-- 🟢 مكان ظهور العداد (تم وضعه هنا) -->
         <div id="liveViewersWrapper" style="display: none; text-align: center; margin-top: 10px; color: #c0392b; font-weight: bold;">
-    <span style="animation: pulse 1.5s infinite;">●</span> 
-    يشاهد المنتج الآن: <span id="liveViewersCount">0</span> أشخاص
-</div>
+            <span style="animation: pulse 1.5s infinite;">●</span> 
+            يشاهد المنتج الآن: <span id="liveViewersCount">0</span> أشخاص
+        </div>
+        <!-- ------------------------------ -->
+
       </div>
 
       <div class="compact-card" id="orderCard">
@@ -511,6 +504,31 @@ titles.forEach(title => {
     }, 300);
 
     setTimeout(checkScroll, 1500); // احتياطي
+
+    // ============================================================
+    // 🟢 كود تشغيل العداد (تم وضعه هنا في النهاية ليعمل بشكل صحيح)
+    // ============================================================
+    onValue(presenceRef, (snapshot) => {
+        // 1. استخدام let بدلاً من const لتعديل الرقم
+        let count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+        
+        // الشرط: إذا كان العدد أقل من 1 (صفر)، اجعله 1 فوراً
+        if (count < 1) {
+            count = 1;
+        }
+        
+        // تحديث الشاشة
+        const wrapper = document.getElementById("liveViewersWrapper");
+        const countSpan = document.getElementById("liveViewersCount");
+        
+        if (wrapper && countSpan) {
+            countSpan.innerText = count;
+            // استخدام inline-flex للحفاظ على تنسيق النقطة والنص
+            wrapper.style.display = "inline-flex";
+        }
+    });
+    // ============================================================
+
   } catch(err) { container.innerHTML = 'حدث خطأ غير متوقع.'; console.log(err); }
 }
 
