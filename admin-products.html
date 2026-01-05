@@ -8,6 +8,116 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin-style.css" />
   
+  <style>
+    /* تنسيقات التبديل بين الصفحات */
+    .hidden-section { display: none !important; }
+
+    /* حاوية النموذج */
+    .form-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .form-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f4f4f4;
+    }
+
+    .back-btn {
+      background: #eee; color: #333; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-family: 'Cairo', sans-serif; font-weight: bold; transition: 0.2s;
+    }
+    .back-btn:hover { background: #ddd; }
+
+    /* =========================================
+       تنسيقات شبكة الصور الجديدة (Gallery Grid)
+       ========================================= */
+    .gallery-input-wrapper {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        align-items: center;
+    }
+    .gallery-grid {
+        display: grid;
+        /* هذا السطر السحري يجعل الأعمدة تتجاوب تلقائياً: أقل عرض 100 بكسل وتتكرر لملء الصف */
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
+        gap: 10px;
+        background: #fafafa;
+        padding: 10px;
+        border: 1px dashed #ddd;
+        border-radius: 8px;
+        min-height: 120px; /* ارتفاع مبدئي */
+    }
+
+    .gallery-item {
+        position: relative;
+        height: 100px; /* مربع ثابت */
+        border-radius: 8px;
+        overflow: hidden;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+        background: white;
+    }
+    .gallery-item:hover { transform: scale(1.03); }
+
+    .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* لملء المربع دون مط الصورة */
+    }
+
+    .gallery-item .remove-img-btn {
+        position: absolute;
+        top: 2px;
+        left: 2px; /* في الزاوية اليسرى لأننا RTL */
+        background: rgba(220, 53, 69, 0.9);
+        color: white;
+        border: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+    }
+    .gallery-item .remove-img-btn:hover { background: red; }
+
+    /* تنسيقات عناصر البناء (وصف، أيقونات) */
+    .desc-block, .icon-block {
+      background: #f9f9f9; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; align-items: center; gap: 10px;
+    }
+    
+    /* تحسين معاينة صور الوصف والأيقونات */
+    .preview-box {
+        width: 50px; height: 50px; border-radius: 4px; overflow: hidden; border: 1px solid #ddd; flex-shrink: 0; background: #fff;
+    }
+    .preview-box img { width: 100%; height: 100%; object-fit: contain; }
+
+    .remove-btn {
+      background: #ffebee; color: #c62828; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; flex-shrink: 0;
+    }
+
+    .builder-controls { margin-top: 10px; margin-bottom: 20px; }
+    .builder-controls button {
+      background: #e3f2fd; color: #1565c0; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer;
+    }
+    
+    .preview-link { margin-top: 8px; font-size: 0.9em; }
+    .preview-link a { color: #007bff; text-decoration: none; border-bottom: 1px dashed #007bff; }
+    .preview-link a:hover { border-bottom-style: solid; }
+  </style>
 </head>
 <body>
 
@@ -27,62 +137,84 @@
   </nav>
 
   <div class="container page-products"> 
-    <h2>📦 إدارة المنتجات</h2>
-
-    <button id="openAddProductModal" class="floating-btn" title="إضافة منتج جديد">+</button>
-
-    <div class="search-wrapper">
-      <input id="searchInput" class="search-input" type="text" placeholder="🔍 ابحث باسم المنتج أو الوصف...">
+    
+    <!-- القسم الأول: قائمة المنتجات -->
+    <div id="viewProductList">
+        <h2>📦 إدارة المنتجات</h2>
+        <button id="openAddProductBtn" class="floating-btn" title="إضافة منتج جديد">+</button>
+        <div class="search-wrapper">
+            <input id="searchInput" class="search-input" type="text" placeholder="🔍 ابحث باسم المنتج أو الوصف...">
+        </div>
+        <div id="productsContainer" class="products-grid">
+            <p class="loading-message">جاري تحميل المنتجات...</p>
+        </div>
     </div>
 
-    <div id="addProductModal" class="modal hidden">
-      <div class="modal-content">
-        <span class="close-modal-btn" id="closeModal">&times;</span>
-        <h3 style="text-align: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-top: 0;">إضافة / تعديل منتج</h3>
-
-        <form id="addProductForm">
-          <label>اسم المنتج:</label>
-          <input type="text" id="productName" placeholder="اكتب اسم المنتج" required />
-
-          <label>لوجو المنتج الخاص (اختياري):</label>
-          <input type="url" id="productCustomLogo" placeholder="رابط اللوجو (يظهر في صفحة الزبون)" />
-
-          <label>وصف المنتج (قطع نصية وصور):</label>
-          <div id="descBuilder">
-             <div id="descBlocksContainer"></div>
-             <div class="builder-controls">
-                <button type="button" id="addDescTextBtn">+ نص</button>
-                <button type="button" id="addDescImgBtn">+ صورة</button>
-             </div>
-          </div>
-
-          <label>أيقونات المنتج:</label>
-          <div id="iconBuilder">
-            <div id="iconBlocksContainer"></div>
-            <div class="builder-controls">
-              <button type="button" id="addIconBtn">+ إضافة أيقونة</button>
+    <!-- القسم الثاني: نموذج الإضافة/التعديل -->
+    <div id="viewProductForm" class="hidden-section">
+        <div class="form-container">
+            <div class="form-header">
+                <h3 id="formTitle" style="margin:0;">إضافة منتج جديد</h3>
+                <button type="button" id="backToListBtn" class="back-btn">↪ رجوع للقائمة</button>
             </div>
-          </div>
 
-          <label>أسعار المنتج:</label>
-          <div style="display: flex; gap: 10px;">
-              <input type="number" id="productPurchasePrice" placeholder="سعر الشراء" step="0.01" required />
-              <input type="number" id="productOldPrice" placeholder="السعر القديم" step="0.01" />
-          </div>
-          <input type="number" id="productNewPrice" placeholder="السعر الجديد (سعر البيع)" step="0.01" style="margin-top: 10px;" required />
-          
-          <label>صور المعرض (السلايدر):</label>
-          <div id="imagesContainer"></div>
-          <button type="button" id="addImageBtn">➕ صورة إضافية</button>
-          
-          <button type="submit" id="addProductButton">💾 حفظ المنتج</button>
-        </form>
-      </div>
+            <form id="addProductForm">
+                <label>اسم المنتج:</label>
+                <input type="text" id="productName" placeholder="اكتب اسم المنتج" required />
+
+                <label>لوجو المنتج الخاص (اختياري):</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="url" id="productCustomLogo" placeholder="رابط اللوجو" style="flex:1;">
+                    <div class="preview-box" id="logoPreviewBox" style="display:none;"><img id="logoPreviewImg" src=""></div>
+                </div>
+
+                <label>وصف المنتج (قطع نصية وصور):</label>
+                <div id="descBuilder">
+                   <div id="descBlocksContainer"></div>
+                   <div class="builder-controls">
+                      <button type="button" id="addDescTextBtn">+ نص</button>
+                      <button type="button" id="addDescImgBtn">+ صورة</button>
+                   </div>
+                </div>
+
+                <label>أيقونات المنتج:</label>
+                <div id="iconBuilder">
+                  <div id="iconBlocksContainer"></div>
+                  <div class="builder-controls">
+                    <button type="button" id="addIconBtn">+ إضافة أيقونة</button>
+                  </div>
+                </div>
+
+                <label>أسعار المنتج:</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="productPurchasePrice" placeholder="سعر الشراء" step="0.01" required />
+                    <input type="number" id="productOldPrice" placeholder="السعر القديم" step="0.01" />
+                </div>
+                <input type="number" id="productNewPrice" placeholder="السعر الجديد (سعر البيع)" step="0.01" style="margin-top: 10px;" required />
+                
+                <!-- ================= منطقة صور المعرض الجديدة ================= -->
+                <label>صور المعرض (السلايدر):</label>
+                
+                <!-- حقل الإضافة -->
+                <div class="gallery-input-wrapper">
+                    <input type="url" id="newImageUrl" placeholder="ضع رابط الصورة هنا..." style="flex:1;">
+                    <button type="button" id="addNewImageBtn" style="background:#28a745; color:white; border:none; padding:10px 15px; border-radius:5px; cursor:pointer;">إضافة</button>
+                </div>
+
+                <!-- شبكة العرض (Grid) -->
+                <div id="galleryGrid" class="gallery-grid">
+                    <!-- سيتم إضافة الصور هنا تلقائياً -->
+                </div>
+                <p style="font-size:0.8em; color:#888; margin-top:5px;">💡 الصور المضافة تظهر بالأعلى. يمكنك حذفها بالضغط على علامة X.</p>
+                <!-- ========================================================== -->
+
+                <hr style="margin: 30px 0; border:0; border-top:1px solid #eee;">
+                
+                <button type="submit" id="saveButton" style="width:100%; padding:15px; background:#007bff; color:white; border:none; font-size:1.1em; cursor:pointer;">💾 حفظ المنتج</button>
+            </form>
+        </div>
     </div>
 
-    <div id="productsContainer" class="products-grid">
-      <p class="loading-message">جاري تحميل المنتجات...</p>
-    </div>
   </div>
 
 <script type="module">
@@ -106,109 +238,248 @@
   const auth = getAuth(app);
   const productsRef = ref(database, 'products');
 
+  // DOM Elements
+  const viewProductList = document.getElementById('viewProductList');
+  const viewProductForm = document.getElementById('viewProductForm');
+  const openAddProductBtn = document.getElementById('openAddProductBtn');
+  const backToListBtn = document.getElementById('backToListBtn');
+  const formTitle = document.getElementById('formTitle');
   const form = document.getElementById('addProductForm');
   const productsContainer = document.getElementById('productsContainer');
+  const saveButton = document.getElementById('saveButton');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const searchInput = document.getElementById('searchInput');
+
+  // Form Inputs
   const nameInput = document.getElementById('productName');
-  const customLogoInput = document.getElementById('productCustomLogo'); 
-  const descBlocksContainer = document.getElementById('descBlocksContainer'); 
-  const addDescTextBtn = document.getElementById('addDescTextBtn'); 
-  const addDescImgBtn = document.getElementById('addDescImgBtn'); 
+  const customLogoInput = document.getElementById('productCustomLogo');
+  const logoPreviewBox = document.getElementById('logoPreviewBox');
+  const logoPreviewImg = document.getElementById('logoPreviewImg');
+  const descBlocksContainer = document.getElementById('descBlocksContainer');
+  const iconBlocksContainer = document.getElementById('iconBlocksContainer');
   const purchasePriceInput = document.getElementById('productPurchasePrice');
   const oldPriceInput = document.getElementById('productOldPrice');
   const newPriceInput = document.getElementById('productNewPrice');
-  const imagesContainer = document.getElementById('imagesContainer');
-  const addImageBtn = document.getElementById('addImageBtn');
-  const addProductButton = document.getElementById('addProductButton');
-  const logoutBtn = document.getElementById('logoutBtn');
-  const modal = document.getElementById('addProductModal');
-  const openModalBtn = document.getElementById('openAddProductModal');
-  const closeModal = document.getElementById('closeModal');
-  const searchInput = document.getElementById('searchInput');
-  const iconBlocksContainer = document.getElementById('iconBlocksContainer');
+  
+  // Gallery Elements
+  const newImageUrlInput = document.getElementById('newImageUrl');
+  const addNewImageBtn = document.getElementById('addNewImageBtn');
+  const galleryGrid = document.getElementById('galleryGrid');
+
+  const addDescTextBtn = document.getElementById('addDescTextBtn');
+  const addDescImgBtn = document.getElementById('addDescImgBtn');
   const addIconBtn = document.getElementById('addIconBtn');
 
   let currentProductsData = {};
   let searchKeyword = "";
   let editingProductId = null;
   let userAuthenticated = false;
+  let formHasChanges = false;
 
-  // --- وصف المنتج ---
+  // --- مراقبة التغييرات ---
+  form.addEventListener('input', (e) => { 
+      // استثناء حقل إضافة الصورة الجديد من تفعيل "يوجد تغييرات" حتى يتم ضغط زر الإضافة
+      if(e.target !== newImageUrlInput) formHasChanges = true; 
+  });
+
+  // --- لوجو المنتج: معاينة ---
+  customLogoInput.addEventListener('input', () => {
+    const url = customLogoInput.value.trim();
+    if(url){
+        logoPreviewImg.src = url;
+        logoPreviewBox.style.display = 'block';
+    } else {
+        logoPreviewBox.style.display = 'none';
+    }
+  });
+
+  // --- التنقل بين الصفحات ---
+  function showForm(productId = null) {
+    resetForm();
+    editingProductId = productId;
+    formHasChanges = false;
+
+    if (productId && currentProductsData[productId]) {
+        formTitle.textContent = "تعديل المنتج";
+        saveButton.textContent = "💾 حفظ التعديلات";
+        fillFormWithData(currentProductsData[productId]);
+    } else {
+        formTitle.textContent = "إضافة منتج جديد";
+        saveButton.textContent = "💾 حفظ المنتج";
+    }
+
+    viewProductList.classList.add('hidden-section');
+    viewProductForm.classList.remove('hidden-section');
+    window.scrollTo(0, 0);
+  }
+
+  function showList() {
+    if (formHasChanges) {
+        if (!confirm("⚠️ لديك تعديلات غير محفوظة.\nهل أنت متأكد من الرجوع دون حفظ؟")) return;
+    }
+    viewProductList.classList.remove('hidden-section');
+    viewProductForm.classList.add('hidden-section');
+    formHasChanges = false;
+    editingProductId = null;
+  }
+
+  openAddProductBtn.addEventListener('click', () => showForm(null));
+  backToListBtn.addEventListener('click', showList);
+
+  // --- بناء الوصف (Description) ---
   function addDescBlock(type, value = '') {
       const div = document.createElement('div');
       div.className = 'desc-block';
       div.dataset.type = type;
+      
       let inputHtml = '';
-      if (type === 'text') {
-          inputHtml = `<textarea placeholder="فقرة نصية..." rows="2" style="resize:vertical;">${value}</textarea>`;
+      if(type === 'text') {
+          inputHtml = `<textarea placeholder="فقرة نصية..." rows="2" style="resize:vertical; width:100%; border:1px solid #ddd;">${value}</textarea>`;
       } else {
-          inputHtml = `<input type="url" placeholder="رابط صورة الوصف..." value="${value}">`;
+          // صورة الوصف مع معاينة صغيرة
+          inputHtml = `
+            <div style="flex:1; display:flex; gap:10px; align-items:center;">
+                <input type="url" class="desc-img-input" placeholder="رابط صورة الوصف..." value="${value}" style="flex:1;">
+                <div class="preview-box" style="${value?'':'display:none'}"><img src="${value}"></div>
+            </div>
+          `;
       }
+      
       div.innerHTML = `
           <span style="font-size:20px;">${type === 'text' ? '📝' : '🖼️'}</span>
           ${inputHtml}
-          <button type="button" class="remove-block" title="حذف هذه الفقرة">×</button>
+          <button type="button" class="remove-btn" title="حذف">×</button>
       `;
-      div.querySelector('.remove-block').addEventListener('click', () => div.remove());
+
+      // منطق المعاينة لصورة الوصف
+      if(type === 'image') {
+          const inp = div.querySelector('.desc-img-input');
+          const box = div.querySelector('.preview-box');
+          const img = div.querySelector('img');
+          inp.addEventListener('input', () => {
+             if(inp.value){ img.src = inp.value; box.style.display = 'block'; }
+             else { box.style.display = 'none'; }
+             formHasChanges = true;
+          });
+      }
+
+      div.querySelector('.remove-btn').addEventListener('click', () => { div.remove(); formHasChanges = true; });
+      if(type === 'text') div.querySelector('textarea').addEventListener('input', () => formHasChanges = true);
+      
       descBlocksContainer.appendChild(div);
   }
-  addDescTextBtn.addEventListener('click', () => addDescBlock('text'));
-  addDescImgBtn.addEventListener('click', () => addDescBlock('image'));
 
-  // --- أيقونات المنتج ---
+  // --- بناء الأيقونات ---
   function addIconBlock(iconUrl = '', text = '') {
     const div = document.createElement('div');
     div.className = 'icon-block';
     div.innerHTML = `
-      <input type="url" class="icon-url" placeholder="رابط الأيقونة" value="${iconUrl}" required style="width:150px;">
-      <input type="text" class="icon-text" placeholder="النص المرافق" value="${text}">
-      <button type="button" class="remove-icon" title="حذف الأيقونة">×</button>
-      <img src="${iconUrl}" class="icon-preview" style="height:30px; margin-left:5px;">
+      <div class="preview-box"><img src="${iconUrl || 'https://via.placeholder.com/30'}" class="icon-preview"></div>
+      <input type="url" class="icon-url" placeholder="رابط الأيقونة" value="${iconUrl}" style="flex:1;">
+      <input type="text" class="icon-text" placeholder="النص المرافق" value="${text}" style="flex:1;">
+      <button type="button" class="remove-btn">×</button>
     `;
     const urlInput = div.querySelector('.icon-url');
     const imgPreview = div.querySelector('.icon-preview');
-    urlInput.addEventListener('input', () => { imgPreview.src = urlInput.value; });
-    div.querySelector('.remove-icon').addEventListener('click', () => div.remove());
+    
+    urlInput.addEventListener('input', () => { 
+        imgPreview.src = urlInput.value || 'https://via.placeholder.com/30'; 
+        formHasChanges = true; 
+    });
+    div.querySelector('.icon-text').addEventListener('input', () => formHasChanges = true);
+    div.querySelector('.remove-btn').addEventListener('click', () => { div.remove(); formHasChanges = true; });
+    
     iconBlocksContainer.appendChild(div);
   }
-  addIconBtn.addEventListener('click', () => addIconBlock());
 
-  // --- صور المعرض مع زر حذف ---
-  function addImageInput(value = '') {
-    const row = document.createElement('div');
-    row.className = 'image-row';
-    row.innerHTML = `
-      <input type="url" class="productImageInput" placeholder="رابط الصورة" value="${value}" required>
-      <button type="button" class="remove-image">×</button>
-    `;
-    row.querySelector('.remove-image').addEventListener('click', () => row.remove());
-    imagesContainer.appendChild(row);
+  // --- [جديد] نظام شبكة الصور (Gallery Grid) ---
+  
+  // دالة لإضافة مربع صورة للشبكة
+  function addImageToGrid(url) {
+      if(!url) return;
+      
+      const div = document.createElement('div');
+      div.className = 'gallery-item';
+      div.dataset.url = url; // تخزين الرابط في البيانات
+
+      div.innerHTML = `
+          <img src="${url}" onerror="this.src='https://via.placeholder.com/100?text=Error'">
+          <button type="button" class="remove-img-btn" title="حذف الصورة">✕</button>
+      `;
+
+      // زر الحذف
+      div.querySelector('.remove-img-btn').addEventListener('click', () => {
+          div.remove();
+          formHasChanges = true;
+      });
+
+      galleryGrid.appendChild(div);
+      formHasChanges = true;
   }
 
-  addImageBtn.addEventListener('click', () => { if (!userAuthenticated) return; addImageInput(); });
-
-  // --- فتح وغلق المودال ---
-  openModalBtn.addEventListener('click', () => { resetForm(); modal.classList.remove('hidden'); });
-  closeModal.addEventListener('click', () => modal.classList.add('hidden'));
-  window.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
-
-  // --- التحقق من تسجيل الدخول ---
-  onAuthStateChanged(auth, (user) => {
-    if (user) { userAuthenticated = true; logoutBtn.style.display = 'block'; } 
-    else { userAuthenticated = false; logoutBtn.style.display = 'none'; window.location.href = 'admin-login.html'; }
+  // زر "إضافة" بجانب حقل الصور
+  addNewImageBtn.addEventListener('click', () => {
+      const url = newImageUrlInput.value.trim();
+      if (url) {
+          addImageToGrid(url);
+          newImageUrlInput.value = ''; // تفريغ الحقل
+      } else {
+          alert("الرجاء وضع رابط الصورة أولاً");
+      }
   });
-  logoutBtn.addEventListener('click', async () => { await signOut(auth); window.location.href = 'admin-login.html'; });
 
-  // --- عرض المنتجات ---
+  addDescTextBtn.addEventListener('click', () => { addDescBlock('text'); formHasChanges = true; });
+  addDescImgBtn.addEventListener('click', () => { addDescBlock('image'); formHasChanges = true; });
+  addIconBtn.addEventListener('click', () => { addIconBlock(); formHasChanges = true; });
+
+  // --- ملء النموذج بالبيانات ---
+  function fillFormWithData(product) {
+    nameInput.value = product.name || '';
+    
+    customLogoInput.value = product.customLogo || '';
+    if(product.customLogo) { logoPreviewImg.src = product.customLogo; logoPreviewBox.style.display = 'block'; }
+
+    purchasePriceInput.value = product.purchasePrice || '';
+    oldPriceInput.value = product.oldPrice || '';
+    newPriceInput.value = product.newPrice || '';
+
+    // الوصف
+    if (Array.isArray(product.description)) {
+        product.description.forEach(blk => addDescBlock(blk.type, blk.val));
+    } else if (product.description) {
+        addDescBlock('text', product.description);
+    }
+
+    // الأيقونات
+    if (Array.isArray(product.icons)) {
+        product.icons.forEach(ic => addIconBlock(ic.icon, ic.text));
+    }
+
+    // صور المعرض (تعديل جذري)
+    const imgs = Array.isArray(product.images) ? product.images : (product.image ? [product.image] : []);
+    imgs.forEach(url => addImageToGrid(url));
+  }
+
+  function resetForm() {
+    form.reset();
+    descBlocksContainer.innerHTML = '';
+    iconBlocksContainer.innerHTML = '';
+    galleryGrid.innerHTML = ''; // تفريغ الشبكة
+    logoPreviewBox.style.display = 'none';
+  }
+
+  // --- عرض قائمة المنتجات (كما هي) ---
   const renderProducts = (productsData) => {
     if (!userAuthenticated) return;
     productsContainer.innerHTML = '';
     currentProductsData = productsData || {};
+    
     const filteredProducts = {};
     Object.entries(currentProductsData).forEach(([id, product]) => {
       if (!product) return;
-      if (searchKeyword && searchKeyword.length > 0) {
+      if (searchKeyword) {
         let descText = Array.isArray(product.description) ? product.description.map(b => b.val).join(' ') : product.description || '';
-        const concat = [(product.name||''), descText, (product.oldPrice||''), (product.newPrice||'')].join(' ').toLowerCase();
+        const concat = [(product.name||''), descText].join(' ').toLowerCase();
         if (!concat.includes(searchKeyword.toLowerCase())) return;
       }
       filteredProducts[id] = product;
@@ -218,30 +489,21 @@
       Object.entries(filteredProducts).forEach(([id, product]) => {
         const div = document.createElement('div');
         div.className = 'product-card';
-        div.setAttribute('data-id', id);
-        const productLink = `product-detail.html?id=${id}`;
+        
         const images = Array.isArray(product.images) && product.images.length > 0 ? product.images : (product.image?[product.image]:['https://via.placeholder.com/150']);
-        const imageGallery = images.map(src => `<img src="${src}" class="product-image" alt="img">`).join('');
-        let shortDesc = "";
-        if(Array.isArray(product.description)) { const firstText = product.description.find(b => b.type==='text'); shortDesc = firstText?firstText.val:"(وصف مصور)"; } 
-        else { shortDesc = product.description||'لا يوجد وصف.'; }
-        if(shortDesc.length>50) shortDesc=shortDesc.substring(0,50)+"...";
-        const oldPrice = product.oldPrice?`${parseFloat(product.oldPrice).toFixed(2)} دج`:'';
-        const newPrice = product.newPrice?`${parseFloat(product.newPrice).toFixed(2)} دج`:'';
-        const purchasePrice = product.purchasePrice?`${parseFloat(product.purchasePrice).toFixed(2)} دج`:'';
-        const logoHtml = product.customLogo?`<img src="${product.customLogo}" style="height:30px; display:block; margin:0 auto 5px;" title="لوجو مخصص">`:'';
+        const imageGallery = images.slice(0, 3).map(src => `<img src="${src}" class="product-image" alt="img">`).join('');
+        const productLink = `product-detail.html?id=${id}`;
+
         div.innerHTML = `
-          ${logoHtml}
+          ${product.customLogo ? `<img src="${product.customLogo}" style="height:30px; display:block; margin:0 auto 5px;">` : ''}
           <div class="product-gallery">${imageGallery}</div>
           <div class="product-info">
             <h3>${product.name||'منتج'}</h3>
-            <p style="font-size:0.9em; color:#666;">${shortDesc}</p>
             <p class="price">
-              ${oldPrice?`<span class="old-price">${oldPrice}</span>`:''}
-              <span class="new-price">${newPrice}</span>
+              ${product.oldPrice ? `<span class="old-price">${product.oldPrice}</span>` : ''}
+              <span class="new-price">${product.newPrice}</span>
             </p>
-            ${product.purchasePrice?`<p style="font-size:0.8em; color:#555;">سعر الشراء: ${purchasePrice}</p>`:''}
-            <p class="share-link"><a href="${productLink}" target="_blank">🔗 معاينة الصفحة</a></p>
+            <p class="preview-link"><a href="${productLink}" target="_blank">🔗 معاينة الصفحة</a></p>
           </div>
           <div class="product-actions">
             <button class="edit-btn" data-id="${id}">تعديل</button>
@@ -251,52 +513,47 @@
         productsContainer.appendChild(div);
       });
 
-      document.querySelectorAll('.edit-btn').forEach(btn =>
-        btn.addEventListener('click', e => {
-          const id = e.target.dataset.id;
-          editProduct(id, currentProductsData[id]);
-          modal.classList.remove('hidden');
-        })
-      );
-
-      document.querySelectorAll('.delete-btn').forEach(btn =>
-        btn.addEventListener('click', e => deleteProduct(e.target.dataset.id))
-      );
-    } else { productsContainer.innerHTML='<p class="loading-message">لا توجد منتجات.</p>'; }
+      document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', e => showForm(e.target.dataset.id)));
+      document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', e => deleteProduct(e.target.dataset.id)));
+    } else {
+      productsContainer.innerHTML='<p class="loading-message">لا توجد منتجات مطابقة.</p>';
+    }
   };
 
-  onValue(productsRef, snapshot => { if(userAuthenticated) renderProducts(snapshot.val()); });
-
-  // --- حفظ / تعديل المنتج ---
+  // --- حفظ البيانات ---
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!userAuthenticated) return;
+
     const name = nameInput.value.trim();
     const customLogo = customLogoInput.value.trim();
+    const purchasePrice = purchasePriceInput.value.trim();
+    const oldPrice = oldPriceInput.value.trim();
+    const newPrice = newPriceInput.value.trim();
 
+    // تجميع الوصف
     const descBlocks = [];
-    const blocks = descBlocksContainer.querySelectorAll('.desc-block');
-    blocks.forEach(blk => {
+    descBlocksContainer.querySelectorAll('.desc-block').forEach(blk => {
         const type = blk.dataset.type;
-        const val = type==='text'?blk.querySelector('textarea').value:blk.querySelector('input').value;
+        const input = type==='text' ? blk.querySelector('textarea') : blk.querySelector('.desc-img-input');
+        const val = input.value;
         if(val.trim()) descBlocks.push({ type, val });
     });
     if(descBlocks.length===0) descBlocks.push({type:'text', val:''});
 
-    const iconBlocks = iconBlocksContainer.querySelectorAll('.icon-block');
-    const iconsData = Array.from(iconBlocks).map(b=>({
+    // تجميع الأيقونات
+    const iconsData = Array.from(iconBlocksContainer.querySelectorAll('.icon-block')).map(b=>({
       icon: b.querySelector('.icon-url').value,
       text: b.querySelector('.icon-text').value
     }));
 
-    const purchasePrice = purchasePriceInput.value.trim();
-    const oldPrice = oldPriceInput.value.trim();
-    const newPrice = newPriceInput.value.trim();
-    const imageInputs = document.querySelectorAll('.productImageInput');
-    const images = Array.from(imageInputs).map(i => i.value.trim()).filter(Boolean);
+    // تجميع الصور من الشبكة (Gallery Grid)
+    // نجمع الروابط المخزنة في data-url لكل عنصر في الشبكة
+    const galleryItems = galleryGrid.querySelectorAll('.gallery-item');
+    const images = Array.from(galleryItems).map(item => item.dataset.url).filter(Boolean);
 
     if(!name || !purchasePrice || !newPrice || images.length===0){
-      alert("يرجى ملء الحقول الأساسية (الاسم، السعر، وصورة واحدة)");
+      alert("يرجى ملء الحقول الأساسية (الاسم، السعر، وصورة واحدة على الأقل)");
       return;
     }
 
@@ -308,82 +565,53 @@
       purchasePrice: parseFloat(purchasePrice),
       oldPrice: oldPrice || null,
       newPrice: parseFloat(newPrice),
-      images,
-      createdAt: new Date().toISOString()
+      images, // المصفوفة الجديدة
+      updatedAt: new Date().toISOString()
     };
+    if (!editingProductId) productData.createdAt = new Date().toISOString();
 
     try {
-      if(editingProductId) { await update(ref(database,'products/'+editingProductId), productData); alert("تم التعديل!"); }
-      else { await push(productsRef, productData); alert("تم الحفظ!"); }
-      modal.classList.add('hidden');
-      resetForm();
-    } catch(error){ alert("خطأ: "+error.message); }
+      saveButton.disabled = true;
+      saveButton.textContent = "جاري الحفظ...";
+
+      if(editingProductId) {
+        await update(ref(database, 'products/'+editingProductId), productData);
+        alert("تم التعديل بنجاح ✅");
+      } else {
+        await push(productsRef, productData);
+        alert("تمت الإضافة بنجاح ✅");
+      }
+      
+      formHasChanges = false;
+      saveButton.disabled = false;
+      showList();
+
+    } catch(error){
+      alert("خطأ: "+error.message);
+      saveButton.disabled = false;
+      saveButton.textContent = editingProductId ? "💾 حفظ التعديلات" : "💾 حفظ المنتج";
+    }
   });
 
-  // تعديل المنتج
-const editProduct = (id, product) => {
-  editingProductId = id;
-  nameInput.value = product.name || '';
-  customLogoInput.value = product.customLogo || '';
-  
-  // إعادة بناء وصف المنتج
-  descBlocksContainer.innerHTML = '';
-  if (Array.isArray(product.description)) {
-    product.description.forEach(blk => addDescBlock(blk.type, blk.val));
-  } else if (product.description) {
-    addDescBlock('text', product.description);
-  }
-  
-  // إعادة بناء أيقونات المنتج
-  iconBlocksContainer.innerHTML = '';
-  if (Array.isArray(product.icons)) {
-    product.icons.forEach(ic => addIconBlock(ic.icon, ic.text));
-  }
-  
-  // إعادة بناء صور المعرض
-  imagesContainer.innerHTML = '';
-  const imgs = Array.isArray(product.images) ? product.images : (product.image ? [product.image] : []);
-  imgs.forEach(url => addImageInput(url));
-  
-  addProductButton.textContent = '💾 حفظ التعديلات';
-};
+  const deleteProduct = async (id) => {
+    if (!confirm("هل أنت متأكد تماماً من حذف هذا المنتج؟")) return;
+    try { await remove(ref(database, 'products/' + id)); } 
+    catch (error) { alert("فشل الحذف: " + error.message); }
+  };
 
-// حذف المنتج
-const deleteProduct = async (id) => {
-  if (!confirm("هل تريد حذف هذا المنتج؟")) return;
-  try {
-    await remove(ref(database, 'products/' + id));
-  } catch (error) {
-    alert("فشل الحذف: " + error.message);
-  }
-};
-
-// إعادة ضبط النموذج
-const resetForm = () => {
-  form.reset();
-  editingProductId = null;
-  descBlocksContainer.innerHTML = '';
-  iconBlocksContainer.innerHTML = '';
-  addProductButton.textContent = '💾 حفظ المنتج';
-  imagesContainer.innerHTML = '';
-  addImageInput(); // إضافة حقل الصورة الأول الافتراضي
-};
-
-// البحث في المنتجات
-searchInput.addEventListener('input', (e) => {
-  searchKeyword = e.target.value.trim().toLowerCase();
-  renderProducts(currentProductsData);
-});
-
-document.addEventListener('DOMContentLoaded', resetForm);
-
-// --- سكربت القائمة الجانبية للموبايل ---
+  onAuthStateChanged(auth, (user) => {
+    if (user) { userAuthenticated = true; logoutBtn.style.display = 'block'; } 
+    else { window.location.href = 'admin-login.html'; }
+  });
+  logoutBtn.addEventListener('click', async () => { await signOut(auth); window.location.href = 'admin-login.html'; });
+  onValue(productsRef, snapshot => { if(userAuthenticated) renderProducts(snapshot.val()); });
+  searchInput.addEventListener('input', (e) => {
+    searchKeyword = e.target.value.trim().toLowerCase();
+    renderProducts(currentProductsData);
+  });
 </script> 
 <script>
-  document.querySelector('.menu-toggle').addEventListener('click', () => {
-    const links = document.querySelector('nav .links');
-    links.classList.toggle('open');
-  });
+  function toggleMenu() { document.querySelector('nav .links').classList.toggle('open'); }
 </script>
 </body>
 </html>
