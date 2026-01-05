@@ -532,3 +532,105 @@ button { font-family: 'Cairo', sans-serif; }
   border: 2px solid #0062cc;    /* إطار أزرق */
   color: #0062cc;                /* نص أزرق */
 }
+/* =========================================
+تنسيق قسم فيسبوك بيكسل ورقم الهاتف
+========================================= */
+.contact-section, .pixel-section {
+background: #fff;
+padding: 20px;
+border-radius: 10px;
+box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+border: 1px solid #eee;
+margin-top: 20px;
+transition: transform 0.2s ease;
+}
+
+.contact-section:hover, .pixel-section:hover {
+transform: translateY(-3px);
+}
+
+.contact-section h3, .pixel-section h3 {
+margin-top: 0;
+color: #2c3e50;
+border-bottom: 2px solid #f0f2f5;
+padding-bottom: 10px;
+margin-bottom: 15px;
+}
+
+/* حقل الإدخال */
+.contact-section input, .pixel-section input {
+width: 100%;
+padding: 12px;
+border: 1px solid #ddd;
+border-radius: 8px;
+font-family: 'Cairo', sans-serif;
+margin-bottom: 10px;
+box-sizing: border-box; /* لضمان عدم خروج الحقل عن الإطار */
+}
+
+.contact-section input:focus, .pixel-section input:focus {
+border-color: #3498db;
+outline: none;
+box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+/* زر الحفظ */
+.contact-section button, .pixel-section button {
+width: 100%;
+padding: 12px;
+border: none;
+border-radius: 8px;
+font-weight: bold;
+font-family: 'Cairo', sans-serif;
+cursor: pointer;
+transition: background 0.3s;
+color: white;
+}
+
+/* لون زر الهاتف (أخضر) */
+.contact-section button {
+background-color: #27ae60;
+}
+.contact-section button:hover {
+background-color: #219150;
+}
+
+/* لون زر البيكسل (أزرق فيسبوك) */
+.pixel-section button#savePixelBtn {
+background-color: #1877f2;
+}
+.pixel-section button#savePixelBtn:hover {
+background-color: #166fe5;
+}
+
+/* رسالة النجاح */
+.success-msg {
+display: none; /* مخفي افتراضياً */
+background-color: #d4edda;
+color: #155724;
+padding: 10px;
+border-radius: 5px;
+margin-top: 10px;
+text-align: center;
+font-size: 0.9rem;
+border: 1px solid #c3e6cb;
+animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(-10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+/* تحسين شكل المنطقة الخطرة (Delete Zone) */
+.danger-zone {
+border: 1px solid #ffcccc;
+background: #fff5f5;
+}
+.danger-zone .delete-btn {
+background-color: #e74c3c;
+color: white;
+}
+.danger-zone .delete-btn:hover {
+background-color: #c0392b;
+}
