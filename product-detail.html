@@ -82,6 +82,37 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const contactFooter = document.querySelector('.contact-footer .contact-container');
 
+// ============================================================
+// 🟢 1. إعداد فيسبوك بيكسل (Facebook Pixel Setup)
+// ============================================================
+
+// تعريف الدالة الأساسية (Loader)
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+
+let globalPixelId = null; // متغير لحفظ الآيدي
+
+// جلب Pixel ID من قاعدة البيانات وتشغيله
+onValue(ref(db, 'settings/pixel_id'), (snapshot) => {
+    if (snapshot.exists()) {
+        const pixelId = snapshot.val();
+        if(pixelId && pixelId.trim() !== "") {
+            globalPixelId = pixelId;
+            fbq('init', pixelId);
+            fbq('track', 'PageView');
+            console.log("✅ Facebook Pixel initialized: " + pixelId);
+        }
+    }
+});
+// ============================================================
+
+
 // جلب رقم الهاتف
 onValue(ref(db, 'settings/contactPhone'), (snapshot) => {
     if (snapshot.exists()) {
@@ -103,7 +134,6 @@ set(myCon, {
     timestamp: Date.now(),
     page: window.location.href
 });
-// (تم نقل جزء القراءة onValue للأسفل ليعمل بشكل صحيح)
 // ============================================================
 
 const container = document.getElementById('productDetailContainer');
@@ -140,6 +170,21 @@ async function fetchProductDetails() {
     const product = snapshot.val();
     currentProductPrice = parseFloat(product.newPrice);
     
+    // 🟢 2. إرسال حدث مشاهدة المحتوى (ViewContent) للبيكسل
+    // نستخدم Timeout بسيط لضمان أن الآيدي قد تم جلبه من القاعدة
+    setTimeout(() => {
+        if (typeof fbq !== 'undefined' && globalPixelId) {
+            fbq('track', 'ViewContent', { 
+                content_name: product.name,
+                content_ids: [productId],
+                content_type: 'product',
+                value: currentProductPrice,
+                currency: 'DZD'
+            });
+        }
+    }, 1500);
+    // ----------------------------------------------------
+
     if (product.customLogo && product.customLogo.trim() !== "") {
         storeLogoImg.src = product.customLogo;
     } else {
@@ -180,7 +225,7 @@ async function fetchProductDetails() {
             ${product.oldPrice ? `<small>${Number(product.oldPrice).toLocaleString()}</small>` : ''}
         </div>
         
-        <!-- 🟢 مكان ظهور العداد (تم وضعه هنا) -->
+        <!-- 🟢 مكان ظهور العداد -->
         <div id="liveViewersWrapper" style="display: none; text-align: center; margin-top: 10px; color: #c0392b; font-weight: bold;">
             <span style="animation: pulse 1.5s infinite;">●</span> 
             يشاهد المنتج الآن: <span id="liveViewersCount">0</span> أشخاص
@@ -250,13 +295,13 @@ async function fetchProductDetails() {
         </div>
       </div>
 
-      <!-- ✅ قسم سياسات المتجر (يُعرض فقط إذا وُجدت سياسات) -->
+      <!-- ✅ قسم سياسات المتجر -->
       <div id="storePolicySection" class="store-policy-section" style="display:none;">
         <h3>📜 سياسات المتجر</h3>
         <div id="policyContent" class="policy-content"></div>
       </div>
 
-      <!-- قسم الأيقونات (شحن سريع، ضمان، إلخ) - يظهر فقط إذا كان هناك أيقونات -->
+      <!-- قسم الأيقونات -->
       ${product.icons && Array.isArray(product.icons) && product.icons.length > 0 ? `
       <div class="product-icons-section">
         <div class="product-icons-grid">
@@ -272,7 +317,7 @@ async function fetchProductDetails() {
 
       <div class="reviews-section">
          <h3>التقييمات</h3>
-         <!-- ✅ خانة التعليق (مخفية افتراضياً وتظهر بعد الطلب) -->
+         <!-- ✅ خانة التعليق -->
          <div id="postOrderReview">
             <h4 style="text-align:center; color:#27ae60; margin:0 0 10px;">🎉 شكراً لطلبك! ما هو تقييمك للمنتج؟</h4>
             
@@ -309,7 +354,7 @@ async function fetchProductDetails() {
     closePreview.addEventListener('click', () => previewModal.classList.remove('active'));
     previewModal.addEventListener('click', e => { if(e.target === previewModal) previewModal.classList.remove('active'); });
 
-    // ================== ✅ جلب سياسات المتجر من Firebase ==================
+    // ================== ✅ جلب سياسات المتجر ==================
     const policySection = document.getElementById('storePolicySection');
     const policyContent = document.getElementById('policyContent');
 
@@ -325,24 +370,19 @@ async function fetchProductDetails() {
     <h4 class="policy-title">${p.title}</h4>
     <p class="policy-body" style="display:none;">${p.content}</p>
   </div>
-`;policyContent.innerHTML
+`;
           }
         }
         if (policyHTML) {
           policyContent.innerHTML = policyHTML;
-          
           policySection.style.display = 'block';
           const titles = policyContent.querySelectorAll('.policy-title');
-titles.forEach(title => {
-    title.addEventListener('click', () => {
-        const body = title.nextElementSibling;
-        if (body.style.display === "none") {
-            body.style.display = "block";
-        } else {
-            body.style.display = "none";
-        }
-    });
-});
+          titles.forEach(title => {
+              title.addEventListener('click', () => {
+                  const body = title.nextElementSibling;
+                  body.style.display = (body.style.display === "none") ? "block" : "none";
+              });
+          });
         } else {
           policySection.style.display = 'none';
         }
@@ -350,7 +390,6 @@ titles.forEach(title => {
         policySection.style.display = 'none';
       }
     });
-    // ===================================================================
 
     const confirmBtn = document.getElementById("confirmOrderBtn");
     const qtyVal = document.getElementById("quantityValue");
@@ -394,6 +433,10 @@ titles.forEach(title => {
         load.classList.remove("hidden");
         try {
             const refOrd = push(ref(db, "orders"));
+            
+            // حساب السعر النهائي لإرساله للبيكسل وقاعدة البيانات
+            const finalTotal = (currentProductPrice * qty) + shipPrice;
+
             await set(refOrd, {
                 id: refOrd.key,
                 productId: productId,
@@ -401,7 +444,7 @@ titles.forEach(title => {
                 productPrice: currentProductPrice,
                 quantity: qty,
                 shippingPrice: shipPrice,
-                totalPrice: (currentProductPrice * qty) + shipPrice,
+                totalPrice: finalTotal,
                 customerName: nm,
                 customerPhone: ph,
                 customerWilaya: wl,
@@ -410,12 +453,26 @@ titles.forEach(title => {
                 timestamp: Date.now(),
                 status: "الطلبات الجديدة"
             });
+            
+            // 🟢 3. إرسال حدث الشراء (Purchase) للبيكسل
+            if (typeof fbq !== 'undefined' && globalPixelId) {
+                fbq('track', 'Purchase', {
+                    value: finalTotal,      // القيمة الإجمالية
+                    currency: 'DZD',
+                    content_name: product.name,
+                    content_ids: [productId],
+                    content_type: 'product',
+                    num_items: qty
+                });
+                console.log("✅ Purchase event sent to Pixel");
+            }
+            // -------------------------------------------
+
             load.classList.add("hidden");
             document.getElementById("thankYouModal").classList.remove("hidden");
             document.getElementById("orderIdBox").textContent = refOrd.key;
             document.getElementById("thankYouMessage").innerHTML = `شكراً <b>${nm}</b>، تم تسجيل طلبك بنجاح.`;
             
-            // ✅ عند نجاح الطلب، نقوم بإظهار خانة التعليق تلقائياً ونملأ اسم الزبون
             document.getElementById("postOrderReview").style.display = "block";
             document.getElementById("reviewName").value = nm; 
             document.getElementById("postOrderReview").scrollIntoView({behavior: "smooth"});
@@ -487,23 +544,20 @@ titles.forEach(title => {
     function checkScroll() {
         if (!orderCard) return;
         const rect = orderCard.getBoundingClientRect();
-        if (rect.bottom < 100) { // عندما تختفي البطاقة
+        if (rect.bottom < 100) { 
             floatingBtn.classList.add('visible');
         } else {
             floatingBtn.classList.remove('visible');
         }
     }
 
-    // عند الضغط على الزر الثابت → يصعد إلى بطاقة الطلب
     document.getElementById('floatingConfirmBtn').addEventListener('click', () => {
         orderCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
-    // تفعيل عند التمرير
     window.addEventListener('scroll', checkScroll);
     window.addEventListener('resize', checkScroll);
 
-    // تشغيل التحقق بعد تحميل المحتوى (مهم!)
     const waitForCard = setInterval(() => {
         if (document.getElementById('orderCard')) {
             checkScroll();
@@ -511,27 +565,20 @@ titles.forEach(title => {
         }
     }, 300);
 
-    setTimeout(checkScroll, 1500); // احتياطي
+    setTimeout(checkScroll, 1500); 
 
     // ============================================================
-    // 🟢 كود تشغيل العداد (تم وضعه هنا في النهاية ليعمل بشكل صحيح)
+    // 🟢 كود تشغيل العداد 
     // ============================================================
     onValue(presenceRef, (snapshot) => {
-        // 1. استخدام let بدلاً من const لتعديل الرقم
         let count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+        if (count < 1) { count = 1; }
         
-        // الشرط: إذا كان العدد أقل من 1 (صفر)، اجعله 1 فوراً
-        if (count < 1) {
-            count = 1;
-        }
-        
-        // تحديث الشاشة
         const wrapper = document.getElementById("liveViewersWrapper");
         const countSpan = document.getElementById("liveViewersCount");
         
         if (wrapper && countSpan) {
             countSpan.innerText = count;
-            // استخدام inline-flex للحفاظ على تنسيق النقطة والنص
             wrapper.style.display = "inline-flex";
         }
     });
