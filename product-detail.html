@@ -56,6 +56,7 @@
 </div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js ";
+
 // تمت إضافة onDisconnect هنا لتفعيل ميزة تتبع الزوار
 import { getDatabase, ref, get, child, push, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js ";
 
@@ -92,6 +93,19 @@ onDisconnect(myCon).remove();
 set(myCon, {
     timestamp: Date.now(),
     page: window.location.href
+});
+onValue(presenceRef, (snapshot) => {
+    const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+    
+    // محاولة العثور على المكان المخصص للعداد وتحديث الرقم
+    const wrapper = document.getElementById("liveViewersWrapper");
+    const countSpan = document.getElementById("liveViewersCount");
+    
+    if (wrapper && countSpan) {
+        countSpan.innerText = count;
+        // إظهار العداد إذا كان هناك زوار
+        wrapper.style.display = "block";
+    }
 });
 // ============================================================
 
@@ -168,6 +182,10 @@ async function fetchProductDetails() {
             ${Number(product.newPrice).toLocaleString()} دج
             ${product.oldPrice ? `<small>${Number(product.oldPrice).toLocaleString()}</small>` : ''}
         </div>
+        <div id="liveViewersWrapper" style="display: none; text-align: center; margin-top: 10px; color: #c0392b; font-weight: bold;">
+    <span style="animation: pulse 1.5s infinite;">●</span> 
+    يشاهد المنتج الآن: <span id="liveViewersCount">0</span> أشخاص
+</div>
       </div>
 
       <div class="compact-card" id="orderCard">
