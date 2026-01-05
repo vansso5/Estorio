@@ -69,15 +69,30 @@ body {
 
 /* ========= PRICE ========= */
 .price-badge {
-    font-size: 1.5rem;
+    font-size: 3rem;
     font-weight: 900;
     color: var(--price-color);
 }
 .price-badge small {
-    text-decoration: line-through;
-    color: #95a5a6;
-    font-size: 1rem;
+    position: relative;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #e74c3c; /* الرقم أحمر */
     margin-right: 10px;
+    display: inline-block;
+}
+
+/* خط الشطب المائل */
+.price-badge small::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -5%;
+    width: 110%;
+    height: 1.5px;              /* خط رقيق */
+    background-color: #2980b9;  /* أزرق */
+    transform: rotate(-12deg);  /* ميلان الخط */
+    pointer-events: none;
 }
 
 /* ========= COMPACT CARD ========= */
@@ -452,4 +467,31 @@ body {
 .review-item p {
     margin: 0;
     line-height: 1.5;
+}
+/* ===== ستايل الرقم في contact-footer ===== */
+.contact-footer {
+    width: 100%;
+    padding: 20px 0;
+    background-color: #f8f8f8; /* خلفية فاتحة للتمييز */
+    text-align: center;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.05); /* ظل خفيف أعلى */
+}
+
+.contact-footer .contact-container span,
+.contact-footer .contact-container a {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    display: inline-block;
+    padding: 12px 28px;
+    border-radius: 50px;
+    background-color: #27ae60; /* لون كلاسيكي أخضر */
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.contact-footer .contact-container a:hover {
+    background-color: #219150;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
