@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>مركز الشحن - Guepex Integration</title>
+  <title>مركز الشحن - Guepex Pro</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin-style.css">
@@ -40,9 +40,14 @@
       
       .order-checkbox { transform: scale(1.3); margin-left: 15px; cursor: pointer; }
       
-      /* تنسيق خاص لتقسيم المدخلات في المودال */
-      .dual-input { display: flex; gap: 10px; margin-bottom: 10px; }
+      /* تنسيق تقسيم المدخلات في المودال */
+      .dual-input { display: flex; gap: 15px; margin-bottom: 15px; }
       .dual-input > div { flex: 1; }
+      
+      .modal-header-custom {
+          background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;
+          border: 1px solid #eee;
+      }
   </style>
 </head>
 <body>
@@ -69,7 +74,7 @@
       <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">إضافة / تعديل شركة</h3>
       <div class="search-wrapper">
           <label style="font-weight:bold; display:block; margin-bottom:5px;">اسم الشركة :</label>
-          <input type="text" id="providerNameInput" class="search-input" placeholder="مثلاً: Guepex, Yalidine...">
+          <input type="text" id="providerNameInput" class="search-input" placeholder="مثلاً: Guepex...">
           <div style="display:flex; gap:10px; margin-top:15px;">
             <div style="flex:1">
                 <label style="font-weight:bold; display:block; margin-bottom:5px;">API ID:</label>
@@ -136,12 +141,14 @@
 
   </div>
 
-  <!-- المودال -->
+  <!-- المودال (النافذة المنبثقة) -->
   <div id="orderDetailModal" class="modal hidden">
     <div class="modal-content">
       <button class="close-modal-btn" id="closeDetailModal">&times;</button>
-      <h3>تعديل بيانات الطرد</h3>
+      <h3>تعديل بيانات الطرد (Guepex)</h3>
+      
       <div class="details-section">
+          <!-- بيانات الزبون -->
           <label class="details-label">الاسم الكامل</label>
           <input type="text" id="editName" class="search-input" style="margin-bottom:10px;">
           
@@ -160,36 +167,43 @@
           </div>
 
           <label class="details-label">العنوان</label>
-          <input type="text" id="editAddress" class="search-input" style="margin-bottom:10px;">
+          <input type="text" id="editAddress" class="search-input" style="margin-bottom:15px;">
           
-          <!-- ✅ الإضافات الجديدة: نوع التوصيل، نوع الشحن، الوزن -->
-          <div class="dual-input">
-              <div>
-                  <label class="details-label">مكان التوصيل</label>
-                  <select id="editDeliveryType" class="search-input">
-                      <option value="home">🏠 المنزل (Domicile)</option>
-                      <option value="desk">🏢 المكتب (Stop Desk)</option>
-                  </select>
+          <!-- ✅✅✅ الإضافات الجديدة الخاصة بـ Guepex ✅✅✅ -->
+          <div class="modal-header-custom">
+              <h4 style="margin-top:0; color:#0062cc;">⚙️ خيارات الشحن (Guepex Options)</h4>
+              
+              <div class="dual-input">
+                  <div>
+                      <label class="details-label">🚀 نوع الشحن (Mode)</label>
+                      <select id="editShippingMode" class="search-input">
+                          <option value="economique">💰 اقتصادي (Economique)</option>
+                          <option value="express">⚡ سريع (Express)</option>
+                      </select>
+                  </div>
+                  <div>
+                      <label class="details-label">⚖️ الوزن (KG)</label>
+                      <input type="number" id="editWeight" class="search-input" value="5" min="0.1" step="0.1">
+                  </div>
               </div>
-              <div>
-                  <label class="details-label">نمط الشحن</label>
-                  <select id="editShippingMode" class="search-input">
-                      <option value="economique">💰 اقتصادي (Economique)</option>
-                      <option value="express">🚀 سريع (Express)</option>
-                  </select>
+
+              <div class="dual-input">
+                  <div style="flex:2;">
+                      <label class="details-label">📍 مكان التوصيل (Livraison)</label>
+                      <select id="editDeliveryType" class="search-input">
+                          <option value="home">🏠 المنزل (A Domicile)</option>
+                          <option value="desk">🏢 المكتب (Stop Desk)</option>
+                      </select>
+                  </div>
               </div>
           </div>
+          <!-- ✅✅✅ نهاية الإضافات ✅✅✅ -->
 
-          <div style="margin-bottom:10px;">
-              <label class="details-label">الوزن (KG)</label>
-              <input type="number" id="editWeight" class="search-input" value="1" min="0.1" step="0.1">
-          </div>
-
-          <div id="productsList" style="margin:15px 0; background:#f9f9f9; padding:10px; border-radius:5px;"></div>
+          <div id="productsList" style="margin:15px 0; background:#fff3cd; padding:10px; border-radius:5px; border:1px solid #ffeeba;"></div>
           <input type="hidden" id="currentOrderId">
           
           <div class="modal-actions">
-              <button id="saveChangesBtn" class="save-btn">حفظ التغييرات</button>
+              <button id="saveChangesBtn" class="save-btn" style="background-color:#0056b3;">حفظ التغييرات</button>
               <button id="cancelOrderBtn" class="btn-delete">إلغاء الطلب</button>
           </div>
       </div>
@@ -320,7 +334,8 @@
                         <small style="color:#777;">${typeIcon} ${order.customerWilaya || order.state || ''} | <span style="color:var(--success-color); font-weight:bold;">${parseFloat(order.totalPrice || 0)} دج</span></small>
                     </div>
                 </div>
-                <div onclick="window.openDetails('${id}')" style="cursor:pointer; background:#f0f2f5; padding:8px 15px; border-radius:20px; font-size:0.85rem; font-weight:bold; color:var(--primary-color);">تعديل ✎</div>
+                <!-- زر تعديل باللون الأزرق لتمييز التحديث -->
+                <div onclick="window.openDetails('${id}')" style="cursor:pointer; background:#e3f2fd; color:#0d47a1; padding:8px 15px; border-radius:20px; font-size:0.85rem; font-weight:bold;">تعديل البيانات ⚙️</div>
             `;
             shippingContainer.appendChild(row);
         });
@@ -343,11 +358,11 @@
                 const deliveryType = (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب'))) ? 'desk' : 'home';
                 document.getElementById('editDeliveryType').value = deliveryType;
 
-                // ✅ تحديد نوع الشحن (افتراضياً اقتصادي إذا لم يحدد من قبل)
+                // ✅ تحديد نوع الشحن (افتراضياً Economique)
                 document.getElementById('editShippingMode').value = order.shippingMode || 'economique';
                 
-                // ✅ تحديد الوزن (افتراضياً 1 إذا لم يحدد)
-                document.getElementById('editWeight').value = order.weight || 1;
+                // ✅ تحديد الوزن (افتراضياً 5 كغ حسب الصورة)
+                document.getElementById('editWeight').value = order.weight || 5;
 
                 const productsDiv = document.getElementById('productsList');
                 let itemsHtml = '';
@@ -355,7 +370,7 @@
                      const items = Array.isArray(order.items) ? order.items : Object.values(order.items);
                      items.forEach(item => { itemsHtml += `<div>📦 ${item.name} <span style="font-weight:bold;">(x${item.quantity})</span></div>`; });
                 } else { itemsHtml = `<div>📦 ${order.productName || 'منتج'}</div>`; }
-                itemsHtml += `<div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:5px; font-weight:bold;">المجموع: ${order.totalPrice} دج</div>`;
+                itemsHtml += `<div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:5px; font-weight:bold;">💰 المجموع الكلي: ${order.totalPrice} دج</div>`;
                 
                 productsDiv.innerHTML = itemsHtml;
                 modal.classList.remove('hidden');
@@ -373,8 +388,9 @@
             customerWilaya: document.getElementById('editWilaya').value,
             customerCommune: document.getElementById('editCommune').value,
             customerAddress: document.getElementById('editAddress').value,
-            deliveryOption: document.getElementById('editDeliveryType').value, // home/desk
-            // ✅ حفظ الإعدادات الجديدة (Mode, Weight)
+            
+            // ✅ حفظ الإعدادات الجديدة في قاعدة البيانات
+            deliveryOption: document.getElementById('editDeliveryType').value,
             shippingMode: document.getElementById('editShippingMode').value,
             weight: parseFloat(document.getElementById('editWeight').value),
             
@@ -385,6 +401,7 @@
         };
         await update(ref(db, 'orders/'+id), updates);
         modal.classList.add('hidden');
+        alert("تم تحديث بيانات الطلب بنجاح ✅");
     });
 
     document.getElementById('cancelOrderBtn').addEventListener('click', async () => {
@@ -396,7 +413,7 @@
     });
 
     // ==========================================================
-    // 4. الإرسال (Complete Shipping Logic)
+    // 4. الإرسال (Guepex Logic Updated)
     // ==========================================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const btn = this;
@@ -442,13 +459,15 @@
                 let firstName = fullName.split(' ')[0]; 
                 let lastName = fullName.substring(firstName.length).trim() || ".";
 
+                // 2. التحقق من Stop Desk
+                // الأولوية للحقل الذي تم حفظه في التعديل، ثم الحقل القديم
                 let isStopDesk = false;
-                // التحقق من الحقل المحفوظ في التعديل أولاً، ثم الحقل القديم
-                if(order.deliveryOption && (order.deliveryOption === 'desk' || order.deliveryOption.includes('مكتب'))) {
+                let delOption = order.deliveryOption ? order.deliveryOption.toLowerCase() : "";
+                if (delOption === 'desk' || delOption.includes('مكتب') || delOption.includes('stop')) {
                     isStopDesk = true;
                 }
 
-                // 2. تجهيز البايلود الكامل (Guepex Payload)
+                // 3. تجهيز البايلود الكامل (Guepex Payload)
                 const parcelData = {
                     "firstname": firstName,
                     "lastname": lastName,
@@ -458,9 +477,9 @@
                     "commune": order.customerCommune || order.city || cleanWilaya, 
                     "price": parseFloat(order.totalPrice || 0), 
                     
-                    // ✅ الإضافات الجديدة
-                    "mode": order.shippingMode || "economique", // افتراضياً اقتصادي
-                    "weight": parseFloat(order.weight || 1),    // افتراضياً 1
+                    // ✅ الإضافات الجديدة التي طلبتها
+                    "mode": order.shippingMode || "economique", // الافتراضي اقتصادي
+                    "weight": parseFloat(order.weight || 5),    // الافتراضي 5
                     "is_stopdesk": isStopDesk, 
                     
                     "freeshipping": false,
@@ -470,7 +489,7 @@
                     "order_id": orderId.replace('#', '') 
                 };
 
-                // 3. الإرسال عبر API (Proxy)
+                // 4. الإرسال عبر API
                 const targetUrl = 'https://api.guepex.app/v1/parcels';
                 const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
 
@@ -488,7 +507,7 @@
                 let result = {};
                 try { result = JSON.parse(resultText); } catch(e) { result = { msg: resultText }; }
 
-                // 4. التحقق
+                // 5. التحقق
                 if (response.ok || result.success === true || result.tracking) { 
                     const updates = {};
                     updates[`orders/${orderId}/status`] = 'Shipped';
