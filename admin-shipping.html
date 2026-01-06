@@ -148,11 +148,11 @@
       <div class="price-inputs-row" style="display:flex; gap:10px; margin-bottom:10px;">
            <div class="price-group" style="flex:1;">
              <label style="display:block; font-weight:bold;">سعر المنزل</label>
-             <input type="number" id="homePrice" class="search-input" placeholder="60">
+             <input type="number" id="homePrice" class="search-input" placeholder="600">
            </div>
            <div class="price-group" style="flex:1;">
              <label style="display:block; font-weight:bold;">سعر المكتب</label>
-             <input type="number" id="deskPrice" class="search-input" placeholder="40">
+             <input type="number" id="deskPrice" class="search-input" placeholder="400">
            </div>
       </div>
       <div class="wilaya-controls">
@@ -441,166 +441,186 @@
     });
 
     // -----------------------------------------------------------
-    // 4. الإرسال (Integration Logic Corrected - FINAL VERSION)
+    // 4. الإرسال (FINAL FIX: French Translation for Wilayas)
     // -----------------------------------------------------------
     
-document.getElementById('sendBulkBtn').addEventListener('click', async function() {
-const btn = this;
-const providerId = shipProviderSelect.value;
-const providerName = shipProviderSelect.options[shipProviderSelect.selectedIndex]?.text || providerId;
-const checks = document.querySelectorAll('.order-checkbox:checked');
+    // قائمة ترجمة الولايات (عربي -> فرنسي)
+    const wilayaMapping = {
+        "أدرار": "Adrar", "الشلف": "Chlef", "الأغواط": "Laghouat",
+        "أم البواقي": "Oum El Bouaghi", "باتنة": "Batna", "بجاية": "Béjaïa",
+        "بسكرة": "Biskra", "بشار": "Béchar", "البليدة": "Blida",
+        "البويرة": "Bouira", "تمنراست": "Tamanrasset", "تبسة": "Tébessa",
+        "تلمسان": "Tlemcen", "تيارت": "Tiaret", "تيزي وزو": "Tizi Ouzou",
+        "الجزائر": "Alger", "الجلفة": "Djelfa", "جيجل": "Jijel",
+        "سطيف": "Sétif", "سعيدة": "Saïda", "سكيكدة": "Skikda",
+        "سيدي بلعباس": "Sidi Bel Abbès", "عنابة": "Annaba", "قالمة": "Guelma",
+        "قسنطينة": "Constantine", "المدية": "Médéa", "مستغانم": "Mostaganem",
+        "المسيلة": "M'Sila", "معسكر": "Mascara", "ورقلة": "Ouargla",
+        "وهران": "Oran", "البيض": "El Bayadh", "إليزي": "Illizi",
+        "برج بوعريريج": "Bordj Bou Arreridj", "بومرداس": "Boumerdès",
+        "الطارف": "El Tarf", "تندوف": "Tindouf", "تيسمسيلت": "Tissemsilt",
+        "الوادي": "El Oued", "خنشلة": "Khenchela", "سوق أهراس": "Souk Ahras",
+        "تيبازة": "Tipaza", "ميلة": "Mila", "عين الدفلى": "Aïn Defla",
+        "النعامة": "Naâma", "عين تموشنت": "Aïn Témouchent", "غرداية": "Ghardaïa",
+        "غليزان": "Relizane",
+        // الولايات الجديدة (49-58)
+        "تيميمون": "Timimoun", "برج باجي مختار": "Bordj Badji Mokhtar",
+        "أولاد جلال": "Ouled Djellal", "بني عباس": "Béni Abbès",
+        "إن صالح": "In Salah", "إن قزام": "In Guezzam",
+        "تقرت": "Touggourt", "جانت": "Djanet",
+        "المغير": "El M'Ghair", "المنيعة": "El Meniaa"
+    };
 
-if(!providerId) { alert('يرجى اختيار شركة شحن أولاً'); return; }
-if(checks.length === 0) { alert('لم تقم بتحديد أي طلب!'); return; }
-if(!confirm(`هل تريد إرسال ${checks.length} طلب عبر (${providerName})؟`)) return;
+    document.getElementById('sendBulkBtn').addEventListener('click', async function() {
+        const btn = this;
+        const providerId = shipProviderSelect.value; 
+        const providerName = shipProviderSelect.options[shipProviderSelect.selectedIndex]?.text || providerId;
+        const checks = document.querySelectorAll('.order-checkbox:checked');
+        
+        if(!providerId) { alert('يرجى اختيار شركة شحن أولاً'); return; }
+        if(checks.length === 0) { alert('لم تقم بتحديد أي طلب!'); return; }
+        if(!confirm(`هل تريد إرسال ${checks.length} طلب عبر (${providerName})؟`)) return;
 
-btn.textContent = "جاري الاتصال ...";
-btn.disabled = true;
+        btn.textContent = "جاري الاتصال ...";
+        btn.disabled = true;
 
-// 1. جلب المفاتيح
-let apiData = null;
-try {
-const settingsSnap = await get(ref(db, `delivery_settings/${providerId}`));
-if(settingsSnap.exists()) apiData = settingsSnap.val();
-else throw new Error("إعدادات API غير موجودة.");
-} catch (err) {
-alert(err.message);
-btn.textContent = "📤 إرسال الطلبات المحددة";
-btn.disabled = false;
-return;
-}
+        // 1. جلب المفاتيح
+        let apiData = null;
+        try {
+            const settingsSnap = await get(ref(db, `delivery_settings/${providerId}`));
+            if(settingsSnap.exists()) apiData = settingsSnap.val();
+            else throw new Error("إعدادات API غير موجودة.");
+        } catch (err) {
+            alert(err.message);
+            btn.textContent = "📤 إرسال الطلبات المحددة";
+            btn.disabled = false;
+            return;
+        }
 
-let successCount = 0;
-let failCount = 0;
-let errorDetails = "";
+        let successCount = 0;
+        let failCount = 0;
+        let errorDetails = "";
 
-// 2. الدوران على الطلبات
-for (const checkbox of checks) {
-const orderId = checkbox.value;
-try {
-const orderSnap = await get(ref(db, `orders/${orderId}`));
-if (!orderSnap.exists()) continue;
-const order = orderSnap.val();
+        // 2. الدوران على الطلبات
+        for (const checkbox of checks) {
+            const orderId = checkbox.value;
+            try {
+                const orderSnap = await get(ref(db, `orders/${orderId}`));
+                if (!orderSnap.exists()) continue;
+                const order = orderSnap.val();
 
-// 🔹 أ) تنظيف اسم الولاية والبلدية
-let rawWilaya = order.customerWilaya || order.state || "";
-// حذف الأرقام: "16. Alger" -> "Alger"
-let cleanWilaya = rawWilaya.replace(/^[0-9]+[\.\-\s]*/, '').trim();
+                // 🔹 أ) تنظيف اسم الولاية وترجمته
+                let rawWilaya = order.customerWilaya || order.state || "";
+                // حذف الأرقام: "16. الجزائر" -> "الجزائر"
+                let cleanWilayaArabic = rawWilaya.replace(/^[0-9]+[\.\-\s]*/, '').trim(); 
+                
+                // 🔥🔥 الترجمة هنا: البحث في القائمة، إذا لم يوجد يبقى كما هو
+                let finalWilaya = wilayaMapping[cleanWilayaArabic] || cleanWilayaArabic;
 
-let cleanCommune = order.customerCommune || order.city || cleanWilaya;
-cleanCommune = cleanCommune.replace(/^[0-9]+[\.\-\s]*/, '').trim();
+                // 🔹 ب) تنسيق الهاتف
+                let phone = (order.customerPhone || order.phone || "").replace(/[^0-9]/g, '');
+                if (phone.length === 9) phone = '0' + phone;
 
-// 🔹 ب) تنسيق الهاتف
-let phone = (order.customerPhone || order.phone || "").replace(/[^0-9]/g, '');
-if (phone.length === 9) phone = '0' + phone;
+                // 🔹 ج) تقسيم الاسم
+                let fullName = (order.customerName || order.name || "Client").trim();
+                let splitName = fullName.split(" ");
+                let firstName = splitName[0];
+                let lastName = splitName.slice(1).join(" ") || firstName; 
 
-// 🔹 ج) تقسيم الاسم
-let fullName = (order.customerName || order.name || "Client").trim();
-let splitName = fullName.split(" ");
-let firstName = splitName[0];
-let lastName = splitName.slice(1).join(" ") || firstName;
+                // 🔹 د) نوع التوصيل
+                let isStopDesk = false;
+                if(order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب'))) {
+                    isStopDesk = true;
+                }
+                
+                const cleanOrderId = orderId.replace('#', '').trim();
 
-// 🔹 د) نوع التوصيل
-let isStopDesk = false;
-if(order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب'))) {
-isStopDesk = true;
-}
+                // 🔹 هـ) تجهيز البيانات
+                const parcelData = {
+                    "order_id": cleanOrderId,
+                    
+                    "firstname": firstName,
+                    "familyname": lastName, 
+                    "contact_phone": phone,
+                    "address": order.customerAddress || order.address || finalWilaya,
+                    "to_wilaya_name": finalWilaya,   // إرسال الاسم الفرنسي
+                    "to_commune_name": finalWilaya,  // نرسل الولاية كبلدية افتراضية لضمان القبول
+                    "product_list": order.productName || "Colis", 
+                    
+                    "price": parseFloat(order.totalPrice || 0), 
+                    "freeshipping": false,
+                    "is_stopdesk": isStopDesk, 
+                    "has_exchange": false,
+                    "do_insurance": false
+                };
 
-const cleanOrderId = orderId.replace('#', '').trim();
+                const targetUrl = 'https://api.guepex.app/v1/parcels';
+                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
 
-// 🔹 هـ) تجهيز البيانات (بناءً على رسالة الخطأ الأخيرة)
-// ⚠️ التغيير الكبير هنا: تغيير أسماء الحقول لتطابق Yalidine Style
-const parcelData = {
-"order_id": cleanOrderId,
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-API-ID': apiData.apiKey,
+                    'X-API-TOKEN': apiData.apiToken
+                };
 
-// الأسماء المطلوبة حسب رسالة الخطأ
-"firstname": firstName,
-"familyname": lastName, // كانت lastname
-"contact_phone": phone, // كانت phone
-"address": order.customerAddress || order.address || cleanWilaya,
-"to_wilaya_name": cleanWilaya, // كانت wilaya
-"to_commune_name": cleanCommune,// كانت commune
-"product_list": order.productName || "Colis", // كانت product
+                const response = await fetch(proxyUrl, { 
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify([ parcelData ]) 
+                });
 
-"price": parseFloat(order.totalPrice || 0),
-"freeshipping": false,
-"is_stopdesk": isStopDesk,
-"has_exchange": false,
-"do_insurance": false
-};
+                const resultText = await response.text();
+                let result = {};
+                try {
+                    result = JSON.parse(resultText);
+                } catch (e) {
+                    throw new Error("استجابة غير صالحة: " + resultText.substring(0, 50));
+                }
 
-// ملاحظة: بما أن الحقول تشبه ياليدين، ربما تحتاج لاستخدام رابط ياليدين
-// ولكن سنبقي الرابط كما هو إذا كنت متأكداً أنه Guepex، أو يمكنك تجربة رابط ياليدين بالأسفل
-// رابط ياليدين: https://api.yalidine.com/v1/parcels
+                // التحقق من النجاح
+                let successItem = null;
+                if (Array.isArray(result) && result.length > 0) successItem = result[0];
+                else if (result.success === true || result.tracking) successItem = result;
+                else if (result[cleanOrderId]) successItem = result[cleanOrderId];
 
-const targetUrl = 'https://api.guepex.app/v1/parcels'; // جرب هذا أولاً، إذا فشل جرب رابط ياليدين
-const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
+                if (successItem && (successItem.tracking || successItem['tracking_code'] || successItem.id || successItem.success === true)) { 
+                    const trackingCode = successItem.tracking || successItem['tracking_code'] || successItem.id || "تم الإرسال";
+                    
+                    const updates = {};
+                    updates[`orders/${orderId}/status`] = 'Shipped';
+                    updates[`orders/${orderId}/deliveryProvider`] = providerName;
+                    updates[`orders/${orderId}/trackingCode`] = trackingCode;
+                    updates[`orders/${orderId}/shippedAt`] = Date.now();
+                    
+                    await update(ref(db), updates);
+                    successCount++;
+                } else {
+                    console.error("API Fail:", result);
+                    failCount++;
+                    
+                    let msg = "";
+                    if (result.message) msg = result.message;
+                    if (result.validation_error) msg += JSON.stringify(result.validation_error);
+                    if (!msg) msg = JSON.stringify(result);
 
-const headers = {
-'Content-Type': 'application/json',
-'Accept': 'application/json',
-'X-API-ID': apiData.apiKey,
-'X-API-TOKEN': apiData.apiToken
-};
+                    errorDetails += `\n❌ ${firstName}: ${msg}`;
+                }
 
-const response = await fetch(proxyUrl, {
-method: 'POST',
-headers: headers,
-body: JSON.stringify([ parcelData ]) // إرسال داخل مصفوفة
-});
+            } catch (err) {
+                console.error("System Error:", err);
+                failCount++;
+                errorDetails += `\n⚠️ خطأ نظام: ${err.message}`;
+            }
+        }
 
-const resultText = await response.text();
-let result = {};
-try {
-result = JSON.parse(resultText);
-} catch (e) {
-throw new Error("استجابة غير صالحة: " + resultText.substring(0, 50));
-}
-
-// التحقق من النجاح
-let successItem = null;
-if (Array.isArray(result) && result.length > 0) successItem = result[0];
-else if (result.success === true || result.tracking) successItem = result;
-else if (result[cleanOrderId]) successItem = result[cleanOrderId];
-
-if (successItem && (successItem.tracking || successItem['tracking_code'] || successItem.id || successItem.success === true)) {
-const trackingCode = successItem.tracking || successItem['tracking_code'] || successItem.id || "تم الإرسال";
-
-const updates = {};
-updates[`orders/${orderId}/status`] = 'Shipped';
-updates[`orders/${orderId}/deliveryProvider`] = providerName;
-updates[`orders/${orderId}/trackingCode`] = trackingCode;
-updates[`orders/${orderId}/shippedAt`] = Date.now();
-
-await update(ref(db), updates);
-successCount++;
-} else {
-console.error("API Fail:", result);
-failCount++;
-
-let msg = "";
-if (result.message) msg = result.message;
-// تجميع الأخطاء من الحقول المختلفة إن وجدت
-if (result.validation_error) msg += JSON.stringify(result.validation_error);
-if (!msg) msg = JSON.stringify(result);
-
-errorDetails += `\n❌ ${firstName}: ${msg}`;
-}
-
-} catch (err) {
-console.error("System Error:", err);
-failCount++;
-errorDetails += `\n⚠️ خطأ نظام: ${err.message}`;
-}
-}
-
-let finalMsg = `النتيجة:\n✅ نجاح: ${successCount}`;
-if(failCount > 0) finalMsg += `\n❌ فشل: ${failCount}\n----------------\n${errorDetails}`;
-alert(finalMsg);
-
-btn.textContent = "📤 إرسال الطلبات المحددة";
-btn.disabled = false;
-});
+        let finalMsg = `النتيجة:\n✅ نجاح: ${successCount}`;
+        if(failCount > 0) finalMsg += `\n❌ فشل: ${failCount}\n----------------\n${errorDetails}`;
+        alert(finalMsg);
+        
+        btn.textContent = "📤 إرسال الطلبات المحددة";
+        btn.disabled = false;
+    });
 
     // -----------------------------------------------------------
     // 5. المناطق (Zones & Wilayas)
@@ -669,7 +689,7 @@ btn.disabled = false;
         if(confirm('هل أنت متأكد من الحذف؟')) remove(ref(db, `shipping_zones/${k}`)); 
     }
 
-    // القائمة الجانبية (تم تصحيح الخطأ هنا)
+    // القائمة الجانبية
     window.toggleMenu = () => {
         document.querySelector('nav .links').classList.toggle('open');
     };
