@@ -3,15 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>مركز الشحن</title>
+  <title>مركز الشحن - Guepex Integration</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin-style.css">
 
   <style>
       /* --- تنسيقات خاصة بهذه الصفحة --- */
-
-      /* 1. قائمة الشركات المحفوظة (Tags) */
       .provider-tags-container {
           display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee;
       }
@@ -23,13 +21,11 @@
       .provider-tag .remove-icon { cursor: pointer; color: #ef5350; font-weight: bold; font-size: 1.1rem; line-height: 1; }
       .provider-tag .remove-icon:hover { color: #c62828; }
       
-      /* 2. رسائل النجاح */
       .success-message-box {
           display: none; background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
           padding: 10px; border-radius: 8px; margin-top: 15px; text-align: center; font-weight: bold;
       }
 
-      /* 3. تنسيق زر الإرسال الكبير */
       #sendBulkBtn {
           height: 60px !important;
           min-height: 60px;
@@ -41,7 +37,6 @@
           color: white;
       }
 
-      /* 4. تنسيق صفوف الطلبات */
       #shippingOrdersContainer .order-row {
           display: flex; align-items: center; justify-content: space-between;
           padding: 12px 15px; background: #fff; border-radius: 8px; margin-bottom: 8px;
@@ -82,12 +77,12 @@
           
           <div style="display:flex; gap:10px; margin-top:15px;">
             <div style="flex:1">
-                <label style="font-weight:bold; display:block; margin-bottom:5px;">API Key (API ID):</label>
-                <input type="text" id="apiKeyInput" class="search-input" placeholder="ألصق الـ API ID هنا">
+                <label style="font-weight:bold; display:block; margin-bottom:5px;">API ID:</label>
+                <input type="text" id="apiKeyInput" class="search-input" placeholder="مثال: 084679...">
             </div>
             <div style="flex:1">
-                <label style="font-weight:bold; display:block; margin-bottom:5px;">Token:</label>
-                <input type="text" id="apiTokenInput" class="search-input" placeholder="ألصق الـ Token هنا">
+                <label style="font-weight:bold; display:block; margin-bottom:5px;">API Token:</label>
+                <input type="text" id="apiTokenInput" class="search-input" placeholder="مثال: 6tDv0V...">
             </div>
           </div>
 
@@ -414,7 +409,7 @@
     });
 
     // ==========================================================
-    // 4. الإرسال (The Shipping Logic - Guepex & Others)
+    // 4. الإرسال (Guepex API Integration - Fixed order_id)
     // ==========================================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const btn = this;
@@ -454,7 +449,7 @@
                 if (!orderSnap.exists()) continue;
                 const order = orderSnap.val();
 
-                // أ) تنظيف اسم الولاية (Guepex تحتاج اسم نظيف)
+                // أ) تنظيف اسم الولاية
                 let rawWilaya = order.customerWilaya || order.state || "";
                 let cleanWilaya = rawWilaya.includes('.') ? rawWilaya.split('.').slice(1).join('.').trim() : rawWilaya;
 
@@ -463,13 +458,13 @@
                 let firstName = fullName.split(' ')[0]; 
                 let lastName = fullName.substring(firstName.length).trim() || ".";
 
-                // ج) تحديد نوع التوصيل (Stop Desk)
+                // ج) تحديد نوع التوصيل
                 let isStopDesk = false;
                 if(order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب'))) {
                     isStopDesk = true;
                 }
 
-                // د) تجهيز البيانات (Payload)
+                // د) تجهيز البيانات النهائية (Guepex Payload)
                 const parcelData = {
                     "firstname": firstName,
                     "lastname": lastName,
@@ -482,10 +477,12 @@
                     "is_stopdesk": isStopDesk, 
                     "has_exchange": false,
                     "product": order.productName || "Colis Divers",
-                    "weight": 1 // وزن افتراضي (1KG)
+                    "weight": 1,
+                    // 🔥🔥 الحقل الذي كان ناقصاً وتمت إضافته لحل المشكلة 🔥🔥
+                    "order_id": orderId.replace('#', '') // إرسال رقم الطلب
                 };
 
-                // هـ) الإرسال عبر API (استخدام Proxy لتخطي CORS في Localhost)
+                // هـ) الإرسال عبر API
                 const targetUrl = 'https://api.guepex.app/v1/parcels';
                 const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
 
@@ -515,14 +512,11 @@
                 } else {
                     console.error("Guepex Error:", result);
                     failCount++;
-                    // فك شفرة رسالة الخطأ لتكون مقروءة
                     let msg = "";
-                    if (typeof result === 'string') msg = result;
-                    else if (result.message) msg = JSON.stringify(result.message);
-                    else if (result.errors) msg = JSON.stringify(result.errors);
+                    if (result.error && result.error.message) msg = result.error.message;
+                    else if (result.message) msg = result.message;
                     else msg = JSON.stringify(result);
-
-                    errorDetails += `\n⛔ ${firstName}: ${msg.substring(0, 150)}`;
+                    errorDetails += `\n⛔ ${firstName}: ${msg.substring(0, 100)}`;
                 }
 
             } catch (err) {
@@ -540,7 +534,7 @@
         btn.disabled = false;
     });
 
-    // المناطق (Zones)
+    // ======================== 5. المناطق ========================
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     function renderWilayaCheckboxes() {
         const grid = document.getElementById('wilayaGrid');
