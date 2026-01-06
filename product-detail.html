@@ -18,7 +18,6 @@
     }
     #storePolicySection.open h3::after { transform: rotate(180deg); }
     
-    /* تحسينات بصرية بسيطة */
     .price-summary { background: #f9f9f9; padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #eee; }
     .final-price { color: #c0392b; font-weight: bold; font-size: 1.2em; }
 </style>
@@ -100,10 +99,8 @@ const db = getDatabase(app);
 const contactFooter = document.querySelector('.contact-footer .contact-container');
 
 // ==========================================
-// 1. إعداد فيسبوك بيكسل (FACEBOOK PIXEL)
+// 1. إعداد فيسبوك بيكسل
 // ==========================================
-
-// الكود الأساسي (Standard Base Code)
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
@@ -112,23 +109,21 @@ t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window, d
 
 let globalPixelId = null;
 
-// جلب الـ ID من قاعدة البيانات وتفعيله
 onValue(ref(db, 'settings/pixel_id'), (snapshot) => {
     if (snapshot.exists()) {
         const pixelId = snapshot.val();
         if(pixelId && pixelId.trim() !== "") {
             globalPixelId = pixelId;
-            fbq('init', pixelId); // تفعيل البيكسل بالرقم المخزن
-            fbq('track', 'PageView'); // تتبع زيارة الصفحة
+            fbq('init', pixelId);
+            fbq('track', 'PageView');
             console.log("✅ Pixel Activated: " + pixelId);
         }
     }
 });
 
 // ==========================================
-// 2. تتبع الزوار والاتصال
+// 2. باقي المنطق (زوار، اتصال، منتجات)
 // ==========================================
-// رقم الهاتف
 onValue(ref(db, 'settings/contactPhone'), (snapshot) => {
     if (snapshot.exists()) {
         const phone = snapshot.val();
@@ -136,15 +131,11 @@ onValue(ref(db, 'settings/contactPhone'), (snapshot) => {
     }
 });
 
-// تتبع الزوار المتواجدين الآن
 const presenceRef = ref(db, "site_presence");
 const myCon = push(presenceRef);
 onDisconnect(myCon).remove();
 set(myCon, { timestamp: Date.now(), page: window.location.href });
 
-// ==========================================
-// 3. منطق المتجر والمنتجات
-// ==========================================
 const container = document.getElementById('productDetailContainer');
 const previewModal = document.getElementById('imagePreviewModal');
 const previewImage = document.getElementById('previewImage');
@@ -155,7 +146,6 @@ let currentProductId = null;
 let currentProductPrice = 0;
 let shippingZones = []; 
 
-// جلب مناطق الشحن
 onValue(ref(db, 'shipping_zones'), (snapshot) => {
     shippingZones = [];
     if (snapshot.exists()) {
@@ -177,8 +167,6 @@ async function fetchProductDetails() {
     const product = snapshot.val();
     currentProductPrice = parseFloat(product.newPrice);
     
-    // 🔥 إرسال حدث مشاهدة المحتوى (ViewContent) للبيكسل بعد تحميل المنتج
-    // نستخدم timeout بسيط لضمان أن البيكسل تم تفعيله
     setTimeout(() => {
         if (typeof fbq !== 'undefined' && globalPixelId) {
             fbq('track', 'ViewContent', { 
@@ -192,7 +180,6 @@ async function fetchProductDetails() {
         }
     }, 2000);
 
-    // تحميل اللوجو
     if (product.customLogo && product.customLogo.trim() !== "") {
         storeLogoImg.src = product.customLogo;
     } else {
@@ -202,15 +189,12 @@ async function fetchProductDetails() {
         });
     }
 
-    // عرض الصور
     const images = Array.isArray(product.images) ? product.images : [product.images || 'default.jpg'];
     const swiperSlides = images.map(src => `<div class="swiper-slide"><img src="${src}" alt="صورة"></div>`).join('');
 
-    // قائمة الولايات
     const wilayas = [ "أدرار","الشلف","الأغواط","أم البواقي","باتنة","بجاية","بسكرة","بشار","البليدة","البويرة","تمنراست","تبسة","تلمسان","تيارت","تيزي وزو","الجزائر","الجلفة","جيجل","سطيف","سعيدة","سكيكدة","سيدي بلعباس","عنابة","قالمة","قسنطينة","المدية","مستغانم","المسيلة","معسكر","ورقلة","وهران","البيض","إليزي","برج بوعريريج","بومرداس","الطارف","تندوف","تيسمسيلت","الوادي","خنشلة","سوق أهراس","تيبازة","ميلة","عين الدفلى","النعامة","عين تموشنت","غرداية","غليزان","تيميمون","برج باجي مختار","أولاد جلال","بني عباس","إن صالح","إن قزام","تقرت","جانت","المغير","المنيعة" ];
     const wilayaOptions = wilayas.map(w => `<option value="${w}">${w}</option>`).join('');
 
-    // الوصف
     let descriptionHTML = '';
     if (Array.isArray(product.description)) {
         product.description.forEach(block => {
@@ -219,7 +203,6 @@ async function fetchProductDetails() {
         });
     } else { descriptionHTML = `<p>${product.description || 'لا يوجد وصف.'}</p>`; }
 
-    // بناء واجهة المستخدم
     container.innerHTML = `
       <div class="swiper mySwiper"><div class="swiper-wrapper">${swiperSlides}</div><div class="swiper-pagination"></div></div>
       <div class="product-header">
@@ -277,7 +260,6 @@ async function fetchProductDetails() {
       <div id="storePolicySection" class="store-policy-section" style="display:none;"><h3>📜 السياسات</h3><div id="policyContent" class="policy-content" style="display:none;"></div></div>
     `;
 
-    // تفعيل السلايدر والمعاينة
     new Swiper(".mySwiper", { pagination: { el: ".swiper-pagination", clickable: true } });
     document.querySelectorAll('.swiper-slide img, .desc-content img').forEach(img => {
       img.addEventListener('click', () => { previewImage.src = img.src; previewModal.classList.add('active'); });
@@ -285,7 +267,6 @@ async function fetchProductDetails() {
     closePreview.addEventListener('click', () => previewModal.classList.remove('active'));
     previewModal.addEventListener('click', e => { if(e.target === previewModal) previewModal.classList.remove('active'); });
 
-    // منطق السياسات
     const policySection = document.getElementById('storePolicySection');
     const policyContent = document.getElementById('policyContent');
     const policyHeader = policySection ? policySection.querySelector('h3') : null;
@@ -314,9 +295,6 @@ async function fetchProductDetails() {
       } else policySection.style.display = 'none';
     });
 
-    // ==========================================
-    // 4. منطق الطلب وحساب الأسعار
-    // ==========================================
     const confirmBtn = document.getElementById("confirmOrderBtn");
     const qtyVal = document.getElementById("quantityValue");
     const wilayaSel = document.getElementById("wilaya");
@@ -347,7 +325,6 @@ async function fetchProductDetails() {
     delSel.addEventListener("change", updatePrice);
     updatePrice();
 
-    // زر تأكيد الطلب
     confirmBtn.addEventListener("click", async () => {
         const load = document.getElementById("loadingScreen");
         const ph = document.getElementById("phone").value.trim();
@@ -362,7 +339,7 @@ async function fetchProductDetails() {
             const refOrd = push(ref(db, "orders"));
             
             const productTotalAmount = currentProductPrice * qty;
-            const finalTotal = productTotalAmount + shipPrice; // المبلغ الإجمالي (سيُرسل للبيكسل)
+            const finalTotal = productTotalAmount + shipPrice; 
 
             await set(refOrd, {
                 id: refOrd.key,
@@ -382,17 +359,20 @@ async function fetchProductDetails() {
                 status: "الطلبات الجديدة"
             });
             
-            // 🔥 إرسال حدث الشراء (Purchase) لفيسبوك
+            // 🔥 إرسال حدث الشراء (Purchase)
             if (typeof fbq !== 'undefined' && globalPixelId) {
                 fbq('track', 'Purchase', { 
-                    value: finalTotal,       // القيمة المالية للطلب
-                    currency: 'DZD',         // العملة
+                    value: finalTotal,      
+                    currency: 'DZD',        
                     content_name: product.name,
                     content_ids: [productId],
                     content_type: 'product',
                     num_items: qty
                 });
                 console.log("💰 Purchase Event Sent: " + finalTotal + " DZD");
+                
+                // 🔥🔥 تم إضافة سطر التنبيه هنا للاختبار 🔥🔥
+                alert("✅ TEST: تم إرسال حدث الشراء لفيسبوك بنجاح!\nالمبلغ: " + finalTotal + " دج");
             }
 
             load.classList.add("hidden");
@@ -407,7 +387,6 @@ async function fetchProductDetails() {
         } catch(e) { console.error(e); alert("خطأ في الاتصال"); load.classList.add("hidden"); }
     });
     
-    // التقييمات والعرض العائم (كما في الكود الأصلي)
     let selectedRating = 0;
     const stars = document.querySelectorAll('#reviewStars i');
     stars.forEach(star => {
