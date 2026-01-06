@@ -1,30 +1,141 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>تسجيل دخول المسؤول</title>
-  
-  <!-- ربط الخط -->
+  <meta charset="UTF-8">
+  <title>بوابة الإدارة</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-  
-  <!-- ربط ملف الستايل -->
-  <link rel="stylesheet" href="admin-style.css" /> 
+  <link rel="stylesheet" href="admin-style.css">
+  <style>
+    /* تنسيق المربعات الكبيرة (الخيارات) */
+    .choices-container {
+      display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 50px;
+    }
+    .choice-card {
+      background: #fff; width: 100%; max-width: 250px; height: 200px;
+      border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; transition: transform 0.3s, border 0.3s;
+      border: 2px solid transparent; text-decoration: none; color: inherit;
+    }
+    .choice-card:hover { transform: translateY(-5px); }
+    
+    .card-icon { font-size: 3rem; margin-bottom: 15px; }
+    .card-title { font-weight: bold; font-size: 1.2rem; margin-bottom: 5px; }
+    .card-desc { font-size: 0.85rem; color: #777; text-align: center; padding: 0 10px; }
+
+    .owner-card { border-bottom: 5px solid #f39c12; }
+    .store-card { border-bottom: 5px solid #007bff; }
+
+    /* تنسيق المراحل */
+    .stage-section { display: none; max-width: 500px; margin: 20px auto; text-align: center; }
+    
+    .security-lock {
+      background: #34495e; color: #fff; padding: 30px; border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .security-lock input {
+      background: #2c3e50; border: 1px solid #46637f; color: #fff;
+      text-align: center; letter-spacing: 5px; font-size: 1.5rem;
+      width: 100%; padding: 15px; border-radius: 8px; margin-bottom: 20px;
+    }
+    
+    /* رسالة الخطأ */
+    .error-text { color: red; font-weight: bold; margin-top: 10px; }
+    .success-text { color: green; font-weight: bold; margin-top: 10px; }
+  </style>
 </head>
-<body class="login-layout">
-  
-  <div class="login-container">
-    <h2>تسجيل دخول المسؤول</h2>
-    <form id="loginForm">
-      <input type="email" id="email" placeholder="البريد الإلكتروني" required />
-      <input type="password" id="password" placeholder="كلمة المرور" required />
-      <button type="submit">تسجيل الدخول</button>
-      <p id="errorMessage" class="error-message"></p>
-    </form>
+<body>
+
+  <nav>
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <div class="logo">لوحة التحكم</div>
+    <div class="links">
+      <a href="admin-products.html" class="nav-link">المنتجات</a>
+      <a href="add-manager.html" class="nav-link active">المسؤولين</a>
+      <a href="#" id="logoutBtn" class="nav-link" style="display:none;">خروج</a>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- 🔄 التحميل -->
+    <div id="loadingStage" style="text-align:center; padding:50px;">
+      <h3>جاري التحقق...</h3>
+    </div>
+
+    <!-- 1️⃣ مرحلة تسجيل الدخول -->
+    <div id="loginStage" class="stage-section" style="background:#fff; padding:30px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
+      <h3 style="color:#2c3e50; margin-bottom:20px;">تسجيل الدخول للمتابعة</h3>
+      <form id="loginForm">
+        <input type="email" id="lEmail" placeholder="البريد الإلكتروني" required style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:6px;">
+        <input type="password" id="lPass" placeholder="كلمة المرور" required style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:6px;">
+        <button type="submit" id="lBtn" class="btn-primary" style="width:100%; padding:12px; font-size:1.1rem; border:none; border-radius:6px; background:#007bff; color:white; cursor:pointer;">دخول</button>
+      </form>
+      <p id="lMsg" class="error-text"></p>
+    </div>
+
+    <!-- 2️⃣ مرحلة الاختيار (المربعين الكبيرين) -->
+    <div id="choiceStage" style="display:none;">
+      <h2 style="text-align:center; margin-top:20px; color:#2c3e50;">اختر وجهتك</h2>
+      
+      <div class="choices-container">
+        <!-- الزر الأيمن: أنا المالك -->
+        <div class="choice-card owner-card" onclick="goToOwnerLock()">
+          <div class="card-icon">👑</div>
+          <div class="card-title">أنا المالك (Owner)</div>
+          <div class="card-desc">إضافة وحذف المدراء (يتطلب المفتاح السري)</div>
+        </div>
+
+        <!-- الزر الأيسر: إدارة المتجر -->
+        <div class="choice-card store-card" onclick="goToStore()">
+          <div class="card-icon">🛒</div>
+          <div class="card-title">إدارة المتجر</div>
+          <div class="card-desc">الذهاب للمنتجات والطلبات والتحكم بالموقع</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3️⃣ مرحلة القفل السري -->
+    <div id="lockStage" class="stage-section">
+      <div class="security-lock">
+        <h3>🔐 إثبات الملكية</h3>
+        <p style="margin-bottom:20px; opacity:0.8;">أدخل الكود السري للمتابعة</p>
+        <input type="password" id="rootKeyInput" placeholder="******">
+        <div style="display:flex; gap:10px;">
+          <button onclick="showChoices()" style="flex:1; background:#555; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer;">رجوع</button>
+          <button onclick="verifyKey()" style="flex:2; background:#f39c12; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer;">فتح</button>
+        </div>
+        <p id="lockMsg" class="error-text"></p>
+      </div>
+    </div>
+
+    <!-- 4️⃣ مرحلة لوحة المالك -->
+    <div id="ownerStage" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h3 style="color:#27ae60;">✅ لوحة المالك</h3>
+        <button onclick="showChoices()" style="background:#ddd; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">عودة للاختيار</button>
+      </div>
+
+      <!-- نموذج الإضافة -->
+      <div class="form-container" style="background:#fff; padding:25px; border-radius:10px; border-top:4px solid #27ae60; margin-bottom:30px; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom:15px;">إضافة موظف جديد</h3>
+        <form id="addManagerForm">
+          <input type="text" id="mName" placeholder="الاسم" required style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:5px;">
+          <input type="email" id="mEmail" placeholder="البريد الإلكتروني" required style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:5px;">
+          <input type="password" id="mPass" placeholder="كلمة المرور (6+ أرقام)" required minlength="6" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:5px;">
+          <button type="submit" id="addBtn" style="width:100%; padding:12px; background:#27ae60; color:white; border:none; border-radius:5px; font-size:1.1rem; cursor:pointer;">حفظ</button>
+          <p id="statusMsg" style="text-align:center; margin-top:10px; font-weight:bold;"></p>
+        </form>
+      </div>
+
+      <!-- القائمة -->
+      <h3>الطاقم الحالي</h3>
+      <div id="adminsList" class="orders-grid"></div>
+    </div>
+
   </div>
 
   <script type="module">
-    // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
       authDomain: "myestore-34f65.firebaseapp.com",
@@ -36,64 +147,188 @@
       measurementId: "G-9181DX0XNJ"
     };
 
-    // استيراد وحدات Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getDatabase, ref, get, set, remove, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-    // تهيئة Firebase
-    const app = initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig, "ChoiceSystem");
+    const db = getDatabase(app);
     const auth = getAuth(app);
 
-    // عناصر DOM
-    const loginForm = document.getElementById('loginForm');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const errorMessage = document.getElementById('errorMessage');
-    const submitBtn = loginForm.querySelector('button[type="submit"]');
+    // دالة التشفير
+    async function hashString(str) {
+      const msgBuffer = new TextEncoder().encode(str);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
 
-    // إذا كان المستخدم مسجل الدخول بالفعل
+    // إدارة العرض (تضمن ظهور القسم الصحيح فقط)
+    function showSection(id) {
+      // إخفاء كل الأقسام
+      ['loadingStage', 'loginStage', 'choiceStage', 'lockStage', 'ownerStage'].forEach(s => {
+        const el = document.getElementById(s);
+        if(el) el.style.display = 'none';
+      });
+      // إظهار القسم المطلوب
+      const target = document.getElementById(id);
+      if(target) target.style.display = 'block';
+    }
+
+    // مراقب الحالة (يحل مشكلة عدم ظهور الخيارات)
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        window.location.href = 'admin-products.html';
+        document.getElementById('logoutBtn').style.display = 'block';
+        
+        // 🔥 الحل لمشكلة إعادة الدخول: إجبار العرض على صفحة الاختيار
+        // نقوم بإعادة تعيين حقل القفل لتجنب الدخول التلقائي للمالك
+        document.getElementById('rootKeyInput').value = '';
+        showSection('choiceStage'); 
+        
+        loadAdminsList(); // تحميل القائمة في الخلفية
+      } else {
+        document.getElementById('logoutBtn').style.display = 'none';
+        showSection('loginStage');
       }
     });
 
-    // معالجة تسجيل الدخول
-    loginForm.addEventListener('submit', async (e) => {
+    // --- تسجيل الدخول ---
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
-      const email = emailInput.value.trim();
-      const password = passwordInput.value.trim();
-
-      if (!email || !password) {
-        errorMessage.textContent = 'يرجى ملء جميع الحقول';
-        return;
+      const btn = document.getElementById('lBtn');
+      const msg = document.getElementById('lMsg');
+      btn.textContent = "جاري الدخول...";
+      btn.disabled = true;
+      try {
+        await signInWithEmailAndPassword(auth, document.getElementById('lEmail').value, document.getElementById('lPass').value);
+        // onAuthStateChanged سيتكفل بالباقي
+      } catch (err) {
+        msg.textContent = "خطأ في البيانات";
+        btn.textContent = "دخول";
+        btn.disabled = false;
       }
+    });
 
-      const originalText = submitBtn.textContent;
-      submitBtn.textContent = 'جاري التسجيل...';
-      submitBtn.disabled = true;
-      errorMessage.textContent = '';
+    // --- أزرار الاختيار ---
+    window.goToStore = () => {
+      window.location.href = 'admin-products.html';
+    };
+
+    window.goToOwnerLock = () => {
+      showSection('lockStage');
+      document.getElementById('lockMsg').textContent = '';
+    };
+
+    window.showChoices = () => {
+      showSection('choiceStage');
+    };
+
+    // --- فك القفل ---
+    window.verifyKey = async () => {
+      const key = document.getElementById('rootKeyInput').value;
+      const msg = document.getElementById('lockMsg');
+      
+      if(!key) return;
+      msg.textContent = "جاري التحقق...";
+      msg.style.color = "yellow";
 
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        // التوجيه التلقائي سيحدث عبر onAuthStateChanged أو هنا
-        window.location.href = 'admin-products.html';
+        const snap = await get(ref(db, 'security/rootHash'));
+        if(!snap.exists()) { msg.textContent = "خطأ في النظام!"; return; }
         
-      } catch (error) {
-        let errorText = 'خطأ في تسجيل الدخول';
-        switch(error.code) {
-          case 'auth/invalid-email': errorText = 'البريد الإلكتروني غير صحيح'; break;
-          case 'auth/user-not-found': errorText = 'المستخدم غير موجود'; break;
-          case 'auth/wrong-password': errorText = 'كلمة المرور غير صحيحة'; break;
-          case 'auth/too-many-requests': errorText = 'محاولات كثيرة، حاول لاحقاً'; break;
-          case 'auth/network-request-failed': errorText = 'تأكد من اتصالك بالإنترنت'; break;
-          default: errorText = `خطأ: ${error.message}`;
+        const dbHash = snap.val();
+        const inputHash = await hashString(key);
+
+        if(inputHash === dbHash) {
+          showSection('ownerStage'); // فتح اللوحة
+        } else {
+          msg.textContent = "❌ كود خاطئ";
+          msg.style.color = "#e74c3c";
         }
-        errorMessage.textContent = errorText;
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
+      } catch(e) {
+        msg.textContent = "خطأ اتصال";
       }
+    };
+
+    // --- إضافة مدير (مع تعريب الأخطاء) ---
+    document.getElementById('addManagerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const status = document.getElementById('statusMsg');
+      const btn = document.getElementById('addBtn');
+      
+      status.style.display = 'none';
+      btn.textContent = "جاري الحفظ...";
+      btn.disabled = true;
+
+      try {
+        const secApp = initializeApp(firebaseConfig, "SecApp");
+        const secAuth = getAuth(secApp);
+        const cred = await createUserWithEmailAndPassword(secAuth, 
+           document.getElementById('mEmail').value, 
+           document.getElementById('mPass').value
+        );
+        await signOut(secAuth);
+
+        await set(ref(db, `admins/${cred.user.uid}`), {
+           name: document.getElementById('mName').value,
+           email: document.getElementById('mEmail').value,
+           role: 'manager', createdAt: Date.now()
+        });
+        
+        status.className = 'success-text';
+        status.textContent = "✅ تمت الإضافة بنجاح!";
+        status.style.display = 'block';
+        e.target.reset();
+
+      } catch(err) {
+        status.className = 'error-text';
+        // ترجمة الأخطاء
+        if (err.code === 'auth/email-already-in-use') {
+            status.textContent = "خطأ: هذا البريد مسجل بالفعل (مستخدم سابقاً)!";
+        } else if (err.code === 'auth/weak-password') {
+            status.textContent = "خطأ: كلمة المرور ضعيفة جداً.";
+        } else if (err.code === 'auth/invalid-email') {
+            status.textContent = "خطأ: شكل البريد الإلكتروني غير صحيح.";
+        } else {
+            status.textContent = "حدث خطأ: " + err.message;
+        }
+        status.style.display = 'block';
+      } finally {
+        btn.textContent = "حفظ";
+        btn.disabled = false;
+      }
+    });
+
+    // تحميل القائمة
+    function loadAdminsList() {
+      onValue(ref(db, 'admins'), (snapshot) => {
+        const list = document.getElementById('adminsList');
+        list.innerHTML = '';
+        const data = snapshot.val();
+        if(!data) { list.innerHTML = '<p>لا يوجد</p>'; return; }
+
+        Object.entries(data).forEach(([uid, val]) => {
+          const div = document.createElement('div');
+          div.className = 'order-row';
+          div.innerHTML = `
+            <div class="row-info">
+              <strong>${val.name || '---'}</strong><br>
+              <small>${val.email}</small>
+            </div>
+            <button onclick="delManager('${uid}')" style="background:red; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">حذف</button>
+          `;
+          list.appendChild(div);
+        });
+      });
+    }
+
+    window.delManager = async (uid) => {
+      if(confirm("هل أنت متأكد من الحذف؟")) await remove(ref(db, `admins/${uid}`));
+    };
+
+    window.toggleMenu = () => document.querySelector('nav .links').classList.toggle('open');
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+       await signOut(auth);
+       window.location.reload(); // تحديث الصفحة لضمان العودة لشاشة الدخول
     });
   </script>
 </body>
