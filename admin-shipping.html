@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="admin-style.css">
 
   <style>
-      /* --- تنسيقات خاصة بهذه الصفحة --- */
+      /* --- تنسيقات خاصة --- */
       .provider-tags-container {
           display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee;
       }
@@ -19,7 +19,6 @@
           display: flex; align-items: center; gap: 8px; animation: fadeIn 0.3s ease;
       }
       .provider-tag .remove-icon { cursor: pointer; color: #ef5350; font-weight: bold; font-size: 1.1rem; line-height: 1; }
-      .provider-tag .remove-icon:hover { color: #c62828; }
       
       .success-message-box {
           display: none; background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
@@ -27,14 +26,8 @@
       }
 
       #sendBulkBtn {
-          height: 60px !important;
-          min-height: 60px;
-          font-size: 1.1rem;
-          font-weight: bold;
-          padding: 0 30px;
-          display: flex; align-items: center; justify-content: center;
-          background-color: var(--primary-color); 
-          color: white;
+          height: 60px !important; min-height: 60px; font-size: 1.1rem; font-weight: bold; padding: 0 30px;
+          display: flex; align-items: center; justify-content: center; background-color: var(--primary-color); color: white;
       }
 
       #shippingOrdersContainer .order-row {
@@ -46,6 +39,10 @@
       #shippingOrdersContainer .order-row:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.05); background-color: #fafafa; }
       
       .order-checkbox { transform: scale(1.3); margin-left: 15px; cursor: pointer; }
+      
+      /* تنسيق خاص لتقسيم المدخلات في المودال */
+      .dual-input { display: flex; gap: 10px; margin-bottom: 10px; }
+      .dual-input > div { flex: 1; }
   </style>
 </head>
 <body>
@@ -66,29 +63,25 @@
 
   <div class="container">
     
-    <!-- القسم 1: إعدادات الربط -->
+    <!-- 1. إعدادات الربط -->
     <h2>⚙️ إعداد شركات التوصيل</h2>
     <div class="form-card">
       <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">إضافة / تعديل شركة</h3>
-      
       <div class="search-wrapper">
           <label style="font-weight:bold; display:block; margin-bottom:5px;">اسم الشركة :</label>
           <input type="text" id="providerNameInput" class="search-input" placeholder="مثلاً: Guepex, Yalidine...">
-          
           <div style="display:flex; gap:10px; margin-top:15px;">
             <div style="flex:1">
                 <label style="font-weight:bold; display:block; margin-bottom:5px;">API ID:</label>
-                <input type="text" id="apiKeyInput" class="search-input" placeholder="مثال: 084679...">
+                <input type="text" id="apiKeyInput" class="search-input" placeholder="API ID (Key)">
             </div>
             <div style="flex:1">
                 <label style="font-weight:bold; display:block; margin-bottom:5px;">API Token:</label>
-                <input type="text" id="apiTokenInput" class="search-input" placeholder="مثال: 6tDv0V...">
+                <input type="text" id="apiTokenInput" class="search-input" placeholder="API Token">
             </div>
           </div>
-
           <button id="saveConfigBtn" class="save-btn" style="margin-top:15px; width:100%;">حفظ معلومات الشركة</button>
           <div id="configSuccessMsg" class="success-message-box">✅ تم حفظ معلومات الشركة بنجاح!</div>
-
           <div style="margin-top:15px;">
               <small style="color:#666;">الشركات المربوطة حالياً:</small>
               <div id="activeProvidersList" class="provider-tags-container"></div>
@@ -96,7 +89,7 @@
       </div>
     </div>
 
-    <!-- القسم 2: تجهيز الطلبات -->
+    <!-- 2. تجهيز الطلبات -->
     <h2>📦 تجهيز وإرسال الطلبات</h2>
     <div class="form-card">
         <div class="search-wrapper" style="display:flex; gap:10px; align-items:center;">
@@ -106,12 +99,10 @@
                     <option value="" disabled selected>-- جاري التحميل... --</option>
                 </select>
             </div>
-            
             <div style="flex:1; display:flex; align-items:flex-end;">
                 <button id="sendBulkBtn" class="add-btn">📤 إرسال الطلبات المحددة</button>
             </div>
         </div>
-
         <h3 style="margin-top:20px; border-bottom:1px solid #eee; padding-bottom:10px;">الطلبات قيد التجهيز (Processing)</h3>
         <div id="shippingOrdersContainer" class="orders-grid">
             <p class="loading-message">جاري تحميل الطلبات...</p>
@@ -120,7 +111,7 @@
 
     <hr style="border: 0; border-top: 2px dashed #ccc; margin: 40px 0;">
 
-    <!-- القسم 3: المناطق -->
+    <!-- 3. المناطق -->
     <h2>💰 تسعيرات التوصيل (Zones)</h2>
     <div class="form-card">
       <div class="price-inputs-row">
@@ -149,7 +140,7 @@
   <div id="orderDetailModal" class="modal hidden">
     <div class="modal-content">
       <button class="close-modal-btn" id="closeDetailModal">&times;</button>
-      <h3>تعديل بيانات الطلب</h3>
+      <h3>تعديل بيانات الطرد</h3>
       <div class="details-section">
           <label class="details-label">الاسم الكامل</label>
           <input type="text" id="editName" class="search-input" style="margin-bottom:10px;">
@@ -157,26 +148,42 @@
           <label class="details-label">رقم الهاتف</label>
           <input type="text" id="editPhone" class="search-input" style="margin-bottom:10px;">
           
-          <div style="display:flex; gap:10px;">
-              <div style="flex:1">
+          <div class="dual-input">
+              <div>
                   <label class="details-label">الولاية</label>
-                  <input type="text" id="editWilaya" class="search-input" style="margin-bottom:10px;">
+                  <input type="text" id="editWilaya" class="search-input">
               </div>
-              <div style="flex:1">
+              <div>
                   <label class="details-label">البلدية</label>
-                  <input type="text" id="editCommune" class="search-input" style="margin-bottom:10px;">
+                  <input type="text" id="editCommune" class="search-input">
               </div>
           </div>
 
           <label class="details-label">العنوان</label>
           <input type="text" id="editAddress" class="search-input" style="margin-bottom:10px;">
           
-          <!-- نوع التوصيل -->
-          <label class="details-label">نوع التوصيل</label>
-          <select id="editDeliveryType" class="search-input" style="margin-bottom:10px;">
-              <option value="home">🏠 توصيل للمنزل</option>
-              <option value="desk">🏢 توصيل للمكتب (Stop Desk)</option>
-          </select>
+          <!-- ✅ الإضافات الجديدة: نوع التوصيل، نوع الشحن، الوزن -->
+          <div class="dual-input">
+              <div>
+                  <label class="details-label">مكان التوصيل</label>
+                  <select id="editDeliveryType" class="search-input">
+                      <option value="home">🏠 المنزل (Domicile)</option>
+                      <option value="desk">🏢 المكتب (Stop Desk)</option>
+                  </select>
+              </div>
+              <div>
+                  <label class="details-label">نمط الشحن</label>
+                  <select id="editShippingMode" class="search-input">
+                      <option value="economique">💰 اقتصادي (Economique)</option>
+                      <option value="express">🚀 سريع (Express)</option>
+                  </select>
+              </div>
+          </div>
+
+          <div style="margin-bottom:10px;">
+              <label class="details-label">الوزن (KG)</label>
+              <input type="number" id="editWeight" class="search-input" value="1" min="0.1" step="0.1">
+          </div>
 
           <div id="productsList" style="margin:15px 0; background:#f9f9f9; padding:10px; border-radius:5px;"></div>
           <input type="hidden" id="currentOrderId">
@@ -247,25 +254,16 @@
         try {
             const providerId = providerName.replace(/\s+/g, '_').toLowerCase();
             await update(ref(db, `delivery_settings/${providerId}`), { 
-                displayName: providerName,
-                apiKey: key, 
-                apiToken: token 
+                displayName: providerName, apiKey: key, apiToken: token 
             });
-            
             const successMsg = document.getElementById('configSuccessMsg');
             successMsg.style.display = 'block';
             setTimeout(() => successMsg.style.display = 'none', 3000);
-
             document.getElementById('providerNameInput').value = '';
             document.getElementById('apiKeyInput').value = '';
             document.getElementById('apiTokenInput').value = '';
-            
-        } catch (error) {
-            alert("خطأ: " + error.message);
-        } finally {
-            btn.textContent = "حفظ معلومات الشركة";
-            btn.disabled = false;
-        }
+        } catch (error) { alert("خطأ: " + error.message); } 
+        finally { btn.textContent = "حفظ معلومات الشركة"; btn.disabled = false; }
     });
 
     function loadActiveProviders() {
@@ -273,7 +271,6 @@
             shipProviderSelect.innerHTML = '<option value="" disabled selected>-- اختر شركة للشحن --</option>';
             const tagsContainer = document.getElementById('activeProvidersList');
             tagsContainer.innerHTML = '';
-
             if(snapshot.exists()) {
                 const settings = snapshot.val();
                 let hasActive = false;
@@ -281,10 +278,8 @@
                     const providerData = settings[key];
                     if(providerData.apiKey) {
                         const option = document.createElement('option');
-                        option.value = key;
-                        option.textContent = providerData.displayName || key; 
+                        option.value = key; option.textContent = providerData.displayName || key; 
                         shipProviderSelect.appendChild(option);
-                        
                         const tag = document.createElement('div');
                         tag.className = 'provider-tag';
                         tag.innerHTML = `<span>${providerData.displayName || key}</span><span class="remove-icon" onclick="deleteProvider('${key}')">&times;</span>`;
@@ -296,19 +291,13 @@
             }
         });
     }
-
-    window.deleteProvider = async (key) => {
-        if(confirm('حذف هذه الشركة؟')) await remove(ref(db, `delivery_settings/${key}`));
-    };
+    window.deleteProvider = async (key) => { if(confirm('حذف هذه الشركة؟')) await remove(ref(db, `delivery_settings/${key}`)); };
 
     // 2. عرض الطلبات
     onValue(ordersRef, (snapshot) => {
         shippingContainer.innerHTML = '';
         const orders = snapshot.val();
-        if(!orders) {
-            shippingContainer.innerHTML = '<p class="loading-message">لا توجد طلبات.</p>';
-            return;
-        }
+        if(!orders) { shippingContainer.innerHTML = '<p class="loading-message">لا توجد طلبات.</p>'; return; }
 
         const sorted = Object.entries(orders).sort((a,b) => b[1].timestamp - a[1].timestamp);
         let count = 0;
@@ -316,12 +305,10 @@
         sorted.forEach(([id, order]) => {
             const status = (order.status || '').toLowerCase();
             if(!status.includes('processing') && !status.includes('تجهيز')) return;
-            
             count++;
             const row = document.createElement('div');
             row.className = 'order-row';
             
-            // أيقونة نوع التوصيل
             const isStopDesk = (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب')));
             const typeIcon = isStopDesk ? '🏢' : '🏠';
             
@@ -330,23 +317,17 @@
                     <input type="checkbox" class="order-checkbox" value="${id}">
                     <div style="display:flex; flex-direction:column; margin-right:15px;">
                         <span class="row-name">${order.customerName || order.name}</span>
-                        <small style="color:#777;">
-                            ${typeIcon} ${order.customerWilaya || order.state || ''} | 
-                            <span style="color:var(--success-color); font-weight:bold;">${parseFloat(order.totalPrice || 0)} دج</span>
-                        </small>
+                        <small style="color:#777;">${typeIcon} ${order.customerWilaya || order.state || ''} | <span style="color:var(--success-color); font-weight:bold;">${parseFloat(order.totalPrice || 0)} دج</span></small>
                     </div>
                 </div>
-                <div onclick="window.openDetails('${id}')" style="cursor:pointer; background:#f0f2f5; padding:8px 15px; border-radius:20px; font-size:0.85rem; font-weight:bold; color:var(--primary-color);">
-                    تعديل ✎
-                </div>
+                <div onclick="window.openDetails('${id}')" style="cursor:pointer; background:#f0f2f5; padding:8px 15px; border-radius:20px; font-size:0.85rem; font-weight:bold; color:var(--primary-color);">تعديل ✎</div>
             `;
             shippingContainer.appendChild(row);
         });
-
         if(count === 0) shippingContainer.innerHTML = '<p class="loading-message">لا توجد طلبات قيد التجهيز.</p>';
     });
 
-    // 3. المودال
+    // 3. المودال (Edit & Settings)
     window.openDetails = (id) => {
         get(ref(db, 'orders/' + id)).then((snap) => {
             if(snap.exists()) {
@@ -358,21 +339,23 @@
                 document.getElementById('editCommune').value = order.customerCommune || order.city || '';
                 document.getElementById('editAddress').value = order.customerAddress || order.address || '';
                 
+                // تحديد مكان التوصيل
                 const deliveryType = (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب'))) ? 'desk' : 'home';
                 document.getElementById('editDeliveryType').value = deliveryType;
+
+                // ✅ تحديد نوع الشحن (افتراضياً اقتصادي إذا لم يحدد من قبل)
+                document.getElementById('editShippingMode').value = order.shippingMode || 'economique';
+                
+                // ✅ تحديد الوزن (افتراضياً 1 إذا لم يحدد)
+                document.getElementById('editWeight').value = order.weight || 1;
 
                 const productsDiv = document.getElementById('productsList');
                 let itemsHtml = '';
                 if(order.items) {
                      const items = Array.isArray(order.items) ? order.items : Object.values(order.items);
-                     items.forEach(item => {
-                         itemsHtml += `<div>📦 ${item.name} <span style="font-weight:bold;">(x${item.quantity})</span></div>`;
-                     });
-                } else {
-                    itemsHtml = `<div>📦 ${order.productName || 'منتج'}</div>`;
-                }
-                
-                itemsHtml += `<div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:5px; font-weight:bold;">المجموع الكلي: ${order.totalPrice} دج</div>`;
+                     items.forEach(item => { itemsHtml += `<div>📦 ${item.name} <span style="font-weight:bold;">(x${item.quantity})</span></div>`; });
+                } else { itemsHtml = `<div>📦 ${order.productName || 'منتج'}</div>`; }
+                itemsHtml += `<div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:5px; font-weight:bold;">المجموع: ${order.totalPrice} دج</div>`;
                 
                 productsDiv.innerHTML = itemsHtml;
                 modal.classList.remove('hidden');
@@ -390,8 +373,12 @@
             customerWilaya: document.getElementById('editWilaya').value,
             customerCommune: document.getElementById('editCommune').value,
             customerAddress: document.getElementById('editAddress').value,
-            deliveryOption: document.getElementById('editDeliveryType').value,
-            // تحديث الحقول القديمة
+            deliveryOption: document.getElementById('editDeliveryType').value, // home/desk
+            // ✅ حفظ الإعدادات الجديدة (Mode, Weight)
+            shippingMode: document.getElementById('editShippingMode').value,
+            weight: parseFloat(document.getElementById('editWeight').value),
+            
+            // Legacy support
             name: document.getElementById('editName').value,
             phone: document.getElementById('editPhone').value,
             state: document.getElementById('editWilaya').value,
@@ -409,7 +396,7 @@
     });
 
     // ==========================================================
-    // 4. الإرسال (Guepex API Integration - Fixed order_id)
+    // 4. الإرسال (Complete Shipping Logic)
     // ==========================================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const btn = this;
@@ -424,7 +411,6 @@
         btn.textContent = "جاري الاتصال ...";
         btn.disabled = true;
 
-        // 1. جلب المفاتيح
         let apiData = null;
         try {
             const settingsSnap = await get(ref(db, `delivery_settings/${providerId}`));
@@ -441,7 +427,6 @@
         let failCount = 0;
         let errorDetails = "";
 
-        // 2. الدوران على الطلبات
         for (const checkbox of checks) {
             const orderId = checkbox.value;
             try {
@@ -449,22 +434,21 @@
                 if (!orderSnap.exists()) continue;
                 const order = orderSnap.val();
 
-                // أ) تنظيف اسم الولاية
+                // 1. تنظيف البيانات
                 let rawWilaya = order.customerWilaya || order.state || "";
                 let cleanWilaya = rawWilaya.includes('.') ? rawWilaya.split('.').slice(1).join('.').trim() : rawWilaya;
 
-                // ب) تقسيم الاسم واللقب
                 let fullName = (order.customerName || order.name || "Inconnu").trim();
                 let firstName = fullName.split(' ')[0]; 
                 let lastName = fullName.substring(firstName.length).trim() || ".";
 
-                // ج) تحديد نوع التوصيل
                 let isStopDesk = false;
-                if(order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب'))) {
+                // التحقق من الحقل المحفوظ في التعديل أولاً، ثم الحقل القديم
+                if(order.deliveryOption && (order.deliveryOption === 'desk' || order.deliveryOption.includes('مكتب'))) {
                     isStopDesk = true;
                 }
 
-                // د) تجهيز البيانات النهائية (Guepex Payload)
+                // 2. تجهيز البايلود الكامل (Guepex Payload)
                 const parcelData = {
                     "firstname": firstName,
                     "lastname": lastName,
@@ -473,16 +457,20 @@
                     "wilaya": cleanWilaya, 
                     "commune": order.customerCommune || order.city || cleanWilaya, 
                     "price": parseFloat(order.totalPrice || 0), 
-                    "freeshipping": false,
+                    
+                    // ✅ الإضافات الجديدة
+                    "mode": order.shippingMode || "economique", // افتراضياً اقتصادي
+                    "weight": parseFloat(order.weight || 1),    // افتراضياً 1
                     "is_stopdesk": isStopDesk, 
+                    
+                    "freeshipping": false,
                     "has_exchange": false,
                     "product": order.productName || "Colis Divers",
-                    "weight": 1,
-                    // 🔥🔥 الحقل الذي كان ناقصاً وتمت إضافته لحل المشكلة 🔥🔥
-                    "order_id": orderId.replace('#', '') // إرسال رقم الطلب
+                    // ✅ الـ ID الأساسي
+                    "order_id": orderId.replace('#', '') 
                 };
 
-                // هـ) الإرسال عبر API
+                // 3. الإرسال عبر API (Proxy)
                 const targetUrl = 'https://api.guepex.app/v1/parcels';
                 const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
 
@@ -500,7 +488,7 @@
                 let result = {};
                 try { result = JSON.parse(resultText); } catch(e) { result = { msg: resultText }; }
 
-                // و) التحقق من النجاح
+                // 4. التحقق
                 if (response.ok || result.success === true || result.tracking) { 
                     const updates = {};
                     updates[`orders/${orderId}/status`] = 'Shipped';
@@ -527,14 +515,13 @@
         }
 
         let finalMsg = `النتيجة:\n✅ نجاح: ${successCount}`;
-        if(failCount > 0) finalMsg += `\n❌ فشل: ${failCount}\n\n📝 تفاصيل الأخطاء:${errorDetails}`;
+        if(failCount > 0) finalMsg += `\n❌ فشل: ${failCount}\n\n📝 التفاصيل:${errorDetails}`;
         alert(finalMsg);
         
         btn.textContent = "📤 إرسال الطلبات المحددة";
         btn.disabled = false;
     });
 
-    // ======================== 5. المناطق ========================
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     function renderWilayaCheckboxes() {
         const grid = document.getElementById('wilayaGrid');
