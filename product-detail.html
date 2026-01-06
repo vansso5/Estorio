@@ -17,24 +17,33 @@
         content: '▼'; font-size: 0.8em; margin-right: 10px; transition: transform 0.3s;
     }
     #storePolicySection.open h3::after { transform: rotate(180deg); }
+    
+    /* تحسينات بصرية بسيطة */
+    .price-summary { background: #f9f9f9; padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #eee; }
+    .final-price { color: #c0392b; font-weight: bold; font-size: 1.2em; }
 </style>
 
 </head>
 
 <body>
+
+<!-- شريط علوي -->
 <div class="top-marquee">
   <div class="marquee-content">🔒 بياناتك الشخصية تُستخدم فقط لمعالجة طلبك ولن تُشارك مع أي طرف ثالث.</div>
 </div>
 
+<!-- شاشة التحميل -->
 <div id="loadingScreen" class="hidden">
   <div class="spinner"></div>
   <p>جارٍ تسجيل الطلب...</p>
 </div>
 
+<!-- اللوجو -->
 <div class="logo-container">
     <img id="storeLogo" src="https://via.placeholder.com/500x120?text=جاري+التحميل..." alt="Logo">
 </div>
 
+<!-- حاوية المنتج -->
 <div class="container">
     <div class="left-side">
         <div id="productDetailContainer">
@@ -44,11 +53,13 @@
     <div class="right-side"></div>
 </div>
 
+<!-- معاينة الصور -->
 <div class="image-preview-modal" id="imagePreviewModal">
   <button class="close-preview" id="closePreview">&times;</button>
   <img id="previewImage" src="" alt="">
 </div>
 
+<!-- مودال الشكر -->
 <div id="thankYouModal" class="modal hidden">
     <div class="modal-content">
       <div class="check-icon">✔</div>
@@ -62,14 +73,17 @@
     </div>
 </div>
 
+<!-- زر عائم للهاتف -->
 <div id="floatingOrderBtn">
     <button id="floatingConfirmBtn">تأكيد الطلب 🚀</button>
 </div>
 
+<!-- سكريبت العمليات -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js ";
 import { getDatabase, ref, get, child, push, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js ";
 
+// إعدادات فايربيس
 const firebaseConfig = {
   apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
   authDomain: "myestore-34f65.firebaseapp.com",
@@ -85,7 +99,11 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const contactFooter = document.querySelector('.contact-footer .contact-container');
 
-// PIXEL SETUP
+// ==========================================
+// 1. إعداد فيسبوك بيكسل (FACEBOOK PIXEL)
+// ==========================================
+
+// الكود الأساسي (Standard Base Code)
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
@@ -93,18 +111,24 @@ t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window, d
 'https://connect.facebook.net/en_US/fbevents.js');
 
 let globalPixelId = null;
+
+// جلب الـ ID من قاعدة البيانات وتفعيله
 onValue(ref(db, 'settings/pixel_id'), (snapshot) => {
     if (snapshot.exists()) {
         const pixelId = snapshot.val();
         if(pixelId && pixelId.trim() !== "") {
             globalPixelId = pixelId;
-            fbq('init', pixelId);
-            fbq('track', 'PageView');
+            fbq('init', pixelId); // تفعيل البيكسل بالرقم المخزن
+            fbq('track', 'PageView'); // تتبع زيارة الصفحة
+            console.log("✅ Pixel Activated: " + pixelId);
         }
     }
 });
 
-// PHONE
+// ==========================================
+// 2. تتبع الزوار والاتصال
+// ==========================================
+// رقم الهاتف
 onValue(ref(db, 'settings/contactPhone'), (snapshot) => {
     if (snapshot.exists()) {
         const phone = snapshot.val();
@@ -112,13 +136,15 @@ onValue(ref(db, 'settings/contactPhone'), (snapshot) => {
     }
 });
 
-// VISITORS TRACKING
+// تتبع الزوار المتواجدين الآن
 const presenceRef = ref(db, "site_presence");
 const myCon = push(presenceRef);
 onDisconnect(myCon).remove();
 set(myCon, { timestamp: Date.now(), page: window.location.href });
 
-// DOM ELEMENTS
+// ==========================================
+// 3. منطق المتجر والمنتجات
+// ==========================================
 const container = document.getElementById('productDetailContainer');
 const previewModal = document.getElementById('imagePreviewModal');
 const previewImage = document.getElementById('previewImage');
@@ -129,9 +155,8 @@ let currentProductId = null;
 let currentProductPrice = 0;
 let shippingZones = []; 
 
-// لجلب مناطق الشحن
-const shippingRef = ref(db, 'shipping_zones');
-onValue(shippingRef, (snapshot) => {
+// جلب مناطق الشحن
+onValue(ref(db, 'shipping_zones'), (snapshot) => {
     shippingZones = [];
     if (snapshot.exists()) {
         snapshot.forEach((childSnapshot) => { shippingZones.push(childSnapshot.val()); });
@@ -152,15 +177,22 @@ async function fetchProductDetails() {
     const product = snapshot.val();
     currentProductPrice = parseFloat(product.newPrice);
     
+    // 🔥 إرسال حدث مشاهدة المحتوى (ViewContent) للبيكسل بعد تحميل المنتج
+    // نستخدم timeout بسيط لضمان أن البيكسل تم تفعيله
     setTimeout(() => {
         if (typeof fbq !== 'undefined' && globalPixelId) {
             fbq('track', 'ViewContent', { 
-                content_name: product.name, content_ids: [productId], content_type: 'product',
-                value: currentProductPrice, currency: 'DZD'
+                content_name: product.name, 
+                content_ids: [productId], 
+                content_type: 'product',
+                value: currentProductPrice, 
+                currency: 'DZD'
             });
+            console.log("👁️ ViewContent Sent");
         }
-    }, 1500);
+    }, 2000);
 
+    // تحميل اللوجو
     if (product.customLogo && product.customLogo.trim() !== "") {
         storeLogoImg.src = product.customLogo;
     } else {
@@ -170,12 +202,15 @@ async function fetchProductDetails() {
         });
     }
 
+    // عرض الصور
     const images = Array.isArray(product.images) ? product.images : [product.images || 'default.jpg'];
     const swiperSlides = images.map(src => `<div class="swiper-slide"><img src="${src}" alt="صورة"></div>`).join('');
 
+    // قائمة الولايات
     const wilayas = [ "أدرار","الشلف","الأغواط","أم البواقي","باتنة","بجاية","بسكرة","بشار","البليدة","البويرة","تمنراست","تبسة","تلمسان","تيارت","تيزي وزو","الجزائر","الجلفة","جيجل","سطيف","سعيدة","سكيكدة","سيدي بلعباس","عنابة","قالمة","قسنطينة","المدية","مستغانم","المسيلة","معسكر","ورقلة","وهران","البيض","إليزي","برج بوعريريج","بومرداس","الطارف","تندوف","تيسمسيلت","الوادي","خنشلة","سوق أهراس","تيبازة","ميلة","عين الدفلى","النعامة","عين تموشنت","غرداية","غليزان","تيميمون","برج باجي مختار","أولاد جلال","بني عباس","إن صالح","إن قزام","تقرت","جانت","المغير","المنيعة" ];
     const wilayaOptions = wilayas.map(w => `<option value="${w}">${w}</option>`).join('');
 
+    // الوصف
     let descriptionHTML = '';
     if (Array.isArray(product.description)) {
         product.description.forEach(block => {
@@ -184,6 +219,7 @@ async function fetchProductDetails() {
         });
     } else { descriptionHTML = `<p>${product.description || 'لا يوجد وصف.'}</p>`; }
 
+    // بناء واجهة المستخدم
     container.innerHTML = `
       <div class="swiper mySwiper"><div class="swiper-wrapper">${swiperSlides}</div><div class="swiper-pagination"></div></div>
       <div class="product-header">
@@ -241,6 +277,7 @@ async function fetchProductDetails() {
       <div id="storePolicySection" class="store-policy-section" style="display:none;"><h3>📜 السياسات</h3><div id="policyContent" class="policy-content" style="display:none;"></div></div>
     `;
 
+    // تفعيل السلايدر والمعاينة
     new Swiper(".mySwiper", { pagination: { el: ".swiper-pagination", clickable: true } });
     document.querySelectorAll('.swiper-slide img, .desc-content img').forEach(img => {
       img.addEventListener('click', () => { previewImage.src = img.src; previewModal.classList.add('active'); });
@@ -248,7 +285,7 @@ async function fetchProductDetails() {
     closePreview.addEventListener('click', () => previewModal.classList.remove('active'));
     previewModal.addEventListener('click', e => { if(e.target === previewModal) previewModal.classList.remove('active'); });
 
-    // POLICY LOGIC
+    // منطق السياسات
     const policySection = document.getElementById('storePolicySection');
     const policyContent = document.getElementById('policyContent');
     const policyHeader = policySection ? policySection.querySelector('h3') : null;
@@ -277,7 +314,9 @@ async function fetchProductDetails() {
       } else policySection.style.display = 'none';
     });
 
-    // ORDER LOGIC
+    // ==========================================
+    // 4. منطق الطلب وحساب الأسعار
+    // ==========================================
     const confirmBtn = document.getElementById("confirmOrderBtn");
     const qtyVal = document.getElementById("quantityValue");
     const wilayaSel = document.getElementById("wilaya");
@@ -290,9 +329,7 @@ async function fetchProductDetails() {
         
         const zone = shippingZones.find(z => z.wilayas && z.wilayas.includes(wilayaSel.value));
         if (zone) {
-            // ✅ تصحيح: استخدام parseFloat لضمان أن السعر رقم وليس نص
             shipPrice = (delSel.value === "المنزل") ? parseFloat(zone.homePrice || 0) : parseFloat(zone.deskPrice || 0);
-            
             document.getElementById("shippingText").textContent = `(+${shipPrice} دج توصيل)`;
             document.getElementById("shippingText").style.color = "#27ae60";
         } else {
@@ -301,7 +338,6 @@ async function fetchProductDetails() {
             document.getElementById("shippingText").style.color = "#7f8c8d";
         }
         
-        // ✅ الآن الجمع سيكون رياضياً صحيحاً
         document.getElementById("summaryTotalPrice").textContent = (pPrice + shipPrice).toLocaleString() + " دج";
     }
 
@@ -311,6 +347,7 @@ async function fetchProductDetails() {
     delSel.addEventListener("change", updatePrice);
     updatePrice();
 
+    // زر تأكيد الطلب
     confirmBtn.addEventListener("click", async () => {
         const load = document.getElementById("loadingScreen");
         const ph = document.getElementById("phone").value.trim();
@@ -324,23 +361,18 @@ async function fetchProductDetails() {
         try {
             const refOrd = push(ref(db, "orders"));
             
-            // ✅ تصحيح الحسابات للفصل بين سعر المنتج وسعر الشحن
-            const productTotalAmount = currentProductPrice * qty; // سعر المنتجات فقط
-            const finalTotal = productTotalAmount + shipPrice; // السعر الكلي مع التوصيل
+            const productTotalAmount = currentProductPrice * qty;
+            const finalTotal = productTotalAmount + shipPrice; // المبلغ الإجمالي (سيُرسل للبيكسل)
 
             await set(refOrd, {
                 id: refOrd.key,
                 productId: productId,
                 productName: product.name,
-                
-                // بيانات مفصلة لتسهيل العمل في لوحة التحكم
-                productPrice: currentProductPrice, // سعر القطعة الواحدة
+                productPrice: currentProductPrice,
                 quantity: qty,
-                
-                productTotal: productTotalAmount, // إجمالي سعر المنتجات (بدون توصيل) <- هذا ما ستحتاجه
-                shippingPrice: shipPrice,         // سعر التوصيل
-                totalPrice: finalTotal,           // المجموع الكلي (للدفع عند الاستلام)
-
+                productTotal: productTotalAmount,
+                shippingPrice: shipPrice,
+                totalPrice: finalTotal,
                 customerName: nm,
                 customerPhone: ph,
                 customerWilaya: wl,
@@ -350,8 +382,17 @@ async function fetchProductDetails() {
                 status: "الطلبات الجديدة"
             });
             
+            // 🔥 إرسال حدث الشراء (Purchase) لفيسبوك
             if (typeof fbq !== 'undefined' && globalPixelId) {
-                fbq('track', 'Purchase', { value: finalTotal, currency: 'DZD', content_name: product.name, content_ids: [productId], content_type: 'product', num_items: qty });
+                fbq('track', 'Purchase', { 
+                    value: finalTotal,       // القيمة المالية للطلب
+                    currency: 'DZD',         // العملة
+                    content_name: product.name,
+                    content_ids: [productId],
+                    content_type: 'product',
+                    num_items: qty
+                });
+                console.log("💰 Purchase Event Sent: " + finalTotal + " DZD");
             }
 
             load.classList.add("hidden");
@@ -366,7 +407,7 @@ async function fetchProductDetails() {
         } catch(e) { console.error(e); alert("خطأ في الاتصال"); load.classList.add("hidden"); }
     });
     
-    // REVIEWS & SCROLL & VIEWERS (Same as before)
+    // التقييمات والعرض العائم (كما في الكود الأصلي)
     let selectedRating = 0;
     const stars = document.querySelectorAll('#reviewStars i');
     stars.forEach(star => {
