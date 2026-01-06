@@ -18,8 +18,9 @@
     }
     #storePolicySection.open h3::after { transform: rotate(180deg); }
     
+    /* تعديل اللون إلى الأخضر */
     .price-summary { background: #f9f9f9; padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #eee; }
-    .final-price { color: #c0392b; font-weight: bold; font-size: 1.2em; }
+    .final-price { color: #27ae60; font-weight: bold; font-size: 1.2em; }
 </style>
 
 </head>
@@ -359,7 +360,7 @@ async function fetchProductDetails() {
                 status: "الطلبات الجديدة"
             });
             
-            // 🔥 إرسال حدث الشراء (Purchase)
+            // 🔥 إرسال حدث الشراء (Purchase) - تم حذف رسالة التنبيه
             if (typeof fbq !== 'undefined' && globalPixelId) {
                 fbq('track', 'Purchase', { 
                     value: finalTotal,      
@@ -370,9 +371,6 @@ async function fetchProductDetails() {
                     num_items: qty
                 });
                 console.log("💰 Purchase Event Sent: " + finalTotal + " DZD");
-                
-                // 🔥🔥 تم إضافة سطر التنبيه هنا للاختبار 🔥🔥
-                alert("✅ TEST: تم إرسال حدث الشراء لفيسبوك بنجاح!\nالمبلغ: " + finalTotal + " دج");
             }
 
             load.classList.add("hidden");
