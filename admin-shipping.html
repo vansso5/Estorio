@@ -148,11 +148,11 @@
       <div class="price-inputs-row" style="display:flex; gap:10px; margin-bottom:10px;">
            <div class="price-group" style="flex:1;">
              <label style="display:block; font-weight:bold;">سعر المنزل</label>
-             <input type="number" id="homePrice" class="search-input" placeholder="6000">
+             <input type="number" id="homePrice" class="search-input" placeholder="60">
            </div>
            <div class="price-group" style="flex:1;">
              <label style="display:block; font-weight:bold;">سعر المكتب</label>
-             <input type="number" id="deskPrice" class="search-input" placeholder="4000">
+             <input type="number" id="deskPrice" class="search-input" placeholder="40">
            </div>
       </div>
       <div class="wilaya-controls">
@@ -443,167 +443,164 @@
     // -----------------------------------------------------------
     // 4. الإرسال (Integration Logic Corrected - FINAL VERSION)
     // -----------------------------------------------------------
-    document.getElementById('sendBulkBtn').addEventListener('click', async function() {
-        const btn = this;
-        const providerId = shipProviderSelect.value; 
-        const providerName = shipProviderSelect.options[shipProviderSelect.selectedIndex]?.text || providerId;
-        const checks = document.querySelectorAll('.order-checkbox:checked');
-        
-        if(!providerId) { alert('يرجى اختيار شركة شحن أولاً'); return; }
-        if(checks.length === 0) { alert('لم تقم بتحديد أي طلب!'); return; }
-        if(!confirm(`هل تريد إرسال ${checks.length} طلب عبر (${providerName})؟`)) return;
+    
+document.getElementById('sendBulkBtn').addEventListener('click', async function() {
+const btn = this;
+const providerId = shipProviderSelect.value;
+const providerName = shipProviderSelect.options[shipProviderSelect.selectedIndex]?.text || providerId;
+const checks = document.querySelectorAll('.order-checkbox:checked');
 
-        btn.textContent = "جاري الاتصال ...";
-        btn.disabled = true;
+if(!providerId) { alert('يرجى اختيار شركة شحن أولاً'); return; }
+if(checks.length === 0) { alert('لم تقم بتحديد أي طلب!'); return; }
+if(!confirm(`هل تريد إرسال ${checks.length} طلب عبر (${providerName})؟`)) return;
 
-        // 1. جلب المفاتيح
-        let apiData = null;
-        try {
-            const settingsSnap = await get(ref(db, `delivery_settings/${providerId}`));
-            if(settingsSnap.exists()) apiData = settingsSnap.val();
-            else throw new Error("إعدادات API غير موجودة.");
-        } catch (err) {
-            alert(err.message);
-            btn.textContent = "📤 إرسال الطلبات المحددة";
-            btn.disabled = false;
-            return;
-        }
+btn.textContent = "جاري الاتصال ...";
+btn.disabled = true;
 
-        let successCount = 0;
-        let failCount = 0;
-        let errorDetails = "";
+// 1. جلب المفاتيح
+let apiData = null;
+try {
+const settingsSnap = await get(ref(db, `delivery_settings/${providerId}`));
+if(settingsSnap.exists()) apiData = settingsSnap.val();
+else throw new Error("إعدادات API غير موجودة.");
+} catch (err) {
+alert(err.message);
+btn.textContent = "📤 إرسال الطلبات المحددة";
+btn.disabled = false;
+return;
+}
 
-        // 2. الدوران على الطلبات
-        for (const checkbox of checks) {
-            const orderId = checkbox.value;
-            try {
-                const orderSnap = await get(ref(db, `orders/${orderId}`));
-                if (!orderSnap.exists()) continue;
-                const order = orderSnap.val();
+let successCount = 0;
+let failCount = 0;
+let errorDetails = "";
 
-                // 🔹 أ) تنظيف اسم الولاية والبلدية
-                let rawWilaya = order.customerWilaya || order.state || "";
-                // حذف الأرقام من البداية: "16. Alger" تصبح "Alger"
-                let cleanWilaya = rawWilaya.replace(/^[0-9]+[\.\-\s]*/, '').trim(); 
-                
-                // التأكد من وجود بلدية، إذا لم توجد نضع اسم الولاية
-                let cleanCommune = order.customerCommune || order.city || cleanWilaya;
-                cleanCommune = cleanCommune.replace(/^[0-9]+[\.\-\s]*/, '').trim();
+// 2. الدوران على الطلبات
+for (const checkbox of checks) {
+const orderId = checkbox.value;
+try {
+const orderSnap = await get(ref(db, `orders/${orderId}`));
+if (!orderSnap.exists()) continue;
+const order = orderSnap.val();
 
-                // 🔹 ب) تنسيق الهاتف (إزالة المسافات والرموز)
-                let phone = (order.customerPhone || order.phone || "").replace(/[^0-9]/g, '');
-                // إضافة صفر في البداية إذا كان ناقصاً (لضمان 10 أرقام مثل 0550...)
-                if (phone.length === 9) phone = '0' + phone;
+// 🔹 أ) تنظيف اسم الولاية والبلدية
+let rawWilaya = order.customerWilaya || order.state || "";
+// حذف الأرقام: "16. Alger" -> "Alger"
+let cleanWilaya = rawWilaya.replace(/^[0-9]+[\.\-\s]*/, '').trim();
 
-                // 🔹 ج) تقسيم الاسم
-                let fullName = (order.customerName || order.name || "Client").trim();
-                let splitName = fullName.split(" ");
-                let firstName = splitName[0];
-                let lastName = splitName.slice(1).join(" ") || firstName; // تكرار الاسم إذا لم يوجد لقب
+let cleanCommune = order.customerCommune || order.city || cleanWilaya;
+cleanCommune = cleanCommune.replace(/^[0-9]+[\.\-\s]*/, '').trim();
 
-                // 🔹 د) نوع التوصيل
-                let isStopDesk = false;
-                if(order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب'))) {
-                    isStopDesk = true;
-                }
-                
-                // تنظيف الـ ID
-                const cleanOrderId = orderId.replace('#', '').trim();
+// 🔹 ب) تنسيق الهاتف
+let phone = (order.customerPhone || order.phone || "").replace(/[^0-9]/g, '');
+if (phone.length === 9) phone = '0' + phone;
 
-                // 🔹 هـ) تجهيز البيانات
-                const parcelData = {
-                    "firstname": firstName,
-                    "lastname": lastName,
-                    "phone": phone,
-                    "address": order.customerAddress || order.address || cleanWilaya,
-                    "wilaya": cleanWilaya, 
-                    "commune": cleanCommune, 
-                    "price": parseFloat(order.totalPrice || 0), 
-                    "freeshipping": false,
-                    "is_stopdesk": isStopDesk, 
-                    "has_exchange": false,
-                    "product": order.productName || "Colis",
-                    "weight": 1,
-                    // 🔥 التصحيح: إرسال ID داخل الحقلين
-                    "order_id": cleanOrderId,
-                    "reference": cleanOrderId 
-                };
+// 🔹 ج) تقسيم الاسم
+let fullName = (order.customerName || order.name || "Client").trim();
+let splitName = fullName.split(" ");
+let firstName = splitName[0];
+let lastName = splitName.slice(1).join(" ") || firstName;
 
-                const targetUrl = 'https://api.guepex.app/v1/parcels';
-                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
+// 🔹 د) نوع التوصيل
+let isStopDesk = false;
+if(order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب'))) {
+isStopDesk = true;
+}
 
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-API-ID': apiData.apiKey,
-                    'X-API-TOKEN': apiData.apiToken
-                };
+const cleanOrderId = orderId.replace('#', '').trim();
 
-                // 🔥🔥 التصحيح: وضع parcelData داخل مصفوفة [ ]
-                const response = await fetch(proxyUrl, { 
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify([ parcelData ]) 
-                });
+// 🔹 هـ) تجهيز البيانات (بناءً على رسالة الخطأ الأخيرة)
+// ⚠️ التغيير الكبير هنا: تغيير أسماء الحقول لتطابق Yalidine Style
+const parcelData = {
+"order_id": cleanOrderId,
 
-                const resultText = await response.text();
-                let result = {};
-                try {
-                    result = JSON.parse(resultText);
-                } catch (e) {
-                    throw new Error("استجابة غير مفهومة من الخادم: " + resultText.substring(0, 50));
-                }
+// الأسماء المطلوبة حسب رسالة الخطأ
+"firstname": firstName,
+"familyname": lastName, // كانت lastname
+"contact_phone": phone, // كانت phone
+"address": order.customerAddress || order.address || cleanWilaya,
+"to_wilaya_name": cleanWilaya, // كانت wilaya
+"to_commune_name": cleanCommune,// كانت commune
+"product_list": order.productName || "Colis", // كانت product
 
-                // التحقق من النجاح (يدعم عدة صيغ للرد)
-                let successItem = null;
-                if (Array.isArray(result) && result.length > 0) successItem = result[0];
-                else if (result.success === true || result.tracking) successItem = result;
-                else if (result[cleanOrderId]) successItem = result[cleanOrderId];
+"price": parseFloat(order.totalPrice || 0),
+"freeshipping": false,
+"is_stopdesk": isStopDesk,
+"has_exchange": false,
+"do_insurance": false
+};
 
-                // إذا وجدنا tracking code أو success: true
-                if (successItem && (successItem.tracking || successItem['tracking_code'] || successItem.id || successItem.success === true)) { 
-                    const trackingCode = successItem.tracking || successItem['tracking_code'] || successItem.id || "تم الإرسال";
-                    
-                    const updates = {};
-                    updates[`orders/${orderId}/status`] = 'Shipped';
-                    updates[`orders/${orderId}/deliveryProvider`] = providerName;
-                    updates[`orders/${orderId}/trackingCode`] = trackingCode;
-                    updates[`orders/${orderId}/shippedAt`] = Date.now();
-                    
-                    await update(ref(db), updates);
-                    successCount++;
-                } else {
-                    console.error("API Fail:", result);
-                    failCount++;
-                    
-                    // استخراج رسالة الخطأ الكاملة للعرض
-                    let msg = "";
-                    if (result.message) msg = result.message;
-                    if (result.errors) msg += " | " + JSON.stringify(result.errors); 
-                    if (!msg && result.error) msg = JSON.stringify(result.error);
-                    if (!msg) msg = JSON.stringify(result);
+// ملاحظة: بما أن الحقول تشبه ياليدين، ربما تحتاج لاستخدام رابط ياليدين
+// ولكن سنبقي الرابط كما هو إذا كنت متأكداً أنه Guepex، أو يمكنك تجربة رابط ياليدين بالأسفل
+// رابط ياليدين: https://api.yalidine.com/v1/parcels
 
-                    errorDetails += `\n❌ ${firstName}: ${msg}`;
-                }
+const targetUrl = 'https://api.guepex.app/v1/parcels'; // جرب هذا أولاً، إذا فشل جرب رابط ياليدين
+const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
 
-            } catch (err) {
-                console.error("System Error:", err);
-                failCount++;
-                errorDetails += `\n⚠️ خطأ نظام: ${err.message}`;
-            }
-        }
+const headers = {
+'Content-Type': 'application/json',
+'Accept': 'application/json',
+'X-API-ID': apiData.apiKey,
+'X-API-TOKEN': apiData.apiToken
+};
 
-        let finalMsg = `النتيجة:\n✅ نجاح: ${successCount}`;
-        if(failCount > 0) {
-            finalMsg += `\n❌ فشل: ${failCount}\n----------------\n${errorDetails}`;
-        }
-        
-        // عرض الرسالة كاملة
-        alert(finalMsg);
-        
-        btn.textContent = "📤 إرسال الطلبات المحددة";
-        btn.disabled = false;
-    });
+const response = await fetch(proxyUrl, {
+method: 'POST',
+headers: headers,
+body: JSON.stringify([ parcelData ]) // إرسال داخل مصفوفة
+});
+
+const resultText = await response.text();
+let result = {};
+try {
+result = JSON.parse(resultText);
+} catch (e) {
+throw new Error("استجابة غير صالحة: " + resultText.substring(0, 50));
+}
+
+// التحقق من النجاح
+let successItem = null;
+if (Array.isArray(result) && result.length > 0) successItem = result[0];
+else if (result.success === true || result.tracking) successItem = result;
+else if (result[cleanOrderId]) successItem = result[cleanOrderId];
+
+if (successItem && (successItem.tracking || successItem['tracking_code'] || successItem.id || successItem.success === true)) {
+const trackingCode = successItem.tracking || successItem['tracking_code'] || successItem.id || "تم الإرسال";
+
+const updates = {};
+updates[`orders/${orderId}/status`] = 'Shipped';
+updates[`orders/${orderId}/deliveryProvider`] = providerName;
+updates[`orders/${orderId}/trackingCode`] = trackingCode;
+updates[`orders/${orderId}/shippedAt`] = Date.now();
+
+await update(ref(db), updates);
+successCount++;
+} else {
+console.error("API Fail:", result);
+failCount++;
+
+let msg = "";
+if (result.message) msg = result.message;
+// تجميع الأخطاء من الحقول المختلفة إن وجدت
+if (result.validation_error) msg += JSON.stringify(result.validation_error);
+if (!msg) msg = JSON.stringify(result);
+
+errorDetails += `\n❌ ${firstName}: ${msg}`;
+}
+
+} catch (err) {
+console.error("System Error:", err);
+failCount++;
+errorDetails += `\n⚠️ خطأ نظام: ${err.message}`;
+}
+}
+
+let finalMsg = `النتيجة:\n✅ نجاح: ${successCount}`;
+if(failCount > 0) finalMsg += `\n❌ فشل: ${failCount}\n----------------\n${errorDetails}`;
+alert(finalMsg);
+
+btn.textContent = "📤 إرسال الطلبات المحددة";
+btn.disabled = false;
+});
 
     // -----------------------------------------------------------
     // 5. المناطق (Zones & Wilayas)
