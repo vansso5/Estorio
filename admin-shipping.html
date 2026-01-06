@@ -3,15 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>مركز الشحن</title>
+  <title>مركز الشحن - Guepex Integration</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin-style.css">
 
   <style>
       /* تنسيقات إضافية خاصة بهذه الصفحة */
-      
-      /* البطاقات الصغيرة للشركات المحفوظة */
       .provider-tags-container {
           display: flex;
           flex-wrap: wrap;
@@ -20,7 +18,6 @@
           padding-top: 15px;
           border-top: 1px dashed #eee;
       }
-      
       .provider-tag {
           background-color: #e3f2fd;
           color: #0d47a1;
@@ -34,7 +31,6 @@
           gap: 8px;
           animation: fadeIn 0.3s ease;
       }
-
       .provider-tag .remove-icon {
           cursor: pointer;
           color: #ef5350;
@@ -42,12 +38,8 @@
           font-size: 1.1rem;
           line-height: 1;
       }
+      .provider-tag .remove-icon:hover { color: #c62828; }
       
-      .provider-tag .remove-icon:hover {
-          color: #c62828;
-      }
-
-      /* رسالة النجاح */
       .success-message-box {
           display: none;
           background-color: #d1e7dd;
@@ -58,6 +50,18 @@
           margin-top: 15px;
           text-align: center;
           font-weight: bold;
+      }
+
+      /* تنسيق خاص لزر الإرسال */
+      #sendBulkBtn {
+          height: 55px !important;
+          font-size: 1.1rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 25px;
+          background-color: #0062cc;
+          color: white;
       }
   </style>
 </head>
@@ -86,31 +90,25 @@
       
       <div class="search-wrapper">
           <label style="font-weight:bold; display:block; margin-bottom:5px;">اسم الشركة :</label>
-          <input type="text" id="providerNameInput" class="search-input" placeholder="مثلاً: Guepex, Yalidine, ZR...">
+          <input type="text" id="providerNameInput" class="search-input" placeholder="مثلاً: Guepex, Yalidine...">
           
           <div style="display:flex; gap:10px; margin-top:15px;">
             <div style="flex:1">
-                <label style="font-weight:bold; display:block; margin-bottom:5px;">API Key:</label>
-                <input type="text" id="apiKeyInput" class="search-input" placeholder="ألصق الـ API ID هنا">
+                <label style="font-weight:bold; display:block; margin-bottom:5px;">API ID (API Key):</label>
+                <input type="text" id="apiKeyInput" class="search-input" placeholder="مثال: 347253...">
             </div>
             <div style="flex:1">
-                <label style="font-weight:bold; display:block; margin-bottom:5px;">Token:</label>
-                <input type="text" id="apiTokenInput" class="search-input" placeholder="ألصق الـ Token هنا">
+                <label style="font-weight:bold; display:block; margin-bottom:5px;">API Token:</label>
+                <input type="text" id="apiTokenInput" class="search-input" placeholder="مثال: FhA4mr...">
             </div>
           </div>
 
-          <button id="saveConfigBtn" class="save-btn" style="margin-top:15px;">حفظ معلومات الشركة</button>
-          
-          <!-- عنصر رسالة النجاح -->
+          <button id="saveConfigBtn" class="save-btn" style="margin-top:15px; width:100%;">حفظ معلومات الشركة</button>
           <div id="configSuccessMsg" class="success-message-box">✅ تم حفظ معلومات الشركة بنجاح!</div>
 
-          <!-- قائمة الشركات المحفوظة (ستظهر هنا) -->
           <div style="margin-top:15px;">
               <small style="color:#666;">الشركات المربوطة حالياً:</small>
-              <div id="activeProvidersList" class="provider-tags-container">
-                  <!-- سيتم ملؤها بالجافاسكريبت -->
-                  <span style="color:#999; font-size:0.8rem;">لا توجد شركات محفوظة بعد.</span>
-              </div>
+              <div id="activeProvidersList" class="provider-tags-container"></div>
           </div>
       </div>
     </div>
@@ -127,7 +125,7 @@
             </div>
             
             <div style="flex:1; display:flex; align-items:flex-end;">
-                <button id="sendBulkBtn" class="add-btn" style="height:48px;">📤 إرسال الطلبات المحددة</button>
+                <button id="sendBulkBtn" class="add-btn">📤 إرسال الطلبات المحددة</button>
             </div>
         </div>
 
@@ -152,17 +150,13 @@
              <input type="number" id="deskPrice" placeholder="ادخل التسعيرة">
            </div>
       </div>
-      
       <div class="wilaya-controls">
          <span>حدد الولايات:</span>
          <button type="button" id="selectAllBtn" class="select-all-btn">تحديد الكل</button>
       </div>
-
       <div id="wilayaGrid" class="wilaya-grid"></div>
-
       <button id="saveZoneBtn" class="save-btn" style="margin-top:15px;">حفظ التسعيرة</button>
     </div>
-
     <h3 style="margin-top:20px;">التسعيرات الحالية:</h3>
     <div id="zonesContainer" class="orders-grid"></div>
 
@@ -227,7 +221,7 @@
         if (!user) window.location.href = 'admin-login.html';
         else {
             document.getElementById('logoutBtn').style.display = 'block';
-            loadActiveProviders(); // هذه الدالة الآن ستملأ القائمة وأيضاً البطاقات الصغيرة
+            loadActiveProviders();
             renderWilayaCheckboxes();
         }
     });
@@ -244,7 +238,7 @@
         const token = document.getElementById('apiTokenInput').value.trim();
 
         if(!providerName) { alert('اكتب اسم الشركة'); return; }
-        if(!key) { alert('أدخل API Key'); return; }
+        if(!key) { alert('أدخل API ID (Key)'); return; }
 
         btn.textContent = "جاري الحفظ...";
         btn.disabled = true;
@@ -257,16 +251,10 @@
                 apiToken: token 
             });
             
-            // إظهار رسالة النجاح
             const successMsg = document.getElementById('configSuccessMsg');
             successMsg.style.display = 'block';
-            
-            // إخفاء الرسالة بعد 3 ثواني
-            setTimeout(() => {
-                successMsg.style.display = 'none';
-            }, 3000);
+            setTimeout(() => successMsg.style.display = 'none', 3000);
 
-            // تفريغ الحقول
             document.getElementById('providerNameInput').value = '';
             document.getElementById('apiKeyInput').value = '';
             document.getElementById('apiTokenInput').value = '';
@@ -279,10 +267,8 @@
         }
     });
 
-    // دالة عرض الشركات المحفوظة (في القائمة + البطاقات الصغيرة)
     function loadActiveProviders() {
         onValue(settingsRef, (snapshot) => {
-            // تفريغ القائمة والبطاقات
             shipProviderSelect.innerHTML = '<option value="" disabled selected>-- اختر شركة للشحن --</option>';
             const tagsContainer = document.getElementById('activeProvidersList');
             tagsContainer.innerHTML = '';
@@ -294,13 +280,11 @@
                 Object.keys(settings).forEach(key => {
                     const providerData = settings[key];
                     if(providerData.apiKey) {
-                        // 1. إضافة للقائمة المنسدلة
                         const option = document.createElement('option');
                         option.value = key;
                         option.textContent = providerData.displayName || key; 
                         shipProviderSelect.appendChild(option);
                         
-                        // 2. إضافة كبطاقة صغيرة (Tag)
                         const tag = document.createElement('div');
                         tag.className = 'provider-tag';
                         tag.innerHTML = `
@@ -308,7 +292,6 @@
                             <span class="remove-icon" onclick="deleteProvider('${key}')">&times;</span>
                         `;
                         tagsContainer.appendChild(tag);
-
                         hasActive = true;
                     }
                 });
@@ -323,7 +306,6 @@
         });
     }
 
-    // دالة حذف شركة (لجعلها تعمل، يجب تعريفها على الـ window)
     window.deleteProvider = async (key) => {
         if(confirm('هل أنت متأكد من حذف إعدادات هذه الشركة؟')) {
             await remove(ref(db, `delivery_settings/${key}`));
@@ -422,8 +404,12 @@
         }
     });
 
+    // ==========================================================
+    // 4. الإرسال الحقيقي (Guepex API Integration)
+    // ==========================================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
-        const providerId = shipProviderSelect.value;
+        const btn = this;
+        const providerId = shipProviderSelect.value; 
         const providerName = shipProviderSelect.options[shipProviderSelect.selectedIndex]?.text || providerId;
         const checks = document.querySelectorAll('.order-checkbox:checked');
         
@@ -431,29 +417,126 @@
         if(checks.length === 0) { alert('لم تقم بتحديد أي طلب!'); return; }
         if(!confirm(`هل تريد إرسال ${checks.length} طلب عبر (${providerName})؟`)) return;
 
-        const btn = this;
-        btn.textContent = "جاري الإرسال...";
+        btn.textContent = "جاري الاتصال بشركة التوصيل...";
         btn.disabled = true;
 
+        // 1. جلب بيانات الـ API
+        let apiData = null;
         try {
-            const updates = {};
-            checks.forEach(chk => {
-                const id = chk.value;
-                updates[`orders/${id}/status`] = 'Shipped';
-                updates[`orders/${id}/deliveryProvider`] = providerName;
-                updates[`orders/${id}/shippedAt`] = Date.now();
-            });
-            await update(ref(db), updates);
-            alert('تم الإرسال بنجاح! ستظهر الطلبات الآن في خانة المشحونة.');
-        } catch (error) {
-            alert("خطأ: " + error.message);
-        } finally {
+            const settingsSnap = await get(ref(db, `delivery_settings/${providerId}`));
+            if(settingsSnap.exists()) {
+                apiData = settingsSnap.val();
+            } else {
+                throw new Error("لم يتم العثور على إعدادات API لهذه الشركة.");
+            }
+        } catch (err) {
+            alert(err.message);
             btn.textContent = "📤 إرسال الطلبات المحددة";
             btn.disabled = false;
+            return;
         }
+
+        let successCount = 0;
+        let failCount = 0;
+        let errorDetails = "";
+
+        // 2. الدوران على الطلبات
+        for (const checkbox of checks) {
+            const orderId = checkbox.value;
+            
+            try {
+                const orderSnap = await get(ref(db, `orders/${orderId}`));
+                if (!orderSnap.exists()) continue;
+                const order = orderSnap.val();
+
+                // أ) تنظيف الولاية (حذف الأرقام مثل "16. Alger" -> "Alger")
+                let rawWilaya = order.customerWilaya || order.state || "";
+                let cleanWilaya = rawWilaya;
+                if(rawWilaya.includes('.')) {
+                    cleanWilaya = rawWilaya.split('.').slice(1).join('.').trim();
+                }
+
+                // ب) تقسيم الاسم الكامل إلى اسم ولقب (Guepex requires split names)
+                let fullName = (order.customerName || order.name || "Client Inconnu").trim();
+                let firstName = fullName.split(' ')[0]; 
+                let lastName = fullName.substring(firstName.length).trim() || ".";
+
+                // ج) تجهيز البيانات حسب وثائق Guepex
+                // ملاحظة: Endpoint: /v1/parcels
+                const parcelData = {
+                    "firstname": firstName,
+                    "lastname": lastName,
+                    "phone": order.customerPhone || order.phone,
+                    "address": order.customerAddress || order.address || cleanWilaya,
+                    "wilaya": cleanWilaya, 
+                    "commune": order.customerCommune || order.city || cleanWilaya, 
+                    "price": parseFloat(order.totalPrice || 0),
+                    "freeshipping": false,
+                    "is_stopdesk": false,
+                    "has_exchange": false,
+                    "product": order.productName || "Colis Divers"
+                };
+
+                // د) الإرسال عبر API (مع استخدام Proxy لحل مشكلة Localhost)
+                // الرابط الصحيح: https://api.guepex.app/v1/parcels
+                const targetUrl = 'https://api.guepex.app/v1/parcels';
+                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
+
+                const response = await fetch(proxyUrl, { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-ID': apiData.apiKey,
+                        'X-API-TOKEN': apiData.apiToken
+                    },
+                    body: JSON.stringify(parcelData)
+                });
+
+                const resultText = await response.text();
+                let result = {};
+                try { result = JSON.parse(resultText); } catch(e) { result = { msg: resultText }; }
+
+                // هـ) التحقق من الرد
+                // Guepex تعيد أحياناً "success": true أو كائن به "id" أو "tracking"
+                if (response.ok) { 
+                    // نجاح
+                    const updates = {};
+                    updates[`orders/${orderId}/status`] = 'Shipped';
+                    updates[`orders/${orderId}/deliveryProvider`] = providerName;
+                    updates[`orders/${orderId}/trackingCode`] = result.tracking || result.id || "تم الإرسال";
+                    updates[`orders/${orderId}/shippedAt`] = Date.now();
+                    
+                    await update(ref(db), updates);
+                    successCount++;
+                } else {
+                    // فشل
+                    console.error("Guepex Error:", result);
+                    failCount++;
+                    let msg = result.message || result.error || JSON.stringify(result);
+                    errorDetails += `\n- طلب ${firstName}: ${msg}`;
+                }
+
+            } catch (err) {
+                console.error("System Error:", err);
+                failCount++;
+                errorDetails += `\n- خطأ تقني في الطلب ${orderId}: ${err.message}`;
+            }
+        }
+
+        // تقرير النهاية
+        let finalMsg = `النتيجة:\n✅ تم الإرسال بنجاح: ${successCount}`;
+        if(failCount > 0) {
+            finalMsg += `\n❌ فشل الإرسال: ${failCount}`;
+            finalMsg += `\n\nتفاصيل الخطأ:\n${errorDetails}`;
+        }
+        
+        alert(finalMsg);
+        
+        btn.textContent = "📤 إرسال الطلبات المحددة";
+        btn.disabled = false;
     });
 
-    // ======================== 4. المناطق ========================
+    // ======================== 5. المناطق ========================
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     
     function renderWilayaCheckboxes() {
