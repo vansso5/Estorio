@@ -10,33 +10,20 @@
 <meta name="google-site-verification" content="lgCRZS6OSalJssBPY7QkuciuXfNh6Uf_nfvWLKNvmQg" />
 
 <style>
-    /* تنسيق إضافي لجعل عنوان السياسات يبدو كزر قابل للضغط */
     #storePolicySection h3 {
-        cursor: pointer;
-        user-select: none;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center;
     }
     #storePolicySection h3::after {
-        content: '▼';
-        font-size: 0.8em;
-        margin-right: 10px;
-        transition: transform 0.3s;
+        content: '▼'; font-size: 0.8em; margin-right: 10px; transition: transform 0.3s;
     }
-    #storePolicySection.open h3::after {
-        transform: rotate(180deg);
-    }
+    #storePolicySection.open h3::after { transform: rotate(180deg); }
 </style>
 
 </head>
 
 <body>
-    <!-- شريط تنويه الخصوصية المتحرك -->
 <div class="top-marquee">
-  <div class="marquee-content">
-    🔒 بياناتك الشخصية تُستخدم فقط لمعالجة طلبك ولن تُشارك مع أي طرف ثالث.
-  </div>
+  <div class="marquee-content">🔒 بياناتك الشخصية تُستخدم فقط لمعالجة طلبك ولن تُشارك مع أي طرف ثالث.</div>
 </div>
 
 <div id="loadingScreen" class="hidden">
@@ -44,9 +31,8 @@
   <p>جارٍ تسجيل الطلب...</p>
 </div>
 
-<!-- اللوجو -->
 <div class="logo-container">
-    <img id="storeLogo" src="https://via.placeholder.com/500x120?text =جاري+التحميل..." alt="Logo">
+    <img id="storeLogo" src="https://via.placeholder.com/500x120?text=جاري+التحميل..." alt="Logo">
 </div>
 
 <div class="container">
@@ -55,10 +41,7 @@
             <p style="text-align:center; padding:20px;">جاري تحميل المنتج...</p>
         </div>
     </div>
-    
-    <div class="right-side">
-        <!-- لا تغير شيء هنا، يمكن أن يبقى فارغ أو يملأ تلقائياً بالوصف الموجود -->
-    </div>
+    <div class="right-side"></div>
 </div>
 
 <div class="image-preview-modal" id="imagePreviewModal">
@@ -78,7 +61,7 @@
       </div>
     </div>
 </div>
-<!-- الزر الثابت في أسفل الشاشة -->
+
 <div id="floatingOrderBtn">
     <button id="floatingConfirmBtn">تأكيد الطلب 🚀</button>
 </div>
@@ -102,23 +85,14 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const contactFooter = document.querySelector('.contact-footer .contact-container');
 
-// ============================================================
-// 🟢 1. إعداد فيسبوك بيكسل (Facebook Pixel Setup)
-// ============================================================
-
-// تعريف الدالة الأساسية (Loader)
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
+// PIXEL SETUP
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 
-let globalPixelId = null; // متغير لحفظ الآيدي
-
-// جلب Pixel ID من قاعدة البيانات وتشغيله
+let globalPixelId = null;
 onValue(ref(db, 'settings/pixel_id'), (snapshot) => {
     if (snapshot.exists()) {
         const pixelId = snapshot.val();
@@ -126,36 +100,25 @@ onValue(ref(db, 'settings/pixel_id'), (snapshot) => {
             globalPixelId = pixelId;
             fbq('init', pixelId);
             fbq('track', 'PageView');
-            console.log("✅ Facebook Pixel initialized: " + pixelId);
         }
     }
 });
-// ============================================================
 
-
-// جلب رقم الهاتف
+// PHONE
 onValue(ref(db, 'settings/contactPhone'), (snapshot) => {
     if (snapshot.exists()) {
         const phone = snapshot.val();
-        contactFooter.innerHTML = `
-            <span>📞 اتصل بنا: </span>
-            <a href="tel:${phone}">${phone}</a>
-        `;
+        contactFooter.innerHTML = `<span>📞 اتصل بنا: </span><a href="tel:${phone}">${phone}</a>`;
     }
 });
 
-// ============================================================
-// 🟢 كود تتبع الزوار (الجزء الأول: التسجيل في قاعدة البيانات)
-// ============================================================
+// VISITORS TRACKING
 const presenceRef = ref(db, "site_presence");
 const myCon = push(presenceRef);
 onDisconnect(myCon).remove();
-set(myCon, {
-    timestamp: Date.now(),
-    page: window.location.href
-});
-// ============================================================
+set(myCon, { timestamp: Date.now(), page: window.location.href });
 
+// DOM ELEMENTS
 const container = document.getElementById('productDetailContainer');
 const previewModal = document.getElementById('imagePreviewModal');
 const previewImage = document.getElementById('previewImage');
@@ -166,6 +129,7 @@ let currentProductId = null;
 let currentProductPrice = 0;
 let shippingZones = []; 
 
+// لجلب مناطق الشحن
 const shippingRef = ref(db, 'shipping_zones');
 onValue(shippingRef, (snapshot) => {
     shippingZones = [];
@@ -174,9 +138,7 @@ onValue(shippingRef, (snapshot) => {
     }
 });
 
-function getProductIdFromUrl() {
-  return new URLSearchParams(window.location.search).get('id');
-}
+function getProductIdFromUrl() { return new URLSearchParams(window.location.search).get('id'); }
 
 async function fetchProductDetails() {
   const productId = getProductIdFromUrl();
@@ -190,206 +152,113 @@ async function fetchProductDetails() {
     const product = snapshot.val();
     currentProductPrice = parseFloat(product.newPrice);
     
-    // 🟢 2. إرسال حدث مشاهدة المحتوى (ViewContent) للبيكسل
     setTimeout(() => {
         if (typeof fbq !== 'undefined' && globalPixelId) {
             fbq('track', 'ViewContent', { 
-                content_name: product.name,
-                content_ids: [productId],
-                content_type: 'product',
-                value: currentProductPrice,
-                currency: 'DZD'
+                content_name: product.name, content_ids: [productId], content_type: 'product',
+                value: currentProductPrice, currency: 'DZD'
             });
         }
     }, 1500);
-    // ----------------------------------------------------
 
     if (product.customLogo && product.customLogo.trim() !== "") {
         storeLogoImg.src = product.customLogo;
     } else {
         onValue(ref(db, 'settings/logo'), (snap) => {
             if(snap.exists()) storeLogoImg.src = snap.val();
-            else storeLogoImg.src = "https://via.placeholder.com/500x120?text=Welcome ";
+            else storeLogoImg.src = "https://via.placeholder.com/500x120?text=Welcome";
         });
     }
 
     const images = Array.isArray(product.images) ? product.images : [product.images || 'default.jpg'];
     const swiperSlides = images.map(src => `<div class="swiper-slide"><img src="${src}" alt="صورة"></div>`).join('');
 
-    const wilayas = [
-      "أدرار","الشلف","الأغواط","أم البواقي","باتنة","بجاية","بسكرة","بشار","البليدة","البويرة","تمنراست","تبسة","تلمسان","تيارت","تيزي وزو","الجزائر","الجلفة","جيجل","سطيف","سعيدة","سكيكدة","سيدي بلعباس","عنابة","قالمة","قسنطينة","المدية","مستغانم","المسيلة","معسكر","ورقلة","وهران","البيض","إليزي","برج بوعريريج","بومرداس","الطارف","تندوف","تيسمسيلت","الوادي","خنشلة","سوق أهراس","تيبازة","ميلة","عين الدفلى","النعامة","عين تموشنت","غرداية","غليزان","تيميمون","برج باجي مختار","أولاد جلال","بني عباس","إن صالح","إن قزام","تقرت","جانت","المغير","المنيعة"
-    ];
+    const wilayas = [ "أدرار","الشلف","الأغواط","أم البواقي","باتنة","بجاية","بسكرة","بشار","البليدة","البويرة","تمنراست","تبسة","تلمسان","تيارت","تيزي وزو","الجزائر","الجلفة","جيجل","سطيف","سعيدة","سكيكدة","سيدي بلعباس","عنابة","قالمة","قسنطينة","المدية","مستغانم","المسيلة","معسكر","ورقلة","وهران","البيض","إليزي","برج بوعريريج","بومرداس","الطارف","تندوف","تيسمسيلت","الوادي","خنشلة","سوق أهراس","تيبازة","ميلة","عين الدفلى","النعامة","عين تموشنت","غرداية","غليزان","تيميمون","برج باجي مختار","أولاد جلال","بني عباس","إن صالح","إن قزام","تقرت","جانت","المغير","المنيعة" ];
     const wilayaOptions = wilayas.map(w => `<option value="${w}">${w}</option>`).join('');
 
     let descriptionHTML = '';
     if (Array.isArray(product.description)) {
         product.description.forEach(block => {
-            if (block.type === 'text') {
-                descriptionHTML += `<p>${block.val}</p>`;
-            } else if (block.type === 'image') {
-                descriptionHTML += `<img src="${block.val}" alt="توضيح">`;
-            }
+            if (block.type === 'text') descriptionHTML += `<p>${block.val}</p>`;
+            else if (block.type === 'image') descriptionHTML += `<img src="${block.val}" alt="توضيح">`;
         });
-    } else {
-        descriptionHTML = `<p>${product.description || 'لا يوجد وصف.'}</p>`;
-    }
+    } else { descriptionHTML = `<p>${product.description || 'لا يوجد وصف.'}</p>`; }
 
     container.innerHTML = `
       <div class="swiper mySwiper"><div class="swiper-wrapper">${swiperSlides}</div><div class="swiper-pagination"></div></div>
-      
       <div class="product-header">
         <h2>${product.name}</h2>
         <div class="price-badge">
             ${Number(product.newPrice).toLocaleString()} دج
             ${product.oldPrice ? `<small>${Number(product.oldPrice).toLocaleString()}</small>` : ''}
         </div>
-        
-        <!-- 🟢 مكان ظهور العداد -->
         <div id="liveViewersWrapper" style="display: none; text-align: center; margin-top: 10px; color: #c0392b; font-weight: bold;">
-            <span style="animation: pulse 1.5s infinite;">●</span> 
-            يشاهد المنتج الآن: <span id="liveViewersCount">0</span> أشخاص
+            <span style="animation: pulse 1.5s infinite;">●</span> يشاهد المنتج الآن: <span id="liveViewersCount">0</span> أشخاص
         </div>
-        <!-- ------------------------------ -->
-
       </div>
 
       <div class="compact-card" id="orderCard">
         <div class="card-header">اطلب الآن 👇</div>
-        
-        <div class="input-wrapper">
-            <i class="fas fa-phone input-icon"></i>
-            <input type="tel" id="phone" placeholder="رقم الهاتف" dir="ltr" style="text-align:right;">
-        </div>
-
-        <div class="input-wrapper">
-            <i class="fas fa-user input-icon"></i>
-            <input type="text" id="fullName" placeholder="الاسم واللقب">
-        </div>
-
+        <div class="input-wrapper"><i class="fas fa-phone input-icon"></i><input type="tel" id="phone" placeholder="رقم الهاتف" dir="ltr" style="text-align:right;"></div>
+        <div class="input-wrapper"><i class="fas fa-user input-icon"></i><input type="text" id="fullName" placeholder="الاسم واللقب"></div>
         <div class="row-dual">
-            <div class="col-half">
-                <select id="wilaya">
-                    <option value="">اختر الولاية</option>
-                    ${wilayaOptions}
-                </select>
-            </div>
-            <div class="col-half">
-                <select id="deliveryType">
-                    <option value="المنزل">🏠 توصيل للمنزل</option>
-                    <option value="مكتب الشركة">🏢 استلام مكتب</option>
-                </select>
-            </div>
+            <div class="col-half"><select id="wilaya"><option value="">اختر الولاية</option>${wilayaOptions}</select></div>
+            <div class="col-half"><select id="deliveryType"><option value="المنزل">🏠 توصيل للمنزل</option><option value="مكتب الشركة">🏢 استلام مكتب</option></select></div>
         </div>
-        
-        <div class="input-wrapper">
-            <i class="fas fa-map-marker-alt input-icon"></i>
-            <input type="text" id="address" placeholder="البلدية / العنوان">
-        </div>
-
+        <div class="input-wrapper"><i class="fas fa-map-marker-alt input-icon"></i><input type="text" id="address" placeholder="البلدية / العنوان"></div>
         <div class="price-summary">
-            <div class="total-row">
-                <span>المجموع:</span>
-                <span id="summaryTotalPrice" class="final-price">0 دج</span>
-            </div>
+            <div class="total-row"><span>المجموع:</span><span id="summaryTotalPrice" class="final-price">0 دج</span></div>
             <small id="shippingText" class="ship-note">(الشحن غير محدد)</small>
         </div>
-
         <div class="action-bar">
-            <div class="qty-box">
-                <button type="button" id="increaseQty">+</button>
-                <span id="quantityValue">1</span>
-                <button type="button" id="decreaseQty">-</button>
-            </div>
-            <!-- ✅ الزر المتحرك -->
-            <button id="confirmOrderBtn">
-                تأكيد الطلب 🚀
-            </button>
+            <div class="qty-box"><button type="button" id="increaseQty">+</button><span id="quantityValue">1</span><button type="button" id="decreaseQty">-</button></div>
+            <button id="confirmOrderBtn">تأكيد الطلب 🚀</button>
         </div>
       </div>
 
-      <div class="desc-section">
-        <h3>تفاصيل المنتج</h3>
-        <div class="desc-content">
-            ${descriptionHTML}
-        </div>
-      </div>
-
-      <!-- قسم الأيقونات -->
+      <div class="desc-section"><h3>تفاصيل المنتج</h3><div class="desc-content">${descriptionHTML}</div></div>
       ${product.icons && Array.isArray(product.icons) && product.icons.length > 0 ? `
-      <div class="product-icons-section">
-        <div class="product-icons-grid">
-          ${product.icons.map(ic => `
-            <div class="icon-item">
-              <img src="${ic.icon || ''}" alt="أيقونة">
-              <span>${ic.text || ''}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-      ` : ''}
+      <div class="product-icons-section"><div class="product-icons-grid">
+          ${product.icons.map(ic => `<div class="icon-item"><img src="${ic.icon || ''}" alt="أيقونة"><span>${ic.text || ''}</span></div>`).join('')}
+      </div></div>` : ''}
 
       <div class="reviews-section">
          <h3>التقييمات</h3>
-         <!-- ✅ خانة التعليق -->
          <div id="postOrderReview">
             <h4 style="text-align:center; color:#27ae60; margin:0 0 10px;">🎉 شكراً لطلبك! ما هو تقييمك للمنتج؟</h4>
-            
             <div class="stars-box" id="reviewStars">
-                <i class="fas fa-star" data-rating="1"></i>
-                <i class="fas fa-star" data-rating="2"></i>
-                <i class="fas fa-star" data-rating="3"></i>
-                <i class="fas fa-star" data-rating="4"></i>
+                <i class="fas fa-star" data-rating="1"></i><i class="fas fa-star" data-rating="2"></i>
+                <i class="fas fa-star" data-rating="3"></i><i class="fas fa-star" data-rating="4"></i>
                 <i class="fas fa-star" data-rating="5"></i>
             </div>
-            
-            <div class="review-input-group">
-                <input type="text" id="reviewName" placeholder="اسمك (سيظهر مع التعليق)">
-            </div>
-            <div class="review-input-group">
-                <textarea id="reviewText" rows="3" placeholder="اكتب رأيك بصراحة..."></textarea>
-            </div>
+            <div class="review-input-group"><input type="text" id="reviewName" placeholder="اسمك (سيظهر مع التعليق)"></div>
+            <div class="review-input-group"><textarea id="reviewText" rows="3" placeholder="اكتب رأيك بصراحة..."></textarea></div>
             <button id="submitReviewBtn" style="width:100%; padding:10px; background:#27ae60; color:white; border:none; border-radius:50px; cursor:pointer;">إرسال التقييم</button>
          </div>
-
          <div id="commentsList">جاري التحميل...</div>
       </div>
 
-      <!-- ✅ قسم سياسات المتجر (تم نقله هنا أسفل التعليقات) -->
-      <div id="storePolicySection" class="store-policy-section" style="display:none;">
-        <h3>📜 السياسات</h3>
-        <div id="policyContent" class="policy-content" style="display:none;"></div>
-      </div>
+      <div id="storePolicySection" class="store-policy-section" style="display:none;"><h3>📜 السياسات</h3><div id="policyContent" class="policy-content" style="display:none;"></div></div>
     `;
 
     new Swiper(".mySwiper", { pagination: { el: ".swiper-pagination", clickable: true } });
-    
-    document.querySelectorAll('.swiper-slide img').forEach(img => {
+    document.querySelectorAll('.swiper-slide img, .desc-content img').forEach(img => {
       img.addEventListener('click', () => { previewImage.src = img.src; previewModal.classList.add('active'); });
     });
-    document.querySelectorAll('.desc-content img').forEach(img => {
-      img.addEventListener('click', () => { previewImage.src = img.src; previewModal.classList.add('active'); });
-    });
-
     closePreview.addEventListener('click', () => previewModal.classList.remove('active'));
     previewModal.addEventListener('click', e => { if(e.target === previewModal) previewModal.classList.remove('active'); });
 
-    // ================== ✅ جلب سياسات المتجر (معدل) ==================
+    // POLICY LOGIC
     const policySection = document.getElementById('storePolicySection');
     const policyContent = document.getElementById('policyContent');
     const policyHeader = policySection ? policySection.querySelector('h3') : null;
-
-    // 1. منطق فتح وإغلاق القائمة الرئيسية عند الضغط على العنوان
     if (policyHeader) {
         policyHeader.addEventListener('click', () => {
             const isHidden = policyContent.style.display === "none";
             policyContent.style.display = isHidden ? "block" : "none";
-            
-            // إضافة كلاس للتنسيق الاختياري للسهم
-            if (isHidden) policySection.classList.add('open');
-            else policySection.classList.remove('open');
+            if (isHidden) policySection.classList.add('open'); else policySection.classList.remove('open');
         });
     }
-
     onValue(ref(db, 'policies'), (snapshot) => {
       if (snapshot.exists()) {
         const policies = snapshot.val();
@@ -397,34 +266,18 @@ async function fetchProductDetails() {
         for (const id in policies) {
           const p = policies[id];
           if (p.title && p.content) {
-            policyHTML += `
-              <div class="policy-item">
-                <h4 class="policy-title">${p.title}</h4>
-                <p class="policy-body" style="display:none;">${p.content}</p>
-              </div>
-            `;
+            policyHTML += `<div class="policy-item"><h4 class="policy-title">${p.title}</h4><p class="policy-body" style="display:none;">${p.content}</p></div>`;
           }
         }
         if (policyHTML) {
-          policyContent.innerHTML = policyHTML;
-          policySection.style.display = 'block'; // إظهار القسم الرئيسي (العنوان فقط)
-          
-          // منطق فتح السياسات الفرعية (الأكورديون)
+          policyContent.innerHTML = policyHTML; policySection.style.display = 'block';
           const titles = policyContent.querySelectorAll('.policy-title');
-          titles.forEach(title => {
-              title.addEventListener('click', () => {
-                  const body = title.nextElementSibling;
-                  body.style.display = (body.style.display === "none") ? "block" : "none";
-              });
-          });
-        } else {
-          policySection.style.display = 'none';
-        }
-      } else {
-        policySection.style.display = 'none';
-      }
+          titles.forEach(title => { title.addEventListener('click', () => { const body = title.nextElementSibling; body.style.display = (body.style.display === "none") ? "block" : "none"; }); });
+        } else policySection.style.display = 'none';
+      } else policySection.style.display = 'none';
     });
 
+    // ORDER LOGIC
     const confirmBtn = document.getElementById("confirmOrderBtn");
     const qtyVal = document.getElementById("quantityValue");
     const wilayaSel = document.getElementById("wilaya");
@@ -437,7 +290,9 @@ async function fetchProductDetails() {
         
         const zone = shippingZones.find(z => z.wilayas && z.wilayas.includes(wilayaSel.value));
         if (zone) {
-            shipPrice = (delSel.value === "المنزل") ? (zone.homePrice || 0) : (zone.deskPrice || 0);
+            // ✅ تصحيح: استخدام parseFloat لضمان أن السعر رقم وليس نص
+            shipPrice = (delSel.value === "المنزل") ? parseFloat(zone.homePrice || 0) : parseFloat(zone.deskPrice || 0);
+            
             document.getElementById("shippingText").textContent = `(+${shipPrice} دج توصيل)`;
             document.getElementById("shippingText").style.color = "#27ae60";
         } else {
@@ -446,6 +301,7 @@ async function fetchProductDetails() {
             document.getElementById("shippingText").style.color = "#7f8c8d";
         }
         
+        // ✅ الآن الجمع سيكون رياضياً صحيحاً
         document.getElementById("summaryTotalPrice").textContent = (pPrice + shipPrice).toLocaleString() + " دج";
     }
 
@@ -468,17 +324,23 @@ async function fetchProductDetails() {
         try {
             const refOrd = push(ref(db, "orders"));
             
-            // حساب السعر النهائي لإرساله للبيكسل وقاعدة البيانات
-            const finalTotal = (currentProductPrice * qty) + shipPrice;
+            // ✅ تصحيح الحسابات للفصل بين سعر المنتج وسعر الشحن
+            const productTotalAmount = currentProductPrice * qty; // سعر المنتجات فقط
+            const finalTotal = productTotalAmount + shipPrice; // السعر الكلي مع التوصيل
 
             await set(refOrd, {
                 id: refOrd.key,
                 productId: productId,
                 productName: product.name,
-                productPrice: currentProductPrice,
+                
+                // بيانات مفصلة لتسهيل العمل في لوحة التحكم
+                productPrice: currentProductPrice, // سعر القطعة الواحدة
                 quantity: qty,
-                shippingPrice: shipPrice,
-                totalPrice: finalTotal,
+                
+                productTotal: productTotalAmount, // إجمالي سعر المنتجات (بدون توصيل) <- هذا ما ستحتاجه
+                shippingPrice: shipPrice,         // سعر التوصيل
+                totalPrice: finalTotal,           // المجموع الكلي (للدفع عند الاستلام)
+
                 customerName: nm,
                 customerPhone: ph,
                 customerWilaya: wl,
@@ -488,146 +350,70 @@ async function fetchProductDetails() {
                 status: "الطلبات الجديدة"
             });
             
-            // 🟢 3. إرسال حدث الشراء (Purchase) للبيكسل
             if (typeof fbq !== 'undefined' && globalPixelId) {
-                fbq('track', 'Purchase', {
-                    value: finalTotal,      // القيمة الإجمالية
-                    currency: 'DZD',
-                    content_name: product.name,
-                    content_ids: [productId],
-                    content_type: 'product',
-                    num_items: qty
-                });
-                console.log("✅ Purchase event sent to Pixel");
+                fbq('track', 'Purchase', { value: finalTotal, currency: 'DZD', content_name: product.name, content_ids: [productId], content_type: 'product', num_items: qty });
             }
-            // -------------------------------------------
 
             load.classList.add("hidden");
             document.getElementById("thankYouModal").classList.remove("hidden");
             document.getElementById("orderIdBox").textContent = refOrd.key;
             document.getElementById("thankYouMessage").innerHTML = `شكراً <b>${nm}</b>، تم تسجيل طلبك بنجاح.`;
-            
             document.getElementById("postOrderReview").style.display = "block";
             document.getElementById("reviewName").value = nm; 
             document.getElementById("postOrderReview").scrollIntoView({behavior: "smooth"});
-
-            document.getElementById("closeModal").onclick = () => {
-                document.getElementById("thankYouModal").classList.add("hidden");
-            };
+            document.getElementById("closeModal").onclick = () => { document.getElementById("thankYouModal").classList.add("hidden"); };
             document.getElementById("copyOrderId").onclick = () => { navigator.clipboard.writeText(refOrd.key); alert("تم النسخ"); };
-        } catch(e) {
-            console.error(e); alert("خطأ في الاتصال"); load.classList.add("hidden");
-        }
+        } catch(e) { console.error(e); alert("خطأ في الاتصال"); load.classList.add("hidden"); }
     });
     
-    
-    // --- منطق التعليقات ---
+    // REVIEWS & SCROLL & VIEWERS (Same as before)
     let selectedRating = 0;
     const stars = document.querySelectorAll('#reviewStars i');
     stars.forEach(star => {
         star.addEventListener('click', () => {
             selectedRating = parseInt(star.dataset.rating);
-            stars.forEach(s => {
-                if(parseInt(s.dataset.rating) <= selectedRating) s.classList.add('active');
-                else s.classList.remove('active');
-            });
+            stars.forEach(s => { if(parseInt(s.dataset.rating) <= selectedRating) s.classList.add('active'); else s.classList.remove('active'); });
         });
     });
-
     document.getElementById('submitReviewBtn').addEventListener('click', async () => {
         const rName = document.getElementById('reviewName').value.trim() || "زبون";
         const rText = document.getElementById('reviewText').value.trim();
-        
         if(selectedRating === 0) { alert("يرجى اختيار عدد النجوم ⭐"); return; }
         if(!rText) { alert("يرجى كتابة تعليق"); return; }
-
-        try {
-            await push(child(ref(db), `reviews/${productId}`), {
-                reviewerName: rName,
-                rating: selectedRating,
-                comment: rText,
-                timestamp: Date.now()
-            });
-            alert("تم إرسال تقييمك، شكراً لك! ❤️");
-            document.getElementById("postOrderReview").style.display = "none";
-        } catch(e) {
-            alert("حدث خطأ، حاول مرة أخرى.");
-        }
+        try { await push(child(ref(db), `reviews/${productId}`), { reviewerName: rName, rating: selectedRating, comment: rText, timestamp: Date.now() }); alert("تم إرسال تقييمك، شكراً لك! ❤️"); document.getElementById("postOrderReview").style.display = "none"; } catch(e) { alert("حدث خطأ، حاول مرة أخرى."); }
     });
-
     onValue(ref(db, `reviews/${productId}`), (snap) => {
         const list = document.getElementById('commentsList');
         if(snap.exists()) {
             list.innerHTML = '';
-            snap.forEach(c => {
-                 const r = c.val();
-                 list.innerHTML += `
-                 <div class="review-item" style="border-bottom:1px solid #eee; padding:10px 0;">
-                    <b>${r.reviewerName}</b> 
-                    <span style="color:#f1c40f">${'★'.repeat(r.rating)}</span>
-                    <br><span style="color:#555;">${r.comment}</span>
-                 </div>`;
-            });
-        } else { list.innerHTML = '<p style="text-align:center;color:#999">لا توجد تعليقات بعد.</p>'; }
+            snap.forEach(c => { const r = c.val(); list.innerHTML += `<div class="review-item" style="border-bottom:1px solid #eee; padding:10px 0;"><b>${r.reviewerName}</b> <span style="color:#f1c40f">${'★'.repeat(r.rating)}</span><br><span style="color:#555;">${r.comment}</span></div>`; });
+        } else list.innerHTML = '<p style="text-align:center;color:#999">لا توجد تعليقات بعد.</p>';
     });
     
-// ================== كود الزر الثابت في الأسفل ==================
     const orderCard = document.getElementById('orderCard');
     const floatingBtn = document.getElementById('floatingOrderBtn');
-
     function checkScroll() {
         if (!orderCard) return;
-        const rect = orderCard.getBoundingClientRect();
-        if (rect.bottom < 100) { 
-            floatingBtn.classList.add('visible');
-        } else {
-            floatingBtn.classList.remove('visible');
-        }
+        if (orderCard.getBoundingClientRect().bottom < 100) floatingBtn.classList.add('visible'); else floatingBtn.classList.remove('visible');
     }
-
-    document.getElementById('floatingConfirmBtn').addEventListener('click', () => {
-        orderCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    window.addEventListener('scroll', checkScroll);
-    window.addEventListener('resize', checkScroll);
-
-    const waitForCard = setInterval(() => {
-        if (document.getElementById('orderCard')) {
-            checkScroll();
-            clearInterval(waitForCard);
-        }
-    }, 300);
-
+    document.getElementById('floatingConfirmBtn').addEventListener('click', () => { orderCard.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+    window.addEventListener('scroll', checkScroll); window.addEventListener('resize', checkScroll);
+    const waitForCard = setInterval(() => { if (document.getElementById('orderCard')) { checkScroll(); clearInterval(waitForCard); } }, 300);
     setTimeout(checkScroll, 1500); 
 
-    // ============================================================
-    // 🟢 كود تشغيل العداد 
-    // ============================================================
     onValue(presenceRef, (snapshot) => {
         let count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
-        if (count < 1) { count = 1; }
-        
+        if (count < 1) count = 1;
         const wrapper = document.getElementById("liveViewersWrapper");
         const countSpan = document.getElementById("liveViewersCount");
-        
-        if (wrapper && countSpan) {
-            countSpan.innerText = count;
-            wrapper.style.display = "inline-flex";
-        }
+        if (wrapper && countSpan) { countSpan.innerText = count; wrapper.style.display = "inline-flex"; }
     });
-    // ============================================================
 
   } catch(err) { container.innerHTML = 'حدث خطأ غير متوقع.'; console.log(err); }
 }
-
 fetchProductDetails();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js "></script>
-
 </body>
-<!-- قسم التواصل أسفل الصفحة -->
-<div class="contact-footer">
-    <div class="contact-container"></div>
-</div>
+<div class="contact-footer"><div class="contact-container"></div></div>
 </html>
