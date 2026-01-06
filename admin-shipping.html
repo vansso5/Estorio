@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>نظام إدارة الشحن (Final Version)</title>
+  <title>إدارة الشحن (النسخة المصححة)</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin-style.css">
@@ -14,8 +14,6 @@
           font-size: 1.1rem; font-weight: bold; color: var(--primary-color);
           margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 5px;
       }
-
-      /* تنسيقات الإعدادات */
       .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
       .provider-item {
           display: flex; justify-content: space-between; align-items: center;
@@ -28,11 +26,8 @@
           padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.85rem;
       }
       .btn-delete-prov:hover { background: #ef5350; color: white; }
-
-      /* تنسيقات منطقة الإرسال */
       .search-wrapper { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
       
-      /* تصميم زر Express */
       .express-option {
           display: flex; align-items: center; gap: 8px;
           background: #fff3e0; border: 1px solid #ffcc80; color: #e65100;
@@ -52,7 +47,6 @@
       #sendBulkBtn:hover { filter: brightness(0.9); }
       #sendBulkBtn:disabled { background-color: #ccc; cursor: not-allowed; }
 
-      /* الجدول */
       #shippingOrdersContainer .order-row {
           display: flex; align-items: center; justify-content: space-between;
           padding: 12px 15px; background: #fff; border-radius: 8px; margin-bottom: 8px;
@@ -62,7 +56,6 @@
       #shippingOrdersContainer .order-row:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.05); background-color: #fafafa; }
       .order-checkbox { transform: scale(1.3); margin-left: 15px; cursor: pointer; }
 
-      /* المناطق والأسعار */
       .wilaya-grid {
           display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); 
           gap: 10px; margin-top: 15px; max-height: 200px; overflow-y: auto; 
@@ -158,7 +151,7 @@
                 </select>
             </div>
             
-            <!-- خيار Express فقط (تم حذف المجاني) -->
+            <!-- خيار Express فقط -->
             <div class="express-option">
                 <input type="checkbox" id="chkExpress">
                 <label for="chkExpress">توصيل سريع (Express)</label>
@@ -184,11 +177,11 @@
       <div class="price-inputs-row" style="display:flex; gap:10px; margin-bottom:10px;">
            <div class="price-group" style="flex:1;">
              <label style="display:block; font-weight:bold; color:#2e7d32;">سعر المنزل (Eco):</label>
-             <input type="number" id="homePrice" class="search-input" placeholder="مثال: 600">
+             <input type="number" id="homePrice" class="search-input" placeholder="ادخل التسعيره">
            </div>
            <div class="price-group" style="flex:1;">
              <label style="display:block; font-weight:bold; color:#2e7d32;">سعر المكتب (Eco):</label>
-             <input type="number" id="deskPrice" class="search-input" placeholder="مثال: 400">
+             <input type="number" id="deskPrice" class="search-input" placeholder="ادخل التسعيره">
            </div>
       </div>
       
@@ -196,11 +189,11 @@
       <div class="price-inputs-row" style="display:flex; gap:10px; margin-bottom:15px;">
            <div class="price-group" style="flex:1;">
              <label style="display:block; font-weight:bold; color:#e65100;">سعر المنزل (Express):</label>
-             <input type="number" id="homePriceExpress" class="search-input" placeholder="مثال: 900">
+             <input type="number" id="homePriceExpress" class="search-input" placeholder="ادخل التسعيره">
            </div>
            <div class="price-group" style="flex:1;">
              <label style="display:block; font-weight:bold; color:#e65100;">سعر المكتب (Express):</label>
-             <input type="number" id="deskPriceExpress" class="search-input" placeholder="مثال: 700">
+             <input type="number" id="deskPriceExpress" class="search-input" placeholder="ادخل التسعيره">
            </div>
       </div>
 
@@ -215,7 +208,7 @@
 
   </div>
 
-  <!-- المودال (مع تعديل السعر) -->
+  <!-- المودال (مع تعديل السعر الصافي) -->
   <div id="orderDetailModal" class="modal hidden">
     <div class="modal-content">
       <button class="close-modal-btn" id="closeDetailModal">&times;</button>
@@ -248,10 +241,10 @@
               <option value="desk">🏢 توصيل للمكتب (Stop Desk)</option>
           </select>
 
-          <!-- تعديل السعر قبل الإرسال -->
-          <label class="details-label" style="color:var(--primary-color);">المبلغ الإجمالي (الذي سيتم إرساله)</label>
-          <input type="number" id="editTotalPrice" class="search-input" style="margin-bottom:10px; font-weight:bold; color:var(--primary-color); border:2px solid var(--primary-color);">
-          <small style="color:#666; display:block; margin-bottom:10px;">⚠️ ملاحظة: هذا المبلغ سيضاف إليه سعر التوصيل تلقائياً من طرف الشركة.</small>
+          <!-- تعديل السعر الصافي (المنتج فقط) للإرسال -->
+          <label class="details-label" style="color:var(--primary-color);">سعر المنتج (المرسل لشركة التوصيل)</label>
+          <input type="number" id="editProductPrice" class="search-input" style="margin-bottom:5px; font-weight:bold; color:var(--primary-color); border:2px solid var(--primary-color);">
+          <small style="color:#666; display:block; margin-bottom:10px;">⚠️ سيتم إرسال هذا المبلغ، والشركة ستضيف سعر التوصيل فوقه.</small>
 
           <div id="productsList" style="margin:15px 0; background:#f9f9f9; padding:10px; border-radius:5px;"></div>
           <input type="hidden" id="currentOrderId">
@@ -365,6 +358,10 @@
             row.className = 'order-row';
             const isStopDesk = (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب')));
             const typeIcon = isStopDesk ? '🏢' : '🏠';
+            
+            // حساب المبلغ الذي سيتم إرساله (سعر المنتج فقط)
+            const productPriceOnly = calculateProductOnlyPrice(order);
+            
             row.innerHTML = `
                 <div class="row-info" style="display:flex; justify-content: flex-start; align-items:center;">
                     <input type="checkbox" class="order-checkbox" value="${id}">
@@ -372,7 +369,7 @@
                         <span class="row-name" style="font-weight:bold;">${order.customerName || order.name}</span>
                         <small style="color:#777;">
                             ${typeIcon} ${order.customerWilaya || order.state || 'غير محدد'} | 
-                            <span style="color:var(--success-color); font-weight:bold;">${parseFloat(order.totalPrice || 0)} دج</span>
+                            <span style="color:var(--success-color); font-weight:bold;">${parseFloat(productPriceOnly)} دج (منتج)</span>
                         </small>
                     </div>
                 </div>
@@ -383,7 +380,28 @@
         if(count === 0) shippingContainer.innerHTML = '<p class="loading-message">لا توجد طلبات قيد التجهيز.</p>';
     });
 
-    // ================= 3. الإرسال (Logic Correction) =================
+    // ================= 3. دالة حساب سعر المنتج فقط (القلب النابض) =================
+    function calculateProductOnlyPrice(order) {
+        // 1. إذا كان الكود الجديد قد حفظ سعر المنتج صافي، نستخدمه
+        if (order.productTotal && !isNaN(order.productTotal)) {
+            return parseFloat(order.productTotal);
+        }
+        
+        // 2. إذا لم يكن محفوظاً، نحاول حسابه من قائمة المنتجات
+        if (order.items) {
+            let sum = 0;
+            const items = Array.isArray(order.items) ? order.items : Object.values(order.items);
+            items.forEach(i => sum += (parseFloat(i.price) * parseInt(i.quantity || 1)));
+            if(sum > 0) return sum;
+        }
+        
+        // 3. كحل أخير (للطلبات القديمة جداً)، نطرح سعر الشحن إن وجد
+        let total = parseFloat(order.totalPrice || 0);
+        let ship = parseFloat(order.shippingPrice || 0);
+        return (total - ship) > 0 ? (total - ship) : total;
+    }
+
+    // ================= 4. الإرسال (المنطق الجديد) =================
     const wilayaMapping = {
         "أدرار": "Adrar", "الشلف": "Chlef", "الأغواط": "Laghouat", "أم البواقي": "Oum El Bouaghi", "باتنة": "Batna", "بجاية": "Béjaïa", "بسكرة": "Biskra", "بشار": "Béchar", "البليدة": "Blida", "البويرة": "Bouira", "تمنراست": "Tamanrasset", "تبسة": "Tébessa", "تلمسان": "Tlemcen", "تيارت": "Tiaret", "تيزي وزو": "Tizi Ouzou", "الجزائر": "Alger", "الجلفة": "Djelfa", "جيجل": "Jijel", "سطيف": "Sétif", "سعيدة": "Saïda", "سكيكدة": "Skikda", "سيدي بلعباس": "Sidi Bel Abbès", "عنابة": "Annaba", "قالمة": "Guelma", "قسنطينة": "Constantine", "المدية": "Médéa", "مستغانم": "Mostaganem", "المسيلة": "M'Sila", "معسكر": "Mascara", "ورقلة": "Ouargla", "وهران": "Oran", "البيض": "El Bayadh", "إليزي": "Illizi", "برج بوعريريج": "Bordj Bou Arreridj", "بومرداس": "Boumerdès", "الطارف": "El Tarf", "تندوف": "Tindouf", "تيسمسيلت": "Tissemsilt", "الوادي": "El Oued", "خنشلة": "Khenchela", "سوق أهراس": "Souk Ahras", "تيبازة": "Tipaza", "ميلة": "Mila", "عين الدفلى": "Aïn Defla", "النعامة": "Naâma", "عين تموشنت": "Aïn Témouchent", "غرداية": "Ghardaïa", "غليزان": "Relizane", "تيميمون": "Timimoun", "برج باجي مختار": "Bordj Badji Mokhtar", "أولاد جلال": "Ouled Djellal", "بني عباس": "Béni Abbès", "إن صالح": "In Salah", "إن قزام": "In Guezzam", "تقرت": "Touggourt", "جانت": "Djanet", "المغير": "El M'Ghair", "المنيعة": "El Meniaa"
     };
@@ -393,8 +411,6 @@
         const providerId = shipProviderSelect.value; 
         const providerName = shipProviderSelect.options[shipProviderSelect.selectedIndex]?.text || providerId;
         const checks = document.querySelectorAll('.order-checkbox:checked');
-        
-        // خيار Express فقط
         const isExpress = document.getElementById('chkExpress').checked; 
         
         if(!providerId) { alert('يرجى اختيار شركة شحن أولاً'); return; }
@@ -423,6 +439,10 @@
                 if (!orderSnap.exists()) continue;
                 const order = orderSnap.val();
 
+                // 1. حساب سعر المنتج فقط (تلقائياً من المنتجات)
+                const productOnlyPrice = calculateProductOnlyPrice(order);
+
+                // 2. التحضير
                 let rawWilaya = order.customerWilaya || order.state || "";
                 let cleanWilayaArabic = rawWilaya.replace(/^[0-9]+[\.\-\s]*/, '').trim(); 
                 let finalWilaya = cleanWilayaArabic;
@@ -457,16 +477,16 @@
                         "to_wilaya_name": finalWilaya, "to_commune_name": finalCommune,
                         "product_list": order.productName || "Colis", 
                         
-                        // 🔥 التعديل الجوهري: مجاني = false دائماً
-                        "price": parseFloat(order.totalPrice || 0), 
-                        "freeshipping": false, 
+                        // 🔥 إرسال سعر المنتج فقط (بدون توصيل)
+                        "price": productOnlyPrice, 
                         
+                        "freeshipping": false, 
                         "is_stopdesk": isStopDesk,
-                        "is_express": isExpress, // تفعيل Express حسب الزر
+                        "is_express": isExpress, 
                         "has_exchange": false, "do_insurance": false
                     };
                 } else {
-                    parcelData = { "name": fullName, "phone": phone, "wilaya": finalWilaya, "price": parseFloat(order.totalPrice || 0) };
+                    parcelData = { "name": fullName, "phone": phone, "wilaya": finalWilaya, "price": productOnlyPrice };
                 }
 
                 const targetUrl = apiData.apiUrl;
@@ -506,7 +526,7 @@
         btn.textContent = "📤 إرسال المحدد"; btn.disabled = false;
     });
 
-    // ================= 4. المودال (مع تعديل السعر) =================
+    // ================= 5. المودال (مع تعديل السعر) =================
     window.openDetails = (id) => {
         get(ref(db, 'orders/' + id)).then((snap) => {
             if(snap.exists()) {
@@ -517,9 +537,12 @@
                 document.getElementById('editWilaya').value = order.customerWilaya || order.state || '';
                 document.getElementById('editCommune').value = order.customerCommune || order.city || '';
                 document.getElementById('editAddress').value = order.customerAddress || order.address || '';
-                document.getElementById('editTotalPrice').value = order.totalPrice || 0; // السعر
                 document.getElementById('editDeliveryType').value = (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب'))) ? 'desk' : 'home';
                 
+                // حساب سعر المنتج للعرض في المودال (يمكن تعديله)
+                const productOnlyPrice = calculateProductOnlyPrice(order);
+                document.getElementById('editProductPrice').value = productOnlyPrice;
+
                 let itemsHtml = '';
                 if(order.items) {
                      const items = Array.isArray(order.items) ? order.items : Object.values(order.items);
@@ -533,6 +556,8 @@
     };
 
     document.getElementById('closeDetailModal').addEventListener('click', () => document.getElementById('orderDetailModal').classList.add('hidden'));
+    
+    // زر الحفظ في المودال
     document.getElementById('saveChangesBtn').addEventListener('click', async () => {
         const id = document.getElementById('currentOrderId').value;
         const updates = {
@@ -541,14 +566,19 @@
             customerWilaya: document.getElementById('editWilaya').value,
             customerCommune: document.getElementById('editCommune').value,
             customerAddress: document.getElementById('editAddress').value,
-            totalPrice: parseFloat(document.getElementById('editTotalPrice').value) || 0, // حفظ السعر الجديد
             deliveryOption: document.getElementById('editDeliveryType').value,
+            
+            // تحديث الحقول القديمة
             name: document.getElementById('editName').value,
             phone: document.getElementById('editPhone').value,
             state: document.getElementById('editWilaya').value,
+            
+            // ✅ حفظ السعر المعدل في قاعدة البيانات (لكي يستخدم عند الإرسال)
+            productTotal: parseFloat(document.getElementById('editProductPrice').value)
         };
         await update(ref(db, 'orders/'+id), updates);
         document.getElementById('orderDetailModal').classList.add('hidden');
+        alert("✅ تم حفظ التعديلات.");
     });
 
     document.getElementById('cancelOrderBtn').addEventListener('click', async () => {
@@ -559,7 +589,7 @@
         }
     });
 
-    // ================= 5. المناطق (Zones) =================
+    // ================= 6. المناطق (Zones) =================
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     function renderWilayaCheckboxes() {
         const grid = document.getElementById('wilayaGrid');
