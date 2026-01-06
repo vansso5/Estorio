@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>إدارة الشحن والربط (All-in-One)</title>
+  <title>إدارة الشحن والربط (Pro)</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin-style.css">
@@ -34,7 +34,7 @@
       }
       .btn-delete-prov:hover { background: #ef5350; color: white; }
 
-      /* --- تنسيقات جدول الطلبات --- */
+      /* --- تنسيقات زر الإرسال والخيارات --- */
       #sendBulkBtn {
           height: 50px !important; min-height: 50px;
           font-size: 1rem; font-weight: bold; padding: 0 25px;
@@ -45,6 +45,18 @@
       #sendBulkBtn:hover { filter: brightness(0.9); }
       #sendBulkBtn:disabled { background-color: #ccc; cursor: not-allowed; }
 
+      /* تنسيق خيار Express Checkbox */
+      .express-toggle-wrapper {
+          display: flex; align-items: center; gap: 8px;
+          background: #fff3e0; border: 1px solid #ffe0b2;
+          padding: 0 15px; border-radius: 6px; height: 50px;
+          cursor: pointer; transition: 0.2s;
+      }
+      .express-toggle-wrapper:hover { background: #ffe0b2; }
+      .express-toggle-wrapper input { transform: scale(1.5); cursor: pointer; }
+      .express-toggle-wrapper label { font-weight: bold; color: #e65100; cursor: pointer; font-size: 0.9rem; }
+
+      /* --- جدول الطلبات --- */
       #shippingOrdersContainer .order-row {
           display: flex; align-items: center; justify-content: space-between;
           padding: 12px 15px; background: #fff; border-radius: 8px; margin-bottom: 8px;
@@ -55,7 +67,7 @@
       
       .order-checkbox { transform: scale(1.3); margin-left: 15px; cursor: pointer; }
 
-      /* --- تنسيقات المناطق --- */
+      /* --- تنسيقات المناطق والأسعار --- */
       .wilaya-grid {
           display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); 
           gap: 10px; margin-top: 15px; max-height: 200px; overflow-y: auto; 
@@ -65,11 +77,21 @@
       
       .zone-card { 
           background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; 
-          display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; 
+          margin-bottom: 8px; position: relative;
       }
-      .price-tag { padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; margin-left: 5px; }
-      .price-tag.home { background: #e8f5e9; color: #2e7d32; }
-      .price-tag.desk { background: #fff3e0; color: #ef6c00; }
+      .zone-header { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+      
+      .prices-display-row {
+          display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.85rem;
+      }
+      .price-badge { padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+      .badge-eco { background: #e8f5e9; color: #2e7d32; }
+      .badge-exp { background: #fff3e0; color: #e65100; }
+      
+      .delete-zone-btn {
+          position: absolute; left: 10px; top: 10px;
+          background: #ffcdd2; color: #c62828; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer;
+      }
   </style>
 </head>
 <body>
@@ -155,6 +177,12 @@
                 </select>
             </div>
             
+            <!-- خيار Express -->
+            <div class="express-toggle-wrapper">
+                <input type="checkbox" id="isExpressCheck">
+                <label for="isExpressCheck">توصيل سريع (Express/Gratuit)</label>
+            </div>
+
             <div style="flex:1; display:flex; align-items:flex-end;">
                 <button id="sendBulkBtn">📤 إرسال المحدد</button>
             </div>
@@ -168,25 +196,42 @@
 
     <hr style="border: 0; border-top: 2px dashed #ccc; margin: 40px 0;">
 
-    <!-- ================= القسم 3: المناطق ================= -->
+    <!-- ================= القسم 3: المناطق (Zones) - تم التحديث ================= -->
     <h2>💰 تسعيرات التوصيل (Zones)</h2>
     <div class="form-card">
+      
+      <!-- الصف 1: تسعيرة عادية -->
       <div class="price-inputs-row" style="display:flex; gap:10px; margin-bottom:10px;">
            <div class="price-group" style="flex:1;">
-             <label style="display:block; font-weight:bold;">سعر المنزل</label>
-             <input type="number" id="homePrice" class="search-input" placeholder="ادخل التسعيرة">
+             <label style="display:block; font-weight:bold; color:#2e7d32;">سعر المنزل (Eco):</label>
+             <input type="number" id="homePrice" class="search-input" placeholder=": ادخل التسعيرة">
            </div>
            <div class="price-group" style="flex:1;">
-             <label style="display:block; font-weight:bold;">سعر المكتب</label>
-             <input type="number" id="deskPrice" class="search-input" placeholder="ادخل التسعيرة">
+             <label style="display:block; font-weight:bold; color:#2e7d32;">سعر المكتب (Eco):</label>
+             <input type="number" id="deskPrice" class="search-input" placeholder=": ادخل التسعيرة">
            </div>
       </div>
+
+      <!-- الصف 2: تسعيرة سريعة (إضافة جديدة) -->
+      <div class="price-inputs-row" style="display:flex; gap:10px; margin-bottom:15px;">
+           <div class="price-group" style="flex:1;">
+             <label style="display:block; font-weight:bold; color:#e65100;">سعر المنزل (Express):</label>
+             <input type="number" id="homePriceExpress" class="search-input" placeholder=": ادخل التسعيرة">
+           </div>
+           <div class="price-group" style="flex:1;">
+             <label style="display:block; font-weight:bold; color:#e65100;">سعر المكتب (Express):</label>
+             <input type="number" id="deskPriceExpress" class="search-input" placeholder=": ادخل التسعيرة">
+           </div>
+      </div>
+
       <div class="wilaya-controls">
          <button type="button" id="selectAllBtn" class="add-btn" style="padding: 2px 10px; font-size:0.8rem;">تحديد/إلغاء الكل</button>
       </div>
       <div id="wilayaGrid" class="wilaya-grid"></div>
-      <button id="saveZoneBtn" class="save-btn" style="margin-top:15px;">حفظ التسعيرة</button>
+      
+      <button id="saveZoneBtn" class="save-btn" style="margin-top:15px;">حفظ التسعيرة (Eco + Express)</button>
     </div>
+    
     <h3 style="margin-top:20px;">التسعيرات الحالية:</h3>
     <div id="zonesContainer" class="orders-grid"></div>
 
@@ -270,7 +315,7 @@
              window.location.href = 'admin-login.html';
         } else {
             document.getElementById('logoutBtn').style.display = 'block';
-            loadActiveProviders(); // تحميل الشركات للعرض وللقائمة
+            loadActiveProviders(); 
             renderWilayaCheckboxes();
         }
     });
@@ -280,10 +325,9 @@
     });
 
     // =========================================================
-    // 1. إدارة الشركات (إضافة / عرض / حذف)
+    // 1. إدارة الشركات
     // =========================================================
     
-    // حفظ شركة جديدة
     document.getElementById('saveProviderBtn').addEventListener('click', async function() {
         const name = document.getElementById('provName').value.trim();
         const url = document.getElementById('provUrl').value.trim();
@@ -292,66 +336,40 @@
         const driver = document.getElementById('provDriver').value;
         const wFormat = document.getElementById('provWilayaFormat').value;
 
-        if(!name || !url || !key) {
-            alert("يرجى ملء الحقول الأساسية (الاسم، الرابط، API Key).");
-            return;
-        }
+        if(!name || !url || !key) { alert("يرجى ملء الحقول الأساسية."); return; }
 
         const btn = this;
-        btn.textContent = "جاري الحفظ...";
-        btn.disabled = true;
-
+        btn.textContent = "جاري الحفظ..."; btn.disabled = true;
         const providerId = name.replace(/\s+/g, '_').toLowerCase();
         
-        const providerData = {
-            displayName: name,
-            apiUrl: url,
-            apiKey: key,
-            apiToken: token,
-            driverType: driver,
-            wilayaFormat: wFormat,
-            active: true
-        };
-
         try {
-            await update(ref(db, `delivery_settings/${providerId}`), providerData);
-            alert("✅ تم حفظ الشركة بنجاح!");
-            
-            // تفريغ الحقول
-            document.getElementById('provName').value = '';
-            document.getElementById('provKey').value = '';
-            document.getElementById('provToken').value = '';
-        } catch (e) {
-            alert("خطأ: " + e.message);
-        } finally {
-            btn.textContent = "حفظ إعدادات الشركة";
-            btn.disabled = false;
-        }
+            await update(ref(db, `delivery_settings/${providerId}`), {
+                displayName: name, apiUrl: url, apiKey: key, apiToken: token,
+                driverType: driver, wilayaFormat: wFormat, active: true
+            });
+            alert("✅ تم حفظ الشركة!");
+            document.getElementById('provName').value = ''; document.getElementById('provKey').value = ''; document.getElementById('provToken').value = '';
+        } catch (e) { alert("خطأ: " + e.message); } 
+        finally { btn.textContent = "حفظ إعدادات الشركة"; btn.disabled = false; }
     });
 
-    // تحميل الشركات وعرضها في مكانين (القائمة المنسدلة + قائمة الإدارة)
     function loadActiveProviders() {
         onValue(settingsRef, (snapshot) => {
-            // تفريغ القوائم
             shipProviderSelect.innerHTML = '<option value="" disabled selected>-- اختر شركة للشحن --</option>';
             savedProvidersList.innerHTML = '';
 
             if(snapshot.exists()) {
                 const settings = snapshot.val();
                 let hasActive = false;
-
                 Object.keys(settings).forEach(key => {
                     const p = settings[key];
                     if(p.apiKey) {
                         hasActive = true;
-
-                        // 1. إضافة للقائمة المنسدلة (للإرسال)
+                        // Dropdown
                         const option = document.createElement('option');
-                        option.value = key;
-                        option.textContent = p.displayName || key;
+                        option.value = key; option.textContent = p.displayName || key;
                         shipProviderSelect.appendChild(option);
-
-                        // 2. إضافة لقائمة الإدارة (للحذف)
+                        // List
                         const div = document.createElement('div');
                         div.className = 'provider-item';
                         div.innerHTML = `
@@ -364,35 +382,20 @@
                         savedProvidersList.appendChild(div);
                     }
                 });
-
-                if(!hasActive) {
-                    shipProviderSelect.innerHTML = '<option disabled>لا توجد شركات</option>';
-                    savedProvidersList.innerHTML = '<p>لا توجد شركات محفوظة.</p>';
-                }
-            } else {
-                shipProviderSelect.innerHTML = '<option disabled>لا توجد شركات</option>';
-                savedProvidersList.innerHTML = '<p>لا توجد شركات محفوظة.</p>';
-            }
+                if(!hasActive) { shipProviderSelect.innerHTML = '<option disabled>لا توجد شركات</option>'; savedProvidersList.innerHTML = '<p>لا توجد شركات محفوظة.</p>'; }
+            } else { shipProviderSelect.innerHTML = '<option disabled>لا توجد شركات</option>'; savedProvidersList.innerHTML = '<p>لا توجد شركات محفوظة.</p>'; }
         });
     }
 
-    // دالة حذف شركة (Global)
-    window.deleteProv = async (key) => {
-        if(confirm('هل أنت متأكد من حذف هذه الشركة؟')) {
-            await remove(ref(db, `delivery_settings/${key}`));
-        }
-    };
+    window.deleteProv = async (key) => { if(confirm('حذف هذه الشركة؟')) await remove(ref(db, `delivery_settings/${key}`)); };
 
     // =========================================================
-    // 2. عرض الطلبات (Processing)
+    // 2. عرض الطلبات
     // =========================================================
     onValue(ordersRef, (snapshot) => {
         shippingContainer.innerHTML = '';
         const orders = snapshot.val();
-        if(!orders) {
-            shippingContainer.innerHTML = '<p class="loading-message">لا توجد طلبات.</p>';
-            return;
-        }
+        if(!orders) { shippingContainer.innerHTML = '<p class="loading-message">لا توجد طلبات.</p>'; return; }
 
         const sorted = Object.entries(orders).sort((a,b) => b[1].timestamp - a[1].timestamp);
         let count = 0;
@@ -425,15 +428,13 @@
             `;
             shippingContainer.appendChild(row);
         });
-
         if(count === 0) shippingContainer.innerHTML = '<p class="loading-message">لا توجد طلبات قيد التجهيز.</p>';
     });
 
     // =========================================================
-    // 3. منطق الإرسال الذكي (Dynamic API Logic)
+    // 3. الإرسال (مع خيار Express)
     // =========================================================
     
-    // قائمة ترجمة الولايات (عربي -> فرنسي)
     const wilayaMapping = {
         "أدرار": "Adrar", "الشلف": "Chlef", "الأغواط": "Laghouat",
         "أم البواقي": "Oum El Bouaghi", "باتنة": "Batna", "بجاية": "Béjaïa",
@@ -451,11 +452,9 @@
         "الوادي": "El Oued", "خنشلة": "Khenchela", "سوق أهراس": "Souk Ahras",
         "تيبازة": "Tipaza", "ميلة": "Mila", "عين الدفلى": "Aïn Defla",
         "النعامة": "Naâma", "عين تموشنت": "Aïn Témouchent", "غرداية": "Ghardaïa",
-        "غليزان": "Relizane",
-        "تيميمون": "Timimoun", "برج باجي مختار": "Bordj Badji Mokhtar",
-        "أولاد جلال": "Ouled Djellal", "بني عباس": "Béni Abbès",
-        "إن صالح": "In Salah", "إن قزام": "In Guezzam",
-        "تقرت": "Touggourt", "جانت": "Djanet",
+        "غليزان": "Relizane", "تيميمون": "Timimoun", "برج باجي مختار": "Bordj Badji Mokhtar",
+        "أولاد جلال": "Ouled Djellal", "بني عباس": "Béni Abbès", "إن صالح": "In Salah",
+        "إن قزام": "In Guezzam", "تقرت": "Touggourt", "جانت": "Djanet",
         "المغير": "El M'Ghair", "المنيعة": "El Meniaa"
     };
 
@@ -463,37 +462,28 @@
         const btn = this;
         const providerId = shipProviderSelect.value; 
         const providerName = shipProviderSelect.options[shipProviderSelect.selectedIndex]?.text || providerId;
+        const isExpress = document.getElementById('isExpressCheck').checked; // قراءة حالة Express
         const checks = document.querySelectorAll('.order-checkbox:checked');
         
         if(!providerId) { alert('يرجى اختيار شركة شحن أولاً'); return; }
         if(checks.length === 0) { alert('لم تقم بتحديد أي طلب!'); return; }
-        if(!confirm(`هل تريد إرسال ${checks.length} طلب عبر (${providerName})؟`)) return;
+        
+        const typeText = isExpress ? "(Express/Gratuit)" : "(Standard)";
+        if(!confirm(`هل تريد إرسال ${checks.length} طلب عبر ${providerName}؟\nنوع الشحن: ${typeText}`)) return;
 
-        btn.textContent = "جاري الاتصال ...";
-        btn.disabled = true;
+        btn.textContent = "جاري الاتصال ..."; btn.disabled = true;
 
-        // 1. جلب إعدادات الشركة من Firebase
         let apiData = null;
         try {
             const settingsSnap = await get(ref(db, `delivery_settings/${providerId}`));
             if(settingsSnap.exists()) {
                 apiData = settingsSnap.val();
-                if(!apiData.apiUrl) throw new Error("رابط API غير مضبوط في إعدادات الشركة.");
-            } else {
-                throw new Error("لم يتم العثور على إعدادات لهذه الشركة.");
-            }
-        } catch (err) {
-            alert(err.message);
-            btn.textContent = "📤 إرسال المحدد";
-            btn.disabled = false;
-            return;
-        }
+                if(!apiData.apiUrl) throw new Error("رابط API غير مضبوط.");
+            } else throw new Error("إعدادات الشركة غير موجودة.");
+        } catch (err) { alert(err.message); btn.textContent = "📤 إرسال المحدد"; btn.disabled = false; return; }
 
-        let successCount = 0;
-        let failCount = 0;
-        let errorDetails = "";
+        let successCount = 0; let failCount = 0; let errorDetails = "";
 
-        // 2. الدوران على الطلبات
         for (const checkbox of checks) {
             const orderId = checkbox.value;
             try {
@@ -501,26 +491,14 @@
                 if (!orderSnap.exists()) continue;
                 const order = orderSnap.val();
 
-                // 🔹 أ) تحضير اسم الولاية
                 let rawWilaya = order.customerWilaya || order.state || "";
                 let cleanWilayaArabic = rawWilaya.replace(/^[0-9]+[\.\-\s]*/, '').trim(); 
-                
                 let finalWilaya = cleanWilayaArabic;
+                if (apiData.wilayaFormat === 'french_name') { finalWilaya = wilayaMapping[cleanWilayaArabic] || cleanWilayaArabic; }
 
-                // إذا كانت الإعدادات تطلب "أسماء فرنسية"، نستخدم القاموس
-                if (apiData.wilayaFormat === 'french_name') {
-                     finalWilaya = wilayaMapping[cleanWilayaArabic] || cleanWilayaArabic;
-                }
-
-                // 🔹 ب) تحضير اسم البلدية
                 let finalCommune = finalWilaya; 
-                
-                // تصحيح خاص لـ Guepex/Yalidine (مشكلة Alger Centre)
-                if ((apiData.driverType === 'yalidine_style') && finalWilaya === "Alger") {
-                    finalCommune = "Alger Centre";
-                }
+                if (apiData.driverType === 'yalidine_style' && finalWilaya === "Alger") { finalCommune = "Alger Centre"; }
 
-                // 🔹 ج) تنسيق الهاتف والاسم
                 let phone = (order.customerPhone || order.phone || "").replace(/[^0-9]/g, '');
                 if (phone.length === 9) phone = '0' + phone;
 
@@ -529,66 +507,36 @@
                 let firstName = splitName[0];
                 let lastName = splitName.slice(1).join(" ") || firstName; 
 
-                // 🔹 د) نوع التوصيل
                 let isStopDesk = false;
-                if(order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب'))) {
-                    isStopDesk = true;
-                }
+                if(order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب'))) { isStopDesk = true; }
                 
                 const cleanOrderId = orderId.replace('#', '').trim();
 
-                // 🔹 هـ) بناء هيكل البيانات (Payload) حسب نوع الشركة
                 let parcelData = {};
-
                 if (apiData.driverType === 'yalidine_style') {
-                    // هيكل Yalidine / Guepex
                     parcelData = {
                         "order_id": cleanOrderId,
-                        "firstname": firstName,
-                        "familyname": lastName, 
-                        "contact_phone": phone,
+                        "firstname": firstName, "familyname": lastName, "contact_phone": phone,
                         "address": order.customerAddress || order.address || finalWilaya,
-                        "to_wilaya_name": finalWilaya,
-                        "to_commune_name": finalCommune,
+                        "to_wilaya_name": finalWilaya, "to_commune_name": finalCommune,
                         "product_list": order.productName || "Colis", 
                         "price": parseFloat(order.totalPrice || 0), 
-                        "freeshipping": false,
-                        "is_stopdesk": isStopDesk, 
-                        "has_exchange": false,
-                        "do_insurance": false
+                        "freeshipping": isExpress, // هنا يتم تفعيل الشحن المجاني (Express)
+                        "is_stopdesk": isStopDesk, "has_exchange": false, "do_insurance": false
                     };
                 } else {
-                    // هيكل افتراضي (Standard)
-                    parcelData = {
-                        "name": fullName,
-                        "phone": phone,
-                        "wilaya": finalWilaya,
-                        "price": parseFloat(order.totalPrice || 0)
-                    };
+                    parcelData = { "name": fullName, "phone": phone, "wilaya": finalWilaya, "price": parseFloat(order.totalPrice || 0) };
                 }
 
-                // 🔹 و) الإرسال الفعلي
                 const targetUrl = apiData.apiUrl;
                 const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
+                const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-API-ID': apiData.apiKey, 'X-API-TOKEN': apiData.apiToken };
 
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-API-ID': apiData.apiKey,
-                    'X-API-TOKEN': apiData.apiToken
-                };
-
-                const response = await fetch(proxyUrl, { 
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify([ parcelData ]) // إرسال داخل مصفوفة
-                });
-
+                const response = await fetch(proxyUrl, { method: 'POST', headers: headers, body: JSON.stringify([ parcelData ]) });
                 const resultText = await response.text();
                 let result = {};
                 try { result = JSON.parse(resultText); } catch (e) { throw new Error("Server Error: " + resultText.substring(0,50)); }
 
-                // التحقق من النجاح
                 let successItem = null;
                 if (Array.isArray(result) && result.length > 0) successItem = result[0];
                 else if (result.success === true || result.tracking) successItem = result;
@@ -604,32 +552,21 @@
                     await update(ref(db), updates);
                     successCount++;
                 } else {
-                    console.error("API Fail:", result);
-                    failCount++;
-                    let msg = "";
-                    if (result.message) msg = result.message;
-                    if (result.validation_error) msg += JSON.stringify(result.validation_error);
-                    if (!msg) msg = JSON.stringify(result);
+                    console.error("API Fail:", result); failCount++;
+                    let msg = ""; if (result.message) msg = result.message; if (result.validation_error) msg += JSON.stringify(result.validation_error); if (!msg) msg = JSON.stringify(result);
                     errorDetails += `\n❌ ${firstName}: ${msg}`;
                 }
-
-            } catch (err) {
-                console.error("System Error:", err);
-                failCount++;
-                errorDetails += `\n⚠️ خطأ نظام: ${err.message}`;
-            }
+            } catch (err) { console.error("Sys Error:", err); failCount++; errorDetails += `\n⚠️ خطأ نظام: ${err.message}`; }
         }
 
         let finalMsg = `النتيجة:\n✅ نجاح: ${successCount}`;
         if(failCount > 0) finalMsg += `\n❌ فشل: ${failCount}\n----------------\n${errorDetails}`;
         alert(finalMsg);
-        
-        btn.textContent = "📤 إرسال المحدد";
-        btn.disabled = false;
+        btn.textContent = "📤 إرسال المحدد"; btn.disabled = false;
     });
 
     // =========================================================
-    // 4. وظائف إضافية (المودال + المناطق)
+    // 4. وظائف إضافية (المودال + المناطق مع Express)
     // =========================================================
     
     // المودال
@@ -684,7 +621,7 @@
         }
     });
 
-    // المناطق
+    // المناطق (Zones) - تم تحديثها لدعم Express
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     function renderWilayaCheckboxes() {
         const grid = document.getElementById('wilayaGrid');
@@ -701,15 +638,30 @@
         const chks = document.querySelectorAll('.wilaya-chk');
         if(chks.length > 0) { const firstState = chks[0].checked; chks.forEach(c => c.checked = !firstState); }
     });
+    
+    // حفظ التسعيرات (Eco + Express)
     document.getElementById('saveZoneBtn').addEventListener('click', async () => {
         const home = document.getElementById('homePrice').value;
         const desk = document.getElementById('deskPrice').value;
+        const homeExp = document.getElementById('homePriceExpress').value;
+        const deskExp = document.getElementById('deskPriceExpress').value;
+        
         const selected = [];
         document.querySelectorAll('.wilaya-chk:checked').forEach(c => selected.push(c.value));
-        if(!home || !desk || selected.length === 0) { alert('أدخل البيانات'); return; }
-        await push(zonesRef, { homePrice: home, deskPrice: desk, wilayas: selected });
-        alert('تم الحفظ'); renderWilayaCheckboxes(); document.getElementById('homePrice').value=''; document.getElementById('deskPrice').value='';
+        
+        if(!home || !desk || selected.length === 0) { alert('أدخل الأسعار العادية وحدد ولاية واحدة على الأقل'); return; }
+        
+        await push(zonesRef, { 
+            homePrice: home, deskPrice: desk,
+            homePriceExpress: homeExp || 0, deskPriceExpress: deskExp || 0, // حفظ السريع
+            wilayas: selected 
+        });
+        
+        alert('تم حفظ التسعيرة'); renderWilayaCheckboxes(); 
+        document.getElementById('homePrice').value=''; document.getElementById('deskPrice').value='';
+        document.getElementById('homePriceExpress').value=''; document.getElementById('deskPriceExpress').value='';
     });
+
     onValue(zonesRef, (snap) => {
         const cont = document.getElementById('zonesContainer');
         cont.innerHTML = '';
@@ -718,11 +670,25 @@
             Object.entries(zones).forEach(([k, v]) => {
                 const div = document.createElement('div');
                 div.className = 'zone-card';
-                div.innerHTML = `<div><strong>مجموعة (${v.wilayas ? v.wilayas.length : 0})</strong></div><div><span class="price-tag home">🏠 ${v.homePrice}</span><span class="price-tag desk">🏢 ${v.deskPrice}</span></div><button onclick="delZone('${k}')" style="background:#ef5350;color:white;border:none;border-radius:4px;cursor:pointer;">x</button>`;
+                div.innerHTML = `
+                    <button class="delete-zone-btn" onclick="delZone('${k}')">حذف 🗑️</button>
+                    <div style="flex:1; margin-left: 10px;">
+                        <div class="zone-header"><strong>مجموعة (${v.wilayas ? v.wilayas.length : 0} ولاية)</strong></div>
+                        <div class="prices-display-row">
+                            <span class="badge-eco">Eco</span> 
+                            <span>🏠 ${v.homePrice} دج | 🏢 ${v.deskPrice} دج</span>
+                        </div>
+                        <div class="prices-display-row">
+                            <span class="badge-exp">Express</span> 
+                            <span>🏠 ${v.homePriceExpress || '-'} دج | 🏢 ${v.deskPriceExpress || '-'} دج</span>
+                        </div>
+                    </div>
+                `;
                 cont.appendChild(div);
             });
         }
     });
+
     window.delZone = (k) => { if(confirm('حذف؟')) remove(ref(db, `shipping_zones/${k}`)); }
     window.toggleMenu = () => { document.querySelector('nav .links').classList.toggle('open'); };
   </script>
