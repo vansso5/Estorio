@@ -86,12 +86,19 @@
         </div>
       </div>
 
-      <!-- قسم إدارة السياسات -->
+      <!-- قسم إدارة السياسات (المعدل) -->
       <div class="policy-section">
-        <h3>📜 إدارة السياسات</h3>
-        <div id="policiesContainer"></div>
-        <button onclick="addPolicyField()" class="add-btn">➕ إضافة سياسة جديدة</button>
-        <button onclick="saveAllPolicies()" class="save-btn">💾 حفظ كل السياسات</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0;">📜 إدارة السياسات</h3>
+            <button id="policyToggleBtn" onclick="togglePolicies()" style="padding: 8px 15px; cursor: pointer; border-radius: 5px; border: 1px solid #ccc; background: #f8f9fa; font-family: inherit;">🔽 إظهار السياسات</button>
+        </div>
+        
+        <!-- الحاوية المخفية التي تضم المحتوى -->
+        <div id="policyContentWrapper" style="display: none; border-top: 1px solid #eee; padding-top: 15px;">
+            <div id="policiesContainer"></div>
+            <button onclick="addPolicyField()" class="add-btn">➕ إضافة سياسة جديدة</button>
+            <button onclick="saveAllPolicies()" class="save-btn">💾 حفظ كل السياسات</button>
+        </div>
       </div>
 
       <!-- قسم التحكم في رقم الهاتف (اتصل بنا) -->
@@ -101,14 +108,15 @@
         <button id="savePhoneBtn">💾 حفظ الرقم</button>
         <div id="phoneSaveMsg" class="success-msg">✅ تم حفظ الرقم بنجاح</div>
       </div>
-<!-- قسم فيسبوك بيكسل (الجديد) -->
-<div class="pixel-section contact-section"> <!-- استخدمنا نفس كلاس contact-section ليأخذ نفس الستايل -->
-  <h3>📊 تتبع فيسبوك (Facebook Pixel)</h3>
-  <p style="font-size: 13px; color: #666; margin-bottom: 10px;">أدخل رقم البيكسل (ID) فقط لربط المتجر بالإعلانات.</p>
-  <input type="text" id="pixelIdInput" placeholder="أدخل Pixel ID (مثال: 1234567890)">
-  <button id="savePixelBtn" style="background-color: #1877f2;">💾 حفظ البيكسل</button>
-  <div id="pixelSaveMsg" class="success-msg">✅ تم حفظ البيكسل بنجاح</div>
-</div>
+
+      <!-- قسم فيسبوك بيكسل -->
+      <div class="pixel-section contact-section">
+        <h3>📊 تتبع فيسبوك (Facebook Pixel)</h3>
+        <p style="font-size: 13px; color: #666; margin-bottom: 10px;">أدخل رقم البيكسل (ID) فقط لربط المتجر بالإعلانات.</p>
+        <input type="text" id="pixelIdInput" placeholder="أدخل Pixel ID (مثال: 1234567890)">
+        <button id="savePixelBtn" style="background-color: #1877f2;">💾 حفظ البيكسل</button>
+        <div id="pixelSaveMsg" class="success-msg">✅ تم حفظ البيكسل بنجاح</div>
+      </div>
     </div>
   </div>
 
@@ -322,6 +330,20 @@
       alert('✅ تم حفظ السياسات بنجاح');
     }
 
+    // ===== دالة إظهار وإخفاء السياسات (الجديدة) =====
+    function togglePolicies() {
+      const wrapper = document.getElementById('policyContentWrapper');
+      const btn = document.getElementById('policyToggleBtn');
+      
+      if (wrapper.style.display === 'none') {
+        wrapper.style.display = 'block';
+        btn.textContent = '🔼 إغلاق السياسات';
+      } else {
+        wrapper.style.display = 'none';
+        btn.textContent = '🔽 إظهار السياسات';
+      }
+    }
+
     // ===== التحكم في رقم الهاتف =====
     const phoneInput = document.getElementById('contactPhone');
     const phoneSaveBtn = document.getElementById('savePhoneBtn');
@@ -343,8 +365,7 @@
       setTimeout(() => phoneSaveMsg.style.display = 'none', 3000);
     });
 
-    // ===== التحكم في فيسبوك بيكسل (Facebook Pixel) =====
-    // 🟢 تم نقل الكود إلى هنا داخل الـ Module ليعمل بشكل صحيح
+    // ===== التحكم في فيسبوك بيكسل =====
     const pixelInput = document.getElementById('pixelIdInput');
     const pixelSaveBtn = document.getElementById('savePixelBtn');
     const pixelSaveMsg = document.getElementById('pixelSaveMsg');
@@ -363,11 +384,13 @@
       setTimeout(() => pixelSaveMsg.style.display = 'none', 3000);
     });
     
+    // ربط الدوال بالنافذة لتكون متاحة لـ onclick
     window.addPolicyField = addPolicyField;
     window.saveAllPolicies = saveAllPolicies;
     window.loadPolicies = loadPolicies;
     window.clearCompletedOrders = clearCompletedOrders;
     window.updatePeriodSelection = updatePeriodSelection;
+    window.togglePolicies = togglePolicies; // ربط الدالة الجديدة
 
     // تحميل السياسات فور فتح الصفحة
     loadPolicies();
