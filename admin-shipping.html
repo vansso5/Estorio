@@ -9,7 +9,9 @@
   <link rel="stylesheet" href="admin-style.css">
 
   <style>
-      /* تنسيقات إضافية */
+      /* --- تنسيقات خاصة بهذه الصفحة --- */
+
+      /* 1. قائمة الشركات المحفوظة (Tags) */
       .provider-tags-container {
           display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee;
       }
@@ -21,19 +23,34 @@
       .provider-tag .remove-icon { cursor: pointer; color: #ef5350; font-weight: bold; font-size: 1.1rem; line-height: 1; }
       .provider-tag .remove-icon:hover { color: #c62828; }
       
+      /* 2. رسائل النجاح */
       .success-message-box {
           display: none; background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
           padding: 10px; border-radius: 8px; margin-top: 15px; text-align: center; font-weight: bold;
       }
 
-      /* تحسين شكل القائمة */
+      /* 3. تنسيق زر الإرسال الكبير */
+      #sendBulkBtn {
+          height: 60px !important;
+          min-height: 60px;
+          font-size: 1.1rem;
+          font-weight: bold;
+          padding: 0 30px;
+          display: flex; align-items: center; justify-content: center;
+          background-color: var(--primary-color); 
+          color: white;
+      }
+
+      /* 4. تنسيق صفوف الطلبات */
       #shippingOrdersContainer .order-row {
           display: flex; align-items: center; justify-content: space-between;
           padding: 12px 15px; background: #fff; border-radius: 8px; margin-bottom: 8px;
           border: 1px solid #eee; border-right: 4px solid var(--warning-color);
-          transition: 0.2s;
+          transition: 0.2s; cursor: pointer;
       }
-      #shippingOrdersContainer .order-row:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+      #shippingOrdersContainer .order-row:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.05); background-color: #fafafa; }
+      
+      .order-checkbox { transform: scale(1.3); margin-left: 15px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -54,7 +71,7 @@
 
   <div class="container">
     
-    <!-- 1. إعدادات الربط -->
+    <!-- القسم 1: إعدادات الربط -->
     <h2>⚙️ إعداد شركات التوصيل</h2>
     <div class="form-card">
       <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">إضافة / تعديل شركة</h3>
@@ -65,12 +82,12 @@
           
           <div style="display:flex; gap:10px; margin-top:15px;">
             <div style="flex:1">
-                <label style="font-weight:bold; display:block; margin-bottom:5px;">API ID (Key):</label>
-                <input type="text" id="apiKeyInput" class="search-input" placeholder="347...">
+                <label style="font-weight:bold; display:block; margin-bottom:5px;">API Key (API ID):</label>
+                <input type="text" id="apiKeyInput" class="search-input" placeholder="ألصق الـ API ID هنا">
             </div>
             <div style="flex:1">
-                <label style="font-weight:bold; display:block; margin-bottom:5px;">API Token:</label>
-                <input type="text" id="apiTokenInput" class="search-input" placeholder="FhA4...">
+                <label style="font-weight:bold; display:block; margin-bottom:5px;">Token:</label>
+                <input type="text" id="apiTokenInput" class="search-input" placeholder="ألصق الـ Token هنا">
             </div>
           </div>
 
@@ -84,7 +101,7 @@
       </div>
     </div>
 
-    <!-- 2. تجهيز الطلبات -->
+    <!-- القسم 2: تجهيز الطلبات -->
     <h2>📦 تجهيز وإرسال الطلبات</h2>
     <div class="form-card">
         <div class="search-wrapper" style="display:flex; gap:10px; align-items:center;">
@@ -96,7 +113,7 @@
             </div>
             
             <div style="flex:1; display:flex; align-items:flex-end;">
-                <button id="sendBulkBtn" class="add-btn" style="height:50px;">📤 إرسال الطلبات المحددة</button>
+                <button id="sendBulkBtn" class="add-btn">📤 إرسال الطلبات المحددة</button>
             </div>
         </div>
 
@@ -108,7 +125,7 @@
 
     <hr style="border: 0; border-top: 2px dashed #ccc; margin: 40px 0;">
 
-    <!-- 3. المناطق -->
+    <!-- القسم 3: المناطق -->
     <h2>💰 تسعيرات التوصيل (Zones)</h2>
     <div class="form-card">
       <div class="price-inputs-row">
@@ -159,10 +176,10 @@
           <label class="details-label">العنوان</label>
           <input type="text" id="editAddress" class="search-input" style="margin-bottom:10px;">
           
-          <!-- حقل جديد لنوع التوصيل -->
+          <!-- نوع التوصيل -->
           <label class="details-label">نوع التوصيل</label>
           <select id="editDeliveryType" class="search-input" style="margin-bottom:10px;">
-              <option value="home">🏠 توصيل للمنزل (A Domicile)</option>
+              <option value="home">🏠 توصيل للمنزل</option>
               <option value="desk">🏢 توصيل للمكتب (Stop Desk)</option>
           </select>
 
@@ -309,17 +326,17 @@
             const row = document.createElement('div');
             row.className = 'order-row';
             
-            // تحديد أيقونة نوع التوصيل
+            // أيقونة نوع التوصيل
             const isStopDesk = (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب')));
             const typeIcon = isStopDesk ? '🏢' : '🏠';
             
             row.innerHTML = `
                 <div class="row-info" style="justify-content: flex-start;">
-                    <input type="checkbox" class="order-checkbox" value="${id}" style="margin-left:15px; transform:scale(1.3);">
-                    <div style="display:flex; flex-direction:column;">
+                    <input type="checkbox" class="order-checkbox" value="${id}">
+                    <div style="display:flex; flex-direction:column; margin-right:15px;">
                         <span class="row-name">${order.customerName || order.name}</span>
                         <small style="color:#777;">
-                            ${typeIcon} ${order.customerWilaya || order.state} | 
+                            ${typeIcon} ${order.customerWilaya || order.state || ''} | 
                             <span style="color:var(--success-color); font-weight:bold;">${parseFloat(order.totalPrice || 0)} دج</span>
                         </small>
                     </div>
@@ -334,7 +351,7 @@
         if(count === 0) shippingContainer.innerHTML = '<p class="loading-message">لا توجد طلبات قيد التجهيز.</p>';
     });
 
-    // 3. المودال (Edit Modal)
+    // 3. المودال
     window.openDetails = (id) => {
         get(ref(db, 'orders/' + id)).then((snap) => {
             if(snap.exists()) {
@@ -346,7 +363,6 @@
                 document.getElementById('editCommune').value = order.customerCommune || order.city || '';
                 document.getElementById('editAddress').value = order.customerAddress || order.address || '';
                 
-                // تحديد نوع التوصيل في القائمة
                 const deliveryType = (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب'))) ? 'desk' : 'home';
                 document.getElementById('editDeliveryType').value = deliveryType;
 
@@ -361,7 +377,6 @@
                     itemsHtml = `<div>📦 ${order.productName || 'منتج'}</div>`;
                 }
                 
-                // إضافة السعر الإجمالي للعرض
                 itemsHtml += `<div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:5px; font-weight:bold;">المجموع الكلي: ${order.totalPrice} دج</div>`;
                 
                 productsDiv.innerHTML = itemsHtml;
@@ -380,7 +395,7 @@
             customerWilaya: document.getElementById('editWilaya').value,
             customerCommune: document.getElementById('editCommune').value,
             customerAddress: document.getElementById('editAddress').value,
-            deliveryOption: document.getElementById('editDeliveryType').value, // حفظ نوع التوصيل
+            deliveryOption: document.getElementById('editDeliveryType').value,
             // تحديث الحقول القديمة
             name: document.getElementById('editName').value,
             phone: document.getElementById('editPhone').value,
@@ -399,7 +414,7 @@
     });
 
     // ==========================================================
-    // 4. الإرسال (The Shipping Logic - Updated)
+    // 4. الإرسال (The Shipping Logic - Guepex & Others)
     // ==========================================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const btn = this;
@@ -439,23 +454,22 @@
                 if (!orderSnap.exists()) continue;
                 const order = orderSnap.val();
 
-                // أ) تنظيف اسم الولاية
+                // أ) تنظيف اسم الولاية (Guepex تحتاج اسم نظيف)
                 let rawWilaya = order.customerWilaya || order.state || "";
                 let cleanWilaya = rawWilaya.includes('.') ? rawWilaya.split('.').slice(1).join('.').trim() : rawWilaya;
 
                 // ب) تقسيم الاسم واللقب
-                let fullName = (order.customerName || order.name || "Client Inconnu").trim();
+                let fullName = (order.customerName || order.name || "Inconnu").trim();
                 let firstName = fullName.split(' ')[0]; 
                 let lastName = fullName.substring(firstName.length).trim() || ".";
 
-                // ج) تحديد Stop Desk
-                // نفحص إذا كان الخيار "desk" أو "bureau" أو "yalidine" موجود في حقل خيار التوصيل
+                // ج) تحديد نوع التوصيل (Stop Desk)
                 let isStopDesk = false;
                 if(order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب'))) {
                     isStopDesk = true;
                 }
 
-                // د) تجهيز البيانات النهائية (Guepex Payload)
+                // د) تجهيز البيانات (Payload)
                 const parcelData = {
                     "firstname": firstName,
                     "lastname": lastName,
@@ -463,18 +477,15 @@
                     "address": order.customerAddress || order.address || cleanWilaya,
                     "wilaya": cleanWilaya, 
                     "commune": order.customerCommune || order.city || cleanWilaya, 
-                    
-                    // هنا السعر الإجمالي (المنتج + التوصيل) كما هو مخزن في totalPrice
                     "price": parseFloat(order.totalPrice || 0), 
-                    
                     "freeshipping": false,
-                    "is_stopdesk": isStopDesk, // تحديد نوع التوصيل تلقائياً
+                    "is_stopdesk": isStopDesk, 
                     "has_exchange": false,
                     "product": order.productName || "Colis Divers",
-                    "weight": 1 // الوزن الافتراضي
+                    "weight": 1 // وزن افتراضي (1KG)
                 };
 
-                // هـ) الإرسال عبر API (مع Proxy)
+                // هـ) الإرسال عبر API (استخدام Proxy لتخطي CORS في Localhost)
                 const targetUrl = 'https://api.guepex.app/v1/parcels';
                 const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
 
@@ -492,31 +503,37 @@
                 let result = {};
                 try { result = JSON.parse(resultText); } catch(e) { result = { msg: resultText }; }
 
-                // و) التحقق من النجاح (Guepex تعيد success: true أو id)
-                if (response.ok || result.success === true || result.id) { 
+                // و) التحقق من النجاح
+                if (response.ok || result.success === true || result.tracking) { 
                     const updates = {};
                     updates[`orders/${orderId}/status`] = 'Shipped';
                     updates[`orders/${orderId}/deliveryProvider`] = providerName;
-                    updates[`orders/${orderId}/trackingCode`] = result.tracking || result.id || "Guepex Tracking";
+                    updates[`orders/${orderId}/trackingCode`] = result.tracking || result.id || "تم الإرسال";
                     updates[`orders/${orderId}/shippedAt`] = Date.now();
                     await update(ref(db), updates);
                     successCount++;
                 } else {
                     console.error("Guepex Error:", result);
                     failCount++;
-                    let msg = result.message || result.error || JSON.stringify(result);
-                    errorDetails += `\n- ${firstName}: ${msg}`;
+                    // فك شفرة رسالة الخطأ لتكون مقروءة
+                    let msg = "";
+                    if (typeof result === 'string') msg = result;
+                    else if (result.message) msg = JSON.stringify(result.message);
+                    else if (result.errors) msg = JSON.stringify(result.errors);
+                    else msg = JSON.stringify(result);
+
+                    errorDetails += `\n⛔ ${firstName}: ${msg.substring(0, 150)}`;
                 }
 
             } catch (err) {
                 console.error("Sys Error:", err);
                 failCount++;
-                errorDetails += `\n- خطأ تقني ${orderId}`;
+                errorDetails += `\n⚠️ خطأ تقني في الطلب ${orderId}: ${err.message}`;
             }
         }
 
         let finalMsg = `النتيجة:\n✅ نجاح: ${successCount}`;
-        if(failCount > 0) finalMsg += `\n❌ فشل: ${failCount}\n${errorDetails}`;
+        if(failCount > 0) finalMsg += `\n❌ فشل: ${failCount}\n\n📝 تفاصيل الأخطاء:${errorDetails}`;
         alert(finalMsg);
         
         btn.textContent = "📤 إرسال الطلبات المحددة";
