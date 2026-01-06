@@ -5,11 +5,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>مركز الشحن</title>
   
-  <!-- ربط الخط -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-  
-  <!-- ملف الستايل الخاص بك -->
   <link rel="stylesheet" href="admin-style.css">
+
+  <style>
+      /* تنسيقات إضافية خاصة بهذه الصفحة */
+      
+      /* البطاقات الصغيرة للشركات المحفوظة */
+      .provider-tags-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-top: 15px;
+          padding-top: 15px;
+          border-top: 1px dashed #eee;
+      }
+      
+      .provider-tag {
+          background-color: #e3f2fd;
+          color: #0d47a1;
+          border: 1px solid #bbdefb;
+          padding: 5px 12px;
+          border-radius: 20px;
+          font-size: 0.85rem;
+          font-weight: bold;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          animation: fadeIn 0.3s ease;
+      }
+
+      .provider-tag .remove-icon {
+          cursor: pointer;
+          color: #ef5350;
+          font-weight: bold;
+          font-size: 1.1rem;
+          line-height: 1;
+      }
+      
+      .provider-tag .remove-icon:hover {
+          color: #c62828;
+      }
+
+      /* رسالة النجاح */
+      .success-message-box {
+          display: none;
+          background-color: #d1e7dd;
+          color: #0f5132;
+          border: 1px solid #badbcc;
+          padding: 10px;
+          border-radius: 8px;
+          margin-top: 15px;
+          text-align: center;
+          font-weight: bold;
+      }
+  </style>
 </head>
 <body>
 
@@ -29,45 +79,50 @@
 
   <div class="container">
     
-    <!-- ============================================================
-         القسم 1: إعدادات الربط (تم وضعها داخل form-card لتأخذ الستايل)
-         تم تغيير القائمة إلى حقل كتابة حر
-    ============================================================ -->
+    <!-- القسم 1: إعدادات الربط -->
     <h2>⚙️ إعداد شركات التوصيل</h2>
     <div class="form-card">
       <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">إضافة / تعديل شركة</h3>
       
       <div class="search-wrapper">
           <label style="font-weight:bold; display:block; margin-bottom:5px;">اسم الشركة :</label>
-          <!-- هنا التغيير: حقل كتابة بدلاً من قائمة -->
-          <input type="text" id="providerNameInput" class="search-input" placeholder="مثلاً: Yalidine, ZR, الموصل الخاص...">
+          <input type="text" id="providerNameInput" class="search-input" placeholder="مثلاً: Guepex, Yalidine, ZR...">
           
           <div style="display:flex; gap:10px; margin-top:15px;">
             <div style="flex:1">
                 <label style="font-weight:bold; display:block; margin-bottom:5px;">API Key:</label>
-                <input type="text" id="apiKeyInput" class="search-input" placeholder="مفتاح الربط">
+                <input type="text" id="apiKeyInput" class="search-input" placeholder="ألصق الـ API ID هنا">
             </div>
             <div style="flex:1">
-                <label style="font-weight:bold; display:block; margin-bottom:5px;">Token / User ID:</label>
-                <input type="text" id="apiTokenInput" class="search-input" placeholder="توكن المستخدم">
+                <label style="font-weight:bold; display:block; margin-bottom:5px;">Token:</label>
+                <input type="text" id="apiTokenInput" class="search-input" placeholder="ألصق الـ Token هنا">
             </div>
           </div>
 
           <button id="saveConfigBtn" class="save-btn" style="margin-top:15px;">حفظ معلومات الشركة</button>
+          
+          <!-- عنصر رسالة النجاح -->
+          <div id="configSuccessMsg" class="success-message-box">✅ تم حفظ معلومات الشركة بنجاح!</div>
+
+          <!-- قائمة الشركات المحفوظة (ستظهر هنا) -->
+          <div style="margin-top:15px;">
+              <small style="color:#666;">الشركات المربوطة حالياً:</small>
+              <div id="activeProvidersList" class="provider-tags-container">
+                  <!-- سيتم ملؤها بالجافاسكريبت -->
+                  <span style="color:#999; font-size:0.8rem;">لا توجد شركات محفوظة بعد.</span>
+              </div>
+          </div>
       </div>
     </div>
 
-    <!-- ============================================================
-         القسم 2: معالجة الطلبات (داخل form-card أيضاً)
-    ============================================================ -->
+    <!-- القسم 2: تجهيز الطلبات -->
     <h2>📦 تجهيز وإرسال الطلبات</h2>
     <div class="form-card">
         <div class="search-wrapper" style="display:flex; gap:10px; align-items:center;">
             <div style="flex:2;">
                 <label style="font-weight:bold; display:block; margin-bottom:5px;">اختر شركة للإرسال:</label>
-                <!-- هذه القائمة ستمتلئ تلقائياً بالأسماء التي كتبتها وحفظتها في الأعلى -->
                 <select id="shipProviderSelect" class="search-input">
-                    <option value="" disabled selected>-- جاري تحميل الشركات المحفوظة... --</option>
+                    <option value="" disabled selected>-- جاري التحميل... --</option>
                 </select>
             </div>
             
@@ -76,7 +131,6 @@
             </div>
         </div>
 
-        <!-- جدول عرض الطلبات -->
         <h3 style="margin-top:20px; border-bottom:1px solid #eee; padding-bottom:10px;">الطلبات قيد التجهيز (Processing)</h3>
         <div id="shippingOrdersContainer" class="orders-grid">
             <p class="loading-message">جاري تحميل الطلبات...</p>
@@ -85,19 +139,17 @@
 
     <hr style="border: 0; border-top: 2px dashed #ccc; margin: 40px 0;">
 
-    <!-- ============================================================
-         القسم 3: تسعيرات المناطق (يعمل جيداً كما قلت)
-    ============================================================ -->
+    <!-- القسم 3: المناطق -->
     <h2>💰 تسعيرات التوصيل (Zones)</h2>
     <div class="form-card">
       <div class="price-inputs-row">
            <div class="price-group">
              <label>سعر المنزل</label>
-             <input type="number" id="homePrice" placeholder="600">
+             <input type="number" id="homePrice" placeholder="ادخل التسعيرة">
            </div>
            <div class="price-group">
              <label>سعر المكتب</label>
-             <input type="number" id="deskPrice" placeholder="400">
+             <input type="number" id="deskPrice" placeholder="ادخل التسعيرة">
            </div>
       </div>
       
@@ -106,7 +158,6 @@
          <button type="button" id="selectAllBtn" class="select-all-btn">تحديد الكل</button>
       </div>
 
-      <!-- شبكة الولايات -->
       <div id="wilayaGrid" class="wilaya-grid"></div>
 
       <button id="saveZoneBtn" class="save-btn" style="margin-top:15px;">حفظ التسعيرة</button>
@@ -117,34 +168,24 @@
 
   </div>
 
-  <!-- ============================================================
-       النافذة المنبثقة (Modal)
-  ============================================================ -->
+  <!-- المودال -->
   <div id="orderDetailModal" class="modal hidden">
     <div class="modal-content">
       <button class="close-modal-btn" id="closeDetailModal">&times;</button>
       <h3>تعديل بيانات الطلب</h3>
-      
       <div class="details-section">
           <label class="details-label">الاسم الكامل</label>
           <input type="text" id="editName" class="search-input" style="margin-bottom:10px;">
-
           <label class="details-label">رقم الهاتف</label>
           <input type="text" id="editPhone" class="search-input" style="margin-bottom:10px;">
-
           <label class="details-label">الولاية</label>
           <input type="text" id="editWilaya" class="search-input" style="margin-bottom:10px;">
-
           <label class="details-label">البلدية</label>
           <input type="text" id="editCommune" class="search-input" style="margin-bottom:10px;">
-
           <label class="details-label">العنوان</label>
           <input type="text" id="editAddress" class="search-input" style="margin-bottom:10px;">
-          
           <div id="productsList" style="margin:15px 0; background:#f9f9f9; padding:10px; border-radius:5px;"></div>
-
           <input type="hidden" id="currentOrderId">
-
           <div class="modal-actions">
               <button id="saveChangesBtn" class="save-btn">حفظ التغييرات</button>
               <button id="cancelOrderBtn" class="btn-delete">إلغاء الطلب</button>
@@ -182,12 +223,11 @@
     const modal = document.getElementById('orderDetailModal');
     const closeModal = document.getElementById('closeDetailModal');
     
-    // Auth Check
     onAuthStateChanged(auth, (user) => {
         if (!user) window.location.href = 'admin-login.html';
         else {
             document.getElementById('logoutBtn').style.display = 'block';
-            loadActiveProviders();
+            loadActiveProviders(); // هذه الدالة الآن ستملأ القائمة وأيضاً البطاقات الصغيرة
             renderWilayaCheckboxes();
         }
     });
@@ -196,66 +236,101 @@
         await signOut(auth); window.location.href = 'admin-login.html';
     });
 
-    // ==========================================================
-    // 1. منطق الشركات (حرية الكتابة)
-    // ==========================================================
-    
-    // حفظ شركة جديدة
-    document.getElementById('saveConfigBtn').addEventListener('click', async () => {
-        const providerName = document.getElementById('providerNameInput').value.trim(); // الاسم الحر
+    // ======================== 1. حفظ الشركات ========================
+    document.getElementById('saveConfigBtn').addEventListener('click', async function() {
+        const btn = this;
+        const providerName = document.getElementById('providerNameInput').value.trim();
         const key = document.getElementById('apiKeyInput').value.trim();
         const token = document.getElementById('apiTokenInput').value.trim();
 
-        if(!providerName) { alert('يجب كتابة اسم الشركة!'); return; }
-        if(!key) { alert('يجب إدخال API Key (أو أي رمز للحفظ)'); return; }
+        if(!providerName) { alert('اكتب اسم الشركة'); return; }
+        if(!key) { alert('أدخل API Key'); return; }
 
-        // استخدام الاسم الذي كتبه المستخدم كـ ID للشركة في قاعدة البيانات
-        // نستبدل المسافات بـ _ ليكون المفتاح صالحاً
-        const providerId = providerName.replace(/\s+/g, '_').toLowerCase();
+        btn.textContent = "جاري الحفظ...";
+        btn.disabled = true;
 
-        await update(ref(db, `delivery_settings/${providerId}`), { 
-            displayName: providerName, // نحفظ الاسم الأصلي للعرض
-            apiKey: key, 
-            apiToken: token 
-        });
-        
-        alert(`تم حفظ شركة: ${providerName} بنجاح ✅`);
-        
-        // تفريغ الحقول
-        document.getElementById('providerNameInput').value = '';
-        document.getElementById('apiKeyInput').value = '';
-        document.getElementById('apiTokenInput').value = '';
+        try {
+            const providerId = providerName.replace(/\s+/g, '_').toLowerCase();
+            await update(ref(db, `delivery_settings/${providerId}`), { 
+                displayName: providerName,
+                apiKey: key, 
+                apiToken: token 
+            });
+            
+            // إظهار رسالة النجاح
+            const successMsg = document.getElementById('configSuccessMsg');
+            successMsg.style.display = 'block';
+            
+            // إخفاء الرسالة بعد 3 ثواني
+            setTimeout(() => {
+                successMsg.style.display = 'none';
+            }, 3000);
+
+            // تفريغ الحقول
+            document.getElementById('providerNameInput').value = '';
+            document.getElementById('apiKeyInput').value = '';
+            document.getElementById('apiTokenInput').value = '';
+            
+        } catch (error) {
+            alert("خطأ: " + error.message);
+        } finally {
+            btn.textContent = "حفظ معلومات الشركة";
+            btn.disabled = false;
+        }
     });
 
-    // ملء القائمة المنسدلة بالشركات المحفوظة
+    // دالة عرض الشركات المحفوظة (في القائمة + البطاقات الصغيرة)
     function loadActiveProviders() {
         onValue(settingsRef, (snapshot) => {
+            // تفريغ القائمة والبطاقات
             shipProviderSelect.innerHTML = '<option value="" disabled selected>-- اختر شركة للشحن --</option>';
+            const tagsContainer = document.getElementById('activeProvidersList');
+            tagsContainer.innerHTML = '';
+
             if(snapshot.exists()) {
                 const settings = snapshot.val();
                 let hasActive = false;
+
                 Object.keys(settings).forEach(key => {
                     const providerData = settings[key];
-                    // نعرض الشركات التي لها مفتاح فقط
                     if(providerData.apiKey) {
+                        // 1. إضافة للقائمة المنسدلة
                         const option = document.createElement('option');
-                        option.value = key; // الـ ID المخزن (مثل yalidine)
-                        // نعرض الاسم الجميل الذي كتبه المستخدم، أو الاسم البرمجي كاحتياط
+                        option.value = key;
                         option.textContent = providerData.displayName || key; 
                         shipProviderSelect.appendChild(option);
+                        
+                        // 2. إضافة كبطاقة صغيرة (Tag)
+                        const tag = document.createElement('div');
+                        tag.className = 'provider-tag';
+                        tag.innerHTML = `
+                            <span>${providerData.displayName || key}</span>
+                            <span class="remove-icon" onclick="deleteProvider('${key}')">&times;</span>
+                        `;
+                        tagsContainer.appendChild(tag);
+
                         hasActive = true;
                     }
                 });
-                if(!hasActive) shipProviderSelect.innerHTML = '<option value="" disabled selected>⚠️ لا توجد شركات، أضف واحدة في الأعلى</option>';
+
+                if(!hasActive) {
+                    shipProviderSelect.innerHTML = '<option disabled>لا توجد شركات</option>';
+                    tagsContainer.innerHTML = '<span style="color:#999; font-size:0.8rem;">لا توجد شركات محفوظة.</span>';
+                }
             } else {
-                shipProviderSelect.innerHTML = '<option value="" disabled selected>⚠️ لا توجد شركات محفوظة</option>';
+                tagsContainer.innerHTML = '<span style="color:#999; font-size:0.8rem;">لا توجد شركات محفوظة.</span>';
             }
         });
     }
 
-    // ==========================================================
-    // 2. منطق الطلبات (عرض القائمة)
-    // ==========================================================
+    // دالة حذف شركة (لجعلها تعمل، يجب تعريفها على الـ window)
+    window.deleteProvider = async (key) => {
+        if(confirm('هل أنت متأكد من حذف إعدادات هذه الشركة؟')) {
+            await remove(ref(db, `delivery_settings/${key}`));
+        }
+    };
+
+    // ======================== 2. الطلبات ========================
     onValue(ordersRef, (snapshot) => {
         shippingContainer.innerHTML = '';
         const orders = snapshot.val();
@@ -269,24 +344,20 @@
 
         sorted.forEach(([id, order]) => {
             const status = (order.status || '').toLowerCase();
-            // الفلترة: فقط الطلبات قيد التجهيز
             if(!status.includes('processing') && !status.includes('تجهيز')) return;
             
             count++;
             const row = document.createElement('div');
-            // استخدام كلاسات الستايل القديمة
             row.className = 'order-row'; 
             
             row.innerHTML = `
                 <div class="row-info" style="justify-content: flex-start;">
                     <input type="checkbox" class="order-checkbox" value="${id}" style="margin-left:15px; transform:scale(1.3);">
-                    
                     <div style="display:flex; flex-direction:column;">
                         <span class="row-name">${order.customerName || order.name}</span>
                         <small style="color:#777;">${order.customerWilaya || order.state || 'الولاية؟'}</small>
                     </div>
                 </div>
-                
                 <div onclick="window.openDetails('${id}')" style="cursor:pointer; background:#f0f2f5; padding:8px 15px; border-radius:20px; font-size:0.85rem; font-weight:bold; color:var(--primary-color);">
                     تعديل ✎
                 </div>
@@ -297,9 +368,7 @@
         if(count === 0) shippingContainer.innerHTML = '<p class="loading-message">لا توجد طلبات قيد التجهيز.</p>';
     });
 
-    // ==========================================================
-    // 3. المودال والتعديل
-    // ==========================================================
+    // ======================== 3. المودال ========================
     window.openDetails = (id) => {
         get(ref(db, 'orders/' + id)).then((snap) => {
             if(snap.exists()) {
@@ -337,7 +406,6 @@
             customerWilaya: document.getElementById('editWilaya').value,
             customerCommune: document.getElementById('editCommune').value,
             customerAddress: document.getElementById('editAddress').value,
-            // تحديث الحقول القديمة أيضا
             name: document.getElementById('editName').value,
             phone: document.getElementById('editPhone').value,
             state: document.getElementById('editWilaya').value,
@@ -354,35 +422,38 @@
         }
     });
 
-    // ==========================================================
-    // 4. الإرسال الجماعي (Shipping)
-    // ==========================================================
-    document.getElementById('sendBulkBtn').addEventListener('click', async () => {
+    document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const providerId = shipProviderSelect.value;
-        
-        // الحصول على اسم الشركة للعرض فقط
         const providerName = shipProviderSelect.options[shipProviderSelect.selectedIndex]?.text || providerId;
-
         const checks = document.querySelectorAll('.order-checkbox:checked');
         
         if(!providerId) { alert('يرجى اختيار شركة شحن أولاً'); return; }
         if(checks.length === 0) { alert('لم تقم بتحديد أي طلب!'); return; }
         if(!confirm(`هل تريد إرسال ${checks.length} طلب عبر (${providerName})؟`)) return;
 
-        const updates = {};
-        checks.forEach(chk => {
-            const id = chk.value;
-            updates[`orders/${id}/status`] = 'Shipped';
-            updates[`orders/${id}/deliveryProvider`] = providerName; // نحفظ الاسم الجميل
-            updates[`orders/${id}/shippedAt`] = Date.now();
-        });
-        await update(ref(db), updates);
-        alert('تم الإرسال بنجاح! ستظهر الطلبات الآن في خانة المشحونة.');
+        const btn = this;
+        btn.textContent = "جاري الإرسال...";
+        btn.disabled = true;
+
+        try {
+            const updates = {};
+            checks.forEach(chk => {
+                const id = chk.value;
+                updates[`orders/${id}/status`] = 'Shipped';
+                updates[`orders/${id}/deliveryProvider`] = providerName;
+                updates[`orders/${id}/shippedAt`] = Date.now();
+            });
+            await update(ref(db), updates);
+            alert('تم الإرسال بنجاح! ستظهر الطلبات الآن في خانة المشحونة.');
+        } catch (error) {
+            alert("خطأ: " + error.message);
+        } finally {
+            btn.textContent = "📤 إرسال الطلبات المحددة";
+            btn.disabled = false;
+        }
     });
 
-    // ==========================================================
-    // 5. منطق المناطق (القديم)
-    // ==========================================================
+    // ======================== 4. المناطق ========================
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     
     function renderWilayaCheckboxes() {
