@@ -232,7 +232,7 @@
     }
     window.delProv = async (k) => { if(confirm('حذف؟')) await remove(ref(db, `delivery_settings/${k}`)); };
 
-    // === دوال العرض والتحكم (مع القائمة المنسدلة) ===
+    // === دوال العرض والتحكم ===
     onValue(ordersRef, async (snapshot) => {
         shippingContainer.innerHTML = '';
         const orders = snapshot.val() || {};
@@ -308,7 +308,6 @@
     async function fetchCenters(apiUrl, apiId, apiToken) {
         if(allCentersCache.length > 0) return allCentersCache;
         try {
-            // تصحيح الرابط: إضافة /v1/centers
             let baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
             if(!baseUrl.includes('/v1')) baseUrl += '/v1';
             
@@ -323,7 +322,7 @@
             });
             const json = await res.json();
             if(json.data) {
-                allCentersCache = json.data; // تخزين المكاتب
+                allCentersCache = json.data;
                 console.log("تم جلب المكاتب:", allCentersCache.length);
                 return allCentersCache;
             }
@@ -334,7 +333,7 @@
     }
 
     // ==========================================
-    // 🔥 إرسال الطلبات 🔥
+    // 🔥 إرسال الطلبات (مع إصلاح المكتب) 🔥
     // ==========================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const btn = this;
@@ -366,7 +365,7 @@
                 if(!orderSnap.exists()) continue;
                 const order = orderSnap.val();
                 
-                // --- قراءة نوع التوصيل من القائمة المنسدلة ---
+                // قراءة نوع التوصيل من القائمة
                 const orderRow = document.querySelector(`.order-row[data-id="${orderId}"]`);
                 const selectBox = orderRow ? orderRow.querySelector('.delivery-type-select') : null;
                 let isStopDesk = false;
@@ -375,7 +374,6 @@
                 } else {
                     isStopDesk = (order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب')));
                 }
-                // ----------------------------------------------
 
                 let currentTotal = parseFloat(order.productTotal);
                 if (isNaN(currentTotal)) currentTotal = parseFloat(order.totalPrice || 0) - parseFloat(order.shippingPrice || 0);
@@ -405,30 +403,35 @@
                 const cleanOrderId = orderId.replace('#','').trim();
                 const cleanCommune = (order.customerCommune || "").trim();
 
-                // === البحث عن ID المكتب (للنوع Guepex/Yalidine) ===
+                // === البحث عن ID المكتب (مع التعديل للإصلاح) ===
                 let stopDeskId = null;
-                let stopDeskName = null;
 
                 if (isStopDesk && apiData.driverType === 'yalidine_style') {
-                    // البحث في القائمة التي جلبناها
-                    const foundCenter = allCentersCache.find(c => {
-                        // نحاول المطابقة باسم الولاية واسم البلدية
-                        const centerWilaya = (c.wilaya_name || "").toLowerCase();
-                        const centerCommune = (c.commune_name || c.name || "").toLowerCase();
-                        
-                        return centerWilaya.includes(finalWilaya.toLowerCase()) && 
-                               (centerCommune.includes(cleanCommune.toLowerCase()) || cleanCommune.includes(centerCommune));
+                    // 1. فلترة المكاتب حسب الولاية أولاً (أدق)
+                    let centersInWilaya = allCentersCache.filter(c => 
+                        (c.wilaya_name && c.wilaya_name.toLowerCase().includes(finalWilaya.toLowerCase())) ||
+                        (finalWilaya.toLowerCase().includes(c.wilaya_name.toLowerCase()))
+                    );
+
+                    // 2. محاولة إيجاد مكتب يطابق البلدية
+                    let foundCenter = centersInWilaya.find(c => {
+                        const cName = (c.name || "").toLowerCase();
+                        const cCommune = (c.commune_name || "").toLowerCase();
+                        const target = cleanCommune.toLowerCase();
+                        return cCommune.includes(target) || cName.includes(target) || target.includes(cCommune);
                     });
 
                     if (foundCenter) {
                         stopDeskId = foundCenter.center_id || foundCenter.id;
-                        stopDeskName = foundCenter.name;
-                    } else if (allCentersCache.length > 0) {
-                        // إذا لم نجد المكتب بالضبط، نحاول إيجاد أي مكتب في نفس الولاية كخيار احتياطي (أو نلغي العملية)
-                        // للأمان: سنعرض خطأ في التقرير النهائي بدلاً من الإرسال الخاطئ
-                        errorDetails += `\n⚠️ ${firstName}: لم يتم العثور على مكتب في (${cleanCommune}, ${finalWilaya}).`;
-                        failCount++;
-                        continue; // تخطي هذا الطلب
+                    } else if (centersInWilaya.length > 0) {
+                        // 3. 🔥 الحل السحري: إذا لم نجد البلدية، نأخذ أول مكتب في الولاية كاحتياط 🔥
+                        // هذا يمنع الفشل ويرسله للمكتب الرئيسي
+                        stopDeskId = centersInWilaya[0].center_id || centersInWilaya[0].id;
+                        errorDetails += `\n⚠️ تنبيه لـ ${firstName}: تم اختيار مكتب (${centersInWilaya[0].name}) لأننا لم نجد مكتباً في ${cleanCommune}.`;
+                    } else {
+                         // فشل تام (لا توجد مكاتب في هذه الولاية)
+                         errorDetails += `\n⛔ فشل ${firstName}: لا توجد مكاتب Stop Desk متاحة في ولاية ${finalWilaya}.`;
+                         failCount++; continue;
                     }
                 }
 
@@ -441,9 +444,8 @@
                     
                     let finalCommune = finalWilaya;
                     if(finalWilaya === "Alger") finalCommune = "Alger Centre";
-                    if(cleanCommune) finalCommune = cleanCommune; // استخدم البلدية المدخلة إذا وجدت
+                    if(cleanCommune) finalCommune = cleanCommune; 
 
-                    // بناء البايلود حسب الوثائق
                     let parcelObj = {
                         "order_id": cleanOrderId,
                         "firstname": firstName, "familyname": lastName, "contact_phone": phone,
@@ -460,21 +462,18 @@
                         "height": 10, "width": 20, "length": 30, "weight": 1
                     };
 
-                    // إضافة stopdesk_id فقط إذا كان التوصيل للمكتب
                     if (isStopDesk) {
                         if (stopDeskId) {
                             parcelObj.stopdesk_id = stopDeskId;
                         } else {
-                            // إذا لم نجد المكتب وفشلنا في تخطيه سابقاً
-                             errorDetails += `\n⚠️ ${firstName}: مطلوب ID المكتب لخدمة Stop Desk.`;
+                            // لن نصل هنا بسبب الكود أعلاه، لكن للاحتياط
                              failCount++; continue;
                         }
                     }
 
-                    payload = [parcelObj]; // يجب أن تكون مصفوفة
+                    payload = [parcelObj];
                 }
 
-                // تصحيح رابط الـ POST (إضافة /v1/parcels)
                 let postUrl = apiData.apiUrl;
                 if(postUrl.endsWith('/')) postUrl = postUrl.slice(0, -1);
                 if(!postUrl.includes('/v1/parcels')) postUrl += '/v1/parcels';
@@ -493,28 +492,19 @@
                 let isSuccess = false;
                 let trackingCode = "Sent";
 
-                // التحقق من النجاح حسب استجابة Guepex
-                // Guepex يرجع: {"MyOrderID": {"success": true, "tracking": "..."}}
-                
-                // الطريقة 1: مصفوفة
                 if (Array.isArray(resJson)) {
                      if (resJson[0] && (resJson[0].tracking || resJson[0].success === true)) {
                         isSuccess = true; trackingCode = resJson[0].tracking || "Sent";
                     }
                 } 
-                // الطريقة 2: كائن مفاتيحه هي رقم الطلب (كما في وثائق Guepex)
                 else if (resJson[cleanOrderId]) {
                     if (resJson[cleanOrderId].success === true) {
-                        isSuccess = true;
-                        trackingCode = resJson[cleanOrderId].tracking;
+                        isSuccess = true; trackingCode = resJson[cleanOrderId].tracking;
                     } else {
-                        // فشل محدد لهذا الطلب
-                        errorDetails += `\n❌ ${firstName}: ${resJson[cleanOrderId].message || 'خطأ غير معروف'}`;
-                        failCount++;
-                        continue;
+                        errorDetails += `\n❌ ${firstName}: ${resJson[cleanOrderId].message || 'خطأ'}`;
+                        failCount++; continue;
                     }
                 }
-                // الطريقة 3: نجاح عام
                 else if (resJson.tracking || resJson.success === true) {
                     isSuccess = true; trackingCode = resJson.tracking || "Sent";
                 }
@@ -523,7 +513,6 @@
                     await update(ref(db, `orders/${orderId}`), { status: 'Shipped', deliveryProvider: apiData.displayName, trackingCode: trackingCode, shippedAt: Date.now() });
                     successCount++;
                 } else {
-                    // إذا لم نجد نجاحاً ولم ندخل في شرط الفشل السابق
                     if(!resJson[cleanOrderId]) {
                          failCount++; errorDetails += `\n❌ ${firstName}: ${JSON.stringify(resJson).substring(0, 100)}`;
                     }
@@ -533,12 +522,11 @@
         }
 
         let report = `النتيجة:\n✅ نجاح: ${successCount}\n❌ فشل: ${failCount}`;
-        if(failCount > 0) report += `\n\nالتفاصيل:${errorDetails}`;
+        if(failCount > 0 || errorDetails.length > 0) report += `\n\nالتفاصيل:${errorDetails}`;
         alert(report);
         btn.textContent = "📤 إرسال المحدد"; btn.disabled = false;
     });
 
-    // باقي الدوال (تفاصيل الطلب، الخ)
     window.openDetails = async (id) => {
         const orderSnap = await get(ref(db, 'orders/'+id));
         if(orderSnap.exists()) {
@@ -549,27 +537,22 @@
             document.getElementById('editWilaya').value = o.customerWilaya || o.state;
             document.getElementById('editCommune').value = o.customerCommune||'';
             document.getElementById('editAddress').value = o.customerAddress || o.address;
-            
             let currentTotal = parseFloat(o.productTotal);
             if(isNaN(currentTotal)) currentTotal = calculateProductOnlyPrice(o);
-
             let marketingDiscount = 0;
             if(o.productId) {
                 const prodSnap = await get(ref(db, `products/${o.productId}`));
                 if(prodSnap.exists()) marketingDiscount = parseFloat(prodSnap.val().marketingDiscount || 0);
             }
-            
             const qty = parseInt(o.quantity || 1);
             let netPrice = currentTotal - (marketingDiscount * qty);
             if(netPrice < 0) netPrice = 0;
-
             document.getElementById('editProductPrice').value = netPrice;
             document.getElementById('orderDetailModal').classList.remove('hidden');
         }
     }
 
     document.getElementById('closeDetailModal').addEventListener('click',()=>document.getElementById('orderDetailModal').classList.add('hidden'));
-    
     document.getElementById('saveChangesBtn').addEventListener('click',async()=>{
         const id=document.getElementById('currentOrderId').value;
         await update(ref(db,'orders/'+id), {
@@ -580,7 +563,6 @@
         document.getElementById('orderDetailModal').classList.add('hidden');
         alert("✅ تم حفظ التعديلات");
     });
-
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     function renderWilayaCheckboxes(){ 
         const g=document.getElementById('wilayaGrid'); g.innerHTML=''; 
