@@ -10,16 +10,69 @@
 <meta name="google-site-verification" content="lgCRZS6OSalJssBPY7QkuciuXfNh6Uf_nfvWLKNvmQg" />
 
 <style>
-    #storePolicySection h3 {
-        cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center;
-    }
-    #storePolicySection h3::after {
-        content: '▼'; font-size: 0.8em; margin-right: 10px; transition: transform 0.3s;
-    }
+    /* تنسيقات القوائم والأسعار */
+    #storePolicySection h3 { cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
+    #storePolicySection h3::after { content: '▼'; font-size: 0.8em; margin-right: 10px; transition: transform 0.3s; }
     #storePolicySection.open h3::after { transform: rotate(180deg); }
     
     .price-summary { background: #f9f9f9; padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #eee; }
     .final-price { color: #27ae60; font-weight: bold; font-size: 1.2em; }
+    
+    /* تنسيق الحقول المتجاورة (البلدية والولاية) */
+    .row-dual { 
+        display: flex; 
+        gap: 10px; 
+        margin-bottom: 10px; 
+    }
+    .col-half { 
+        flex: 1; 
+        position: relative; /* ضروري لضبط المحتوى */
+    }
+
+    /* 🔥🔥🔥 هنا التعديل لضبط الحجم والمحاذاة 🔥🔥🔥 */
+    .col-half select, 
+    .col-half input { 
+        width: 100%; 
+        box-sizing: border-box; 
+        height: 50px; /* ⬅️ تكبير الخانة: غير هذا الرقم لتكبيرها أو تصغيرها (مثلا 45px أو 60px) */
+        font-size: 16px; /* ⬅️ تكبير الخط ليصبح أوضح */
+        font-weight: bold;
+        text-align: center; /* ⬅️ وضع النص في الوسط */
+        text-align-last: center; /* ⬅️ إجبار المتصفح على توسيط النص داخل القائمة */
+        padding: 0 10px; /* مسافة داخلية مريحة */
+        border-radius: 8px; /* تدوير الحواف قليلاً */
+        border: 1px solid #ddd; /* لون الإطار */
+        appearance: none; /* إخفاء السهم الافتراضي لبعض المتصفحات لضبط التوسيط */
+        -webkit-appearance: none;
+        background-color: #fff;
+    }
+
+    /* إضافة سهم مخصص للقائمة ليظهر بشكل جميل */
+    .col-half select {
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='gray' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: left 10px center; /* السهم على اليسار لأن الموقع عربي */
+        background-size: 15px;
+    }
+
+    /* تحسين قائمة التوصيل */
+    select {
+        font-family: 'Cairo', sans-serif;
+    }
+    
+    /* تحسين قائمة التوصيل داخل الغلاف */
+    .select-no-border {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: transparent;
+        outline: none;
+        font-family: 'Cairo', sans-serif;
+        color: #333;
+        font-weight: bold;
+        text-align: center;
+        text-align-last: center;
+    }
 </style>
 
 </head>
@@ -97,9 +150,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const contactFooter = document.querySelector('.contact-footer .contact-container');
 
-// ==========================================
-// 1. إعداد فيسبوك بيكسل
-// ==========================================
+// بيكسل فيسبوك
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
@@ -107,7 +158,6 @@ t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window, d
 'https://connect.facebook.net/en_US/fbevents.js');
 
 let activePixelId = null;
-
 function initPixel(pixelId) {
     if (!pixelId) return;
     if (activePixelId) return; 
@@ -116,9 +166,6 @@ function initPixel(pixelId) {
     fbq('track', 'PageView');
 }
 
-// ==========================================
-// 2. باقي المنطق
-// ==========================================
 onValue(ref(db, 'settings/contactPhone'), (snapshot) => {
     if (snapshot.exists()) {
         const phone = snapshot.val();
@@ -138,7 +185,7 @@ const closePreview = document.getElementById('closePreview');
 const storeLogoImg = document.getElementById('storeLogo');
 
 let currentProductId = null;
-let currentProductPrice = 0; // سيتم تخزين (السعر + الخصم) هنا
+let currentProductPrice = 0;
 let shippingZones = []; 
 
 onValue(ref(db, 'shipping_zones'), (snapshot) => {
@@ -160,16 +207,9 @@ async function fetchProductDetails() {
     if (!snapshot.exists()) { container.innerHTML = '<p class="error-text">المنتج غير موجود.</p>'; return; }
 
     const product = snapshot.val();
-    
-    // ===========================================
-    // 🔥 التعديل هنا فقط 🔥
-    // ===========================================
-    // نقوم بجمع (السعر الأصلي + مبلغ الخصم التسويقي)
-    // هذا السعر هو الذي سيظهر للزبون في كل مكان في الصفحة
     const marketingDiscount = parseFloat(product.marketingDiscount || 0);
     currentProductPrice = parseFloat(product.newPrice) + marketingDiscount;
 
-    // تشغيل البيكسل
     if (product.customPixelId && product.customPixelId.trim() !== "") {
         initPixel(product.customPixelId);
     } else {
@@ -202,8 +242,20 @@ async function fetchProductDetails() {
     const images = Array.isArray(product.images) ? product.images : [product.images || 'default.jpg'];
     const swiperSlides = images.map(src => `<div class="swiper-slide"><img src="${src}" alt="صورة"></div>`).join('');
 
-    const wilayas = [ "أدرار","الشلف","الأغواط","أم البواقي","باتنة","بجاية","بسكرة","بشار","البليدة","البويرة","تمنراست","تبسة","تلمسان","تيارت","تيزي وزو","الجزائر","الجلفة","جيجل","سطيف","سعيدة","سكيكدة","سيدي بلعباس","عنابة","قالمة","قسنطينة","المدية","مستغانم","المسيلة","معسكر","ورقلة","وهران","البيض","إليزي","برج بوعريريج","بومرداس","الطارف","تندوف","تيسمسيلت","الوادي","خنشلة","سوق أهراس","تيبازة","ميلة","عين الدفلى","النعامة","عين تموشنت","غرداية","غليزان","تيميمون","برج باجي مختار","أولاد جلال","بني عباس","إن صالح","إن قزام","تقرت","جانت","المغير","المنيعة" ];
-    const wilayaOptions = wilayas.map(w => `<option value="${w}">${w}</option>`).join('');
+    // ===========================================
+    // قائمة الولايات
+    // ===========================================
+    const wilayas = [
+        "أدرار", "الشلف", "الأغواط", "أم البواقي", "باتنة", "بجاية", "بسكرة", "بشار", "البليدة", "البويرة",
+        "تمنراست", "تبسة", "تلمسان", "تيارت", "تيزي وزو", "الجزائر", "الجلفة", "جيجل", "سطيف", "سعيدة",
+        "سكيكدة", "سيدي بلعباس", "عنابة", "قالمة", "قسنطينة", "المدية", "مستغانم", "المسيلة", "معسكر", "ورقلة",
+        "وهران", "البيض", "إليزي", "برج بوعريريج", "بومرداس", "الطارف", "تندوف", "تيسمسيلت", "الوادي", "خنشلة",
+        "سوق أهراس", "تيبازة", "ميلة", "عين الدفلى", "النعامة", "عين تموشنت", "غرداية", "غليزان", "تيميمون", "برج باجي مختار",
+        "أولاد جلال", "بني عباس", "إن صالح", "إن قزام", "تقرت", "جانت", "المغير", "المنيعة"
+    ];
+    
+    // إنشاء خيارات الولاية
+    const wilayaOptions = wilayas.map((w, index) => `<option value="${w}">${index + 1} - ${w}</option>`).join('');
 
     let descriptionHTML = '';
     if (Array.isArray(product.description)) {
@@ -213,12 +265,15 @@ async function fetchProductDetails() {
         });
     } else { descriptionHTML = `<p>${product.description || 'لا يوجد وصف.'}</p>`; }
 
+    // =======================================================
+    // 🔥 تحديث هيكل النموذج (ترتيب الخانات) 🔥
+    // =======================================================
     container.innerHTML = `
       <div class="swiper mySwiper"><div class="swiper-wrapper">${swiperSlides}</div><div class="swiper-pagination"></div></div>
       <div class="product-header">
         <h2>${product.name}</h2>
         <div class="price-badge">
-            ${Number(currentProductPrice).toLocaleString()} دج <!-- السعر المرتفع يظهر هنا -->
+            ${Number(currentProductPrice).toLocaleString()} دج
             ${product.oldPrice ? `<small>${Number(product.oldPrice).toLocaleString()}</small>` : ''}
         </div>
         <div id="liveViewersWrapper" style="display: none; text-align: center; margin-top: 10px; color: #c0392b; font-weight: bold;">
@@ -228,13 +283,34 @@ async function fetchProductDetails() {
 
       <div class="compact-card" id="orderCard">
         <div class="card-header">اطلب الآن 👇</div>
+        
+        <!-- 1. رقم الهاتف -->
         <div class="input-wrapper"><i class="fas fa-phone input-icon"></i><input type="tel" id="phone" placeholder="رقم الهاتف" dir="ltr" style="text-align:right;"></div>
+        
+        <!-- 2. الاسم واللقب -->
         <div class="input-wrapper"><i class="fas fa-user input-icon"></i><input type="text" id="fullName" placeholder="الاسم واللقب"></div>
+        
+        <!-- 3. الولاية والبلدية (في نفس السطر) -->
         <div class="row-dual">
             <div class="col-half"><select id="wilaya"><option value="">اختر الولاية</option>${wilayaOptions}</select></div>
-            <div class="col-half"><select id="deliveryType"><option value="المنزل">🏠 توصيل للمنزل</option><option value="مكتب الشركة">🏢 استلام مكتب</option></select></div>
+            <div class="col-half"><input type="text" id="commune" placeholder="البلدية"></div>
         </div>
-        <div class="input-wrapper"><i class="fas fa-map-marker-alt input-icon"></i><input type="text" id="address" placeholder="البلدية / العنوان"></div>
+        
+        <!-- 4. العنوان -->
+        <div class="input-wrapper">
+            <i class="fas fa-map-marker-alt input-icon"></i>
+            <input type="text" id="address" placeholder="العنوان (الحي / الشارع)">
+        </div>
+
+        <!-- 5. مكان الاستلام (بدون إيموجي) -->
+        <div class="input-wrapper">
+            <i class="fas fa-truck input-icon"></i>
+            <select id="deliveryType" class="select-no-border">
+                <option value="المنزل">توصيل للمنزل</option>
+                <option value="مكتب الشركة">استلام من المكتب</option>
+            </select>
+        </div>
+
         <div class="price-summary">
             <div class="total-row"><span>المجموع:</span><span id="summaryTotalPrice" class="final-price">0 دج</span></div>
             <small id="shippingText" class="ship-note">(الشحن غير محدد)</small>
@@ -312,14 +388,16 @@ async function fetchProductDetails() {
     let qty = 1;
     let shipPrice = 0;
 
+    // تحديث السعر عند تغيير الولاية
+    wilayaSel.addEventListener("change", updatePrice);
+    delSel.addEventListener("change", updatePrice);
+
     function updatePrice() {
-        const pPrice = currentProductPrice * qty; // السعر (المضاف له الخصم) * الكمية
+        const pPrice = currentProductPrice * qty;
         
         const zone = shippingZones.find(z => z.wilayas && z.wilayas.includes(wilayaSel.value));
         if (zone) {
-            // 🔥 هنا الشحن يبقى كما هو (لم يتم التعديل عليه) 🔥
             shipPrice = (delSel.value === "المنزل") ? parseFloat(zone.homePrice || 0) : parseFloat(zone.deskPrice || 0);
-            
             document.getElementById("shippingText").textContent = `(+${shipPrice} دج توصيل)`;
             document.getElementById("shippingText").style.color = "#27ae60";
         } else {
@@ -333,8 +411,7 @@ async function fetchProductDetails() {
 
     document.getElementById("decreaseQty").addEventListener("click", () => { if(qty>1) { qty--; qtyVal.textContent = qty; updatePrice(); }});
     document.getElementById("increaseQty").addEventListener("click", () => { qty++; qtyVal.textContent = qty; updatePrice(); });
-    wilayaSel.addEventListener("change", updatePrice);
-    delSel.addEventListener("change", updatePrice);
+    
     updatePrice();
 
     confirmBtn.addEventListener("click", async () => {
@@ -342,22 +419,23 @@ async function fetchProductDetails() {
         const ph = document.getElementById("phone").value.trim();
         const nm = document.getElementById("fullName").value.trim();
         const wl = document.getElementById("wilaya").value;
+        const cm = document.getElementById("commune").value.trim(); // قراءة البلدية من الـ Input
         const ad = document.getElementById("address").value.trim();
 
-        if(!ph || !nm || !wl || !ad) { alert("⚠️ يرجى ملء جميع الخانات المطلوبة!"); return; }
+        if(!ph || !nm || !wl || !cm || !ad) { alert("⚠️ يرجى ملء جميع الخانات (بما في ذلك البلدية)!"); return; }
         
         load.classList.remove("hidden");
         try {
             const refOrd = push(ref(db, "orders"));
             
-            const productTotalAmount = currentProductPrice * qty; // المجموع باستخدام السعر المرتفع
+            const productTotalAmount = currentProductPrice * qty;
             const finalTotal = productTotalAmount + shipPrice; 
 
             await set(refOrd, {
                 id: refOrd.key,
                 productId: productId,
                 productName: product.name,
-                productPrice: currentProductPrice, // حفظ السعر المرتفع في الطلب
+                productPrice: currentProductPrice,
                 quantity: qty,
                 productTotal: productTotalAmount,
                 shippingPrice: shipPrice,
@@ -365,6 +443,7 @@ async function fetchProductDetails() {
                 customerName: nm,
                 customerPhone: ph,
                 customerWilaya: wl,
+                customerCommune: cm,
                 customerAddress: ad,
                 deliveryOption: delSel.value,
                 timestamp: Date.now(),
