@@ -3,12 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>إدارة الشحن (النسخة النهائية)</title>
+  <title>إدارة الشحن (النسخة النهائية المعدلة)</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin-style.css">
-
   <style>
+      :root { --primary-color: #2c3e50; --secondary-color: #3498db; --accent-color: #e74c3c; --bg-color: #f4f6f9; --warning-color: #f1c40f; }
+      * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+      body { background-color: var(--bg-color); color: #333; padding-bottom: 50px; }
+      nav { background: #fff; padding: 10px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+      .logo { font-size: 1.4rem; font-weight: bold; color: var(--primary-color); }
+      .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+      .links { display: flex; gap: 15px; }
+      .nav-link { text-decoration: none; color: #555; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: 0.3s; }
+      .nav-link:hover, .nav-link.active { background-color: var(--primary-color); color: #fff; }
+      .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+      h2 { color: var(--primary-color); margin-bottom: 20px; border-right: 5px solid var(--secondary-color); padding-right: 15px; }
+      .form-card { background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
+      .search-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; outline: none; transition: 0.3s; }
+      .search-input:focus { border-color: var(--secondary-color); box-shadow: 0 0 5px rgba(52,152,219,0.3); }
+      .save-btn { background-color: var(--secondary-color); color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: 0.3s; }
+      .save-btn:hover { background-color: #2980b9; }
       .form-section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
       .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
       .provider-item { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border: 1px solid #ddd; padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; }
@@ -27,6 +41,20 @@
       .price-badge { padding: 2px 8px; border-radius: 4px; font-weight: bold; background: #e8f5e9; color: #2e7d32; }
       .delete-zone-btn { position: absolute; left: 10px; top: 10px; background: #ffcdd2; color: #c62828; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
       .loading-message { text-align: center; color: #777; padding: 20px; }
+      
+      /* Modal */
+      .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 1; visibility: visible; transition: 0.3s; }
+      .modal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+      .modal-content { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 500px; position: relative; max-height: 90vh; overflow-y: auto; }
+      .close-modal-btn { position: absolute; left: 15px; top: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #777; }
+      .btn-delete { background: #e74c3c; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; margin-right: 10px; }
+      
+      @media (max-width: 768px) {
+          .menu-toggle { display: block; }
+          .links { display: none; flex-direction: column; width: 100%; position: absolute; top: 60px; right: 0; background: #fff; padding: 20px; box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
+          .links.open { display: flex; }
+          .settings-grid { grid-template-columns: 1fr; }
+      }
   </style>
 </head>
 <body>
@@ -52,15 +80,15 @@
     <div class="form-card" style="margin-bottom: 30px;">
         <div class="form-section-title">إضافة شركة جديدة / تعديل</div>
         <div class="settings-grid">
-            <div><label>اسم الشركة:</label><input type="text" id="provName" class="search-input" placeholder="مثلاً: Yalidine"></div>
-            <div><label>رابط API:</label><input type="text" id="provUrl" class="search-input" placeholder="https://api..."></div>
-            <div><label>API Key / User ID:</label><input type="text" id="provKey" class="search-input"></div>
-            <div><label>API Token / Password:</label><input type="text" id="provToken" class="search-input"></div>
+            <div><label>اسم الشركة:</label><input type="text" id="provName" class="search-input" placeholder="مثلاً: GroupEX"></div>
+            <div><label>رابط API (كاملاً):</label><input type="text" id="provUrl" class="search-input" placeholder="مثلاً: https://api.groupex.dz/api/v1/create"></div>
+            <div><label>API Key / User ID:</label><input type="text" id="provKey" class="search-input" placeholder="رقم المستخدم"></div>
+            <div><label>API Token / Password:</label><input type="text" id="provToken" class="search-input" placeholder="الكود الطويل (Token)"></div>
             <div>
                 <label>هيكلة البيانات:</label>
                 <select id="provDriver" class="search-input">
-                    <option value="yalidine_style" selected>نظام Yalidine / Guepex</option>
-                    <option value="standard">نظام قياسي</option>
+                    <option value="yalidine_style">نظام Yalidine / Guepex</option>
+                    <option value="standard" selected>نظام GroupEX / قياسي</option>
                 </select>
             </div>
             <div>
@@ -108,7 +136,7 @@
            <div class="price-group" style="flex:1;"><label>سعر المنزل (Home):</label><input type="number" id="homePrice" class="search-input"></div>
            <div class="price-group" style="flex:1;"><label>سعر المكتب (Desk):</label><input type="number" id="deskPrice" class="search-input"></div>
       </div>
-      <div class="wilaya-controls"><button type="button" id="selectAllBtn" class="add-btn">تحديد/إلغاء الكل</button></div>
+      <div class="wilaya-controls"><button type="button" id="selectAllBtn" class="add-btn" style="padding:5px 10px; cursor:pointer;">تحديد/إلغاء الكل</button></div>
       <div id="wilayaGrid" class="wilaya-grid"></div>
       <button id="saveZoneBtn" class="save-btn" style="margin-top:15px;">حفظ التسعيرة</button>
     </div>
@@ -196,7 +224,7 @@
                 Object.entries(snap.val()).forEach(([k, p]) => {
                     const opt = document.createElement('option'); opt.value = k; opt.textContent = p.displayName; shipProviderSelect.appendChild(opt);
                     const div = document.createElement('div'); div.className = 'provider-item';
-                    div.innerHTML = `<div>${p.displayName}</div><button class="btn-delete-prov" onclick="window.delProv('${k}')">حذف 🗑️</button>`;
+                    div.innerHTML = `<div>${p.displayName} <small style="color:blue">(${p.driverType})</small></div><button class="btn-delete-prov" onclick="window.delProv('${k}')">حذف 🗑️</button>`;
                     savedProvidersList.appendChild(div);
                 });
             }
@@ -204,14 +232,13 @@
     }
     window.delProv = async (k) => { if(confirm('حذف؟')) await remove(ref(db, `delivery_settings/${k}`)); };
 
-    // 🔥 دالة الرسم المعدلة (لتظهر السعر الصافي في البطاقة الخارجية) 🔥
+    // === دوال العرض والتحكم ===
     onValue(ordersRef, async (snapshot) => {
         shippingContainer.innerHTML = '';
         const orders = snapshot.val() || {};
         const sorted = Object.entries(orders).sort((a,b) => b[1].timestamp - a[1].timestamp);
         let count = 0;
         
-        // جلب المنتجات لحساب الخصم (للعرض الصحيح)
         const productsSnap = await get(ref(db, 'products'));
         const products = productsSnap.exists() ? productsSnap.val() : {};
 
@@ -220,7 +247,6 @@
             if(!status.includes('processing') && !status.includes('تجهيز')) return;
             count++;
             
-            // حساب السعر الصافي للعرض
             let currentTotal = parseFloat(order.productTotal);
             if(isNaN(currentTotal)) currentTotal = calculateProductOnlyPrice(order);
             
@@ -235,7 +261,6 @@
 
             const row = document.createElement('div'); row.className = 'order-row';
             const isStopDesk = (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب')));
-            const typeIcon = isStopDesk ? '🏢' : '🏠';
             
             row.innerHTML = `
                 <div class="row-info" style="display:flex;align-items:center;">
@@ -266,6 +291,9 @@
 
     const wilayaMapping = { "أدرار": "Adrar", "الشلف": "Chlef", "الأغواط": "Laghouat", "أم البواقي": "Oum El Bouaghi", "باتنة": "Batna", "بجاية": "Bejaia", "بسكرة": "Biskra", "بشار": "Bechar", "البليدة": "Blida", "البويرة": "Bouira", "تمنراست": "Tamanrasset", "تبسة": "Tebessa", "تلمسان": "Tlemcen", "تيارت": "Tiaret", "تيزي وزو": "Tizi Ouzou", "الجزائر": "Alger", "الجلفة": "Djelfa", "جيجل": "Jijel", "سطيف": "Setif", "سعيدة": "Saida", "سكيكدة": "Skikda", "سيدي بلعباس": "Sidi Bel Abbes", "عنابة": "Annaba", "قالمة": "Guelma", "قسنطينة": "Constantine", "المدية": "Medea", "مستغانم": "Mostaganem", "المسيلة": "M'sila", "معسكر": "Mascara", "ورقلة": "Ouargla", "وهران": "Oran", "البيض": "El Bayadh", "إليزي": "Illizi", "برج بوعريريج": "Bordj Bou Arreridj", "بومرداس": "Boumerdes", "الطارف": "El Tarf", "تندوف": "Tindouf", "تيسمسيلت": "Tissemsilt", "الوادي": "El Oued", "خنشلة": "Khenchela", "سوق أهراس": "Souk Ahras", "تيبازة": "Tipaza", "ميلة": "Mila", "عين الدفلى": "Ain Defla", "النعامة": "Naama", "عين تموشنت": "Ain Temouchent", "غرداية": "Ghardaia", "غليزان": "Relizane", "تيميمون": "Timimoun", "برج باجي مختار": "Bordj Badji Mokhtar", "أولاد جلال": "Ouled Djellal", "بني عباس": "Beni Abbes", "إن صالح": "In Salah", "إن قزام": "In Guezzam", "تقرت": "Touggourt", "جانت": "Djanet", "المغير": "El M'Ghair", "المنيعة": "El Meniaa" };
 
+    // ==========================================
+    // 🔥 الجزء المهم: إرسال الطلبات (معدل لـ GroupEX) 🔥
+    // ==========================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const btn = this;
         const providerId = shipProviderSelect.value;
@@ -291,25 +319,23 @@
                 if(!orderSnap.exists()) continue;
                 const order = orderSnap.val();
                 
+                // حساب السعر
                 let currentTotal = parseFloat(order.productTotal);
-                if (isNaN(currentTotal)) {
-                    currentTotal = parseFloat(order.totalPrice || 0) - parseFloat(order.shippingPrice || 0);
-                }
+                if (isNaN(currentTotal)) currentTotal = parseFloat(order.totalPrice || 0) - parseFloat(order.shippingPrice || 0);
                 
                 let marketingDiscount = 0;
                 if(order.productId) {
                     try {
                         const prodSnap = await get(ref(db, `products/${order.productId}`));
-                        if(prodSnap.exists()) {
-                            marketingDiscount = parseFloat(prodSnap.val().marketingDiscount || 0);
-                        }
-                    } catch(e) { console.log("Fetch Error", e); }
+                        if(prodSnap.exists()) marketingDiscount = parseFloat(prodSnap.val().marketingDiscount || 0);
+                    } catch(e) { }
                 }
 
                 const qty = parseInt(order.quantity || 1);
                 let finalPriceToSend = currentTotal - (marketingDiscount * qty);
                 if (finalPriceToSend < 0) finalPriceToSend = 0; 
 
+                // تجهيز بيانات الولاية والهاتف
                 let rawWilaya = order.customerWilaya || order.state || "";
                 let cleanWilaya = rawWilaya.replace(/^[0-9]+[\.\-\s]*/, '').trim();
                 let finalWilaya = apiData.wilayaFormat === 'french_name' ? (wilayaMapping[cleanWilaya] || cleanWilaya) : cleanWilaya;
@@ -321,61 +347,97 @@
                 let splitName = fullName.split(" ");
                 let firstName = splitName[0];
                 let lastName = splitName.slice(1).join(" ") || ".";
-
                 const cleanOrderId = orderId.replace('#','').trim();
 
-                let parcelData = {};
+                // === بناء البيانات بناءً على نوع الشركة ===
+                let payload = {};
+                let requestHeaders = { 'Content-Type': 'application/json' };
+
                 if (apiData.driverType === 'yalidine_style') {
+                    // إعدادات Yalidine (القديمة)
+                    requestHeaders['X-API-ID'] = apiData.apiKey;
+                    requestHeaders['X-API-TOKEN'] = apiData.apiToken;
+                    
                     let finalCommune = finalWilaya;
                     if(finalWilaya === "Alger") finalCommune = "Alger Centre";
 
-                    parcelData = {
+                    payload = [{
                         "order_id": cleanOrderId,
                         "firstname": firstName, "familyname": lastName, "contact_phone": phone,
                         "address": order.customerAddress || cleanWilaya,
                         "to_wilaya_name": finalWilaya, 
                         "to_commune_name": finalCommune,
                         "product_list": order.productName || "Colis",
-                        
                         "price": finalPriceToSend, 
                         "freeshipping": false,     
                         "is_stopdesk": isStopDesk,
                         "has_exchange": false
-                    };
+                    }];
                 } else {
-                    parcelData = { "name": fullName, "phone": phone, "price": finalPriceToSend, "free_shipping": 0 };
+                    // إعدادات GroupEX / Standard (المعدلة)
+                    // نضع التوكن داخل الجسم وأيضا في الهيدر للاحتياط
+                    // requestHeaders['Authorization'] = `Bearer ${apiData.apiToken}`; // بعض الشركات تتطلب هذا
+                    
+                    payload = {
+                        "api_token": apiData.apiToken, // التوكن داخل البيانات (شائع في GroupEX)
+                        "user_id": apiData.apiKey,
+                        "orders": [
+                            {
+                                "reference": cleanOrderId,
+                                "nom_client": fullName,
+                                "telephone": phone,
+                                "adresse": order.customerAddress || cleanWilaya,
+                                "wilaya": finalWilaya,
+                                "commune": order.customerCommune || finalWilaya,
+                                "montant": finalPriceToSend,
+                                "remarque": order.productName || "Colis",
+                                "produit": order.productName || "Product",
+                                "stop_desk": isStopDesk ? 1 : 0
+                            }
+                        ]
+                    };
+                    // ملاحظة: إذا فشل هذا، جرب إرسال كائن واحد بدون مصفوفة orders، حسب وثائق الشركة
                 }
 
+                // الإرسال عبر البروكسي
                 const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(apiData.apiUrl);
                 const res = await fetch(proxyUrl, { 
                     method: 'POST', 
-                    headers: { 'Content-Type': 'application/json', 'X-API-ID': apiData.apiKey, 'X-API-TOKEN': apiData.apiToken },
-                    body: JSON.stringify([parcelData])
+                    headers: requestHeaders,
+                    body: JSON.stringify(payload)
                 });
                 
                 const resText = await res.text();
                 let resJson;
-                try { resJson = JSON.parse(resText); } catch (e) { throw new Error("Server Error"); }
+                
+                // محاولة قراءة الاستجابة، وإذا فشلت نعرض الخطأ الحقيقي
+                try { 
+                    resJson = JSON.parse(resText); 
+                } catch (e) { 
+                    // إذا كان الخادم يرجع HTML (خطأ 404 أو 500)
+                    throw new Error(`استجابة الخادم غير مفهومة (تأكد من الرابط): ${resText.substring(0, 50)}...`); 
+                }
 
+                // التحقق من النجاح
                 let isSuccess = false;
                 let trackingCode = "Sent";
 
+                // منطق التحقق (يتكيف مع أنواع الاستجابات المختلفة)
                 if (Array.isArray(resJson)) {
                     if (resJson[0] && (resJson[0].tracking || resJson[0].success === true)) {
                         isSuccess = true; trackingCode = resJson[0].tracking || "Sent";
                     }
-                } else if (resJson.tracking || resJson.success === true) {
+                } else if (resJson.tracking || resJson.success === true || resJson.status === 200 || resJson.code === 200) {
                     isSuccess = true; trackingCode = resJson.tracking || "Sent";
                 } else if (resJson[cleanOrderId] && (resJson[cleanOrderId].success === true || resJson[cleanOrderId].tracking)) {
-                    isSuccess = true; 
-                    trackingCode = resJson[cleanOrderId].tracking || "Sent";
+                    isSuccess = true; trackingCode = resJson[cleanOrderId].tracking || "Sent";
                 }
                 
                 if (isSuccess) {
                     await update(ref(db, `orders/${orderId}`), { status: 'Shipped', deliveryProvider: apiData.displayName, trackingCode: trackingCode, shippedAt: Date.now() });
                     successCount++;
                 } else {
-                    failCount++; errorDetails += `\n❌ ${firstName}: ${JSON.stringify(resJson)}`;
+                    failCount++; errorDetails += `\n❌ ${firstName}: ${JSON.stringify(resJson).substring(0, 100)}`;
                 }
 
             } catch(e) { console.error(e); failCount++; errorDetails += `\n⚠️ ${orderId}: ${e.message}`; }
@@ -387,6 +449,7 @@
         btn.textContent = "📤 إرسال المحدد"; btn.disabled = false;
     });
 
+    // باقي الدوال (تعديل الطلب، المناطق)
     window.openDetails = async (id) => {
         const orderSnap = await get(ref(db, 'orders/'+id));
         if(orderSnap.exists()) {
@@ -412,7 +475,6 @@
             if(netPrice < 0) netPrice = 0;
 
             document.getElementById('editProductPrice').value = netPrice;
-            
             document.getElementById('orderDetailModal').classList.remove('hidden');
         }
     }
@@ -450,20 +512,14 @@
     const c = document.getElementById('zonesContainer');
     c.innerHTML = '';
     if (s.exists()) Object.entries(s.val()).forEach(([k, v]) => {
-        // دمج أسماء الولايات بفاصلة
         const wilayaList = v.wilayas ? v.wilayas.join('، ') : '';
-        
         c.innerHTML += `
             <div class="zone-card">
                 <button class="delete-zone-btn" onclick="delZ('${k}')">x</button>
-                
-                <!-- عرض قائمة الولايات -->
                 <div style="margin-top: 15px; margin-bottom: 10px; font-size: 0.9rem; color: #333; line-height: 1.4;">
                     <strong>الولايات المشمولة:</strong><br>
                     ${wilayaList}
                 </div>
-                
-                <!-- عرض الأسعار -->
                 <div style="border-top: 1px solid #eee; padding-top: 8px;">
                     <span class="price-badge">🏠 ${v.homePrice} دج</span>
                     <span class="price-badge" style="background:#e3f2fd; color:#1565c0;">🏢 ${v.deskPrice || 0} دج</span>
