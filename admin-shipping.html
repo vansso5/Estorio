@@ -1,87 +1,51 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>إدارة الشحن (النسخة النهائية المعدلة)</title>
-  
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-      :root { --primary-color: #2c3e50; --secondary-color: #3498db; --accent-color: #e74c3c; --bg-color: #f4f6f9; --warning-color: #f1c40f; }
-      * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
-      body { background-color: var(--bg-color); color: #333; padding-bottom: 50px; }
-      nav { background: #fff; padding: 10px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
-      .logo { font-size: 1.4rem; font-weight: bold; color: var(--primary-color); }
-      .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; }
-      .links { display: flex; gap: 15px; }
-      .nav-link { text-decoration: none; color: #555; font-weight: 600; padding: 8px 12px; border-radius: 6px; transition: 0.3s; }
-      .nav-link:hover, .nav-link.active { background-color: var(--primary-color); color: #fff; }
-      .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-      h2 { color: var(--primary-color); margin-bottom: 20px; border-right: 5px solid var(--secondary-color); padding-right: 15px; }
-      .form-card { background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
-      .search-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; outline: none; transition: 0.3s; }
-      .search-input:focus { border-color: var(--secondary-color); box-shadow: 0 0 5px rgba(52,152,219,0.3); }
-      .save-btn { background-color: var(--secondary-color); color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: 0.3s; }
-      .save-btn:hover { background-color: #2980b9; }
-      .form-section-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
-      .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-      .provider-item { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border: 1px solid #ddd; padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; }
-      .btn-delete-prov { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.85rem; }
-      .btn-delete-prov:hover { background: #ef5350; color: white; }
-      .search-wrapper { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-      #sendBulkBtn { height: 50px !important; min-height: 50px; font-size: 1rem; font-weight: bold; padding: 0 25px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; transition: 0.3s; }
-      #sendBulkBtn:hover { filter: brightness(0.9); }
-      #sendBulkBtn:disabled { background-color: #ccc; cursor: not-allowed; }
-      #shippingOrdersContainer .order-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: #fff; border-radius: 8px; margin-bottom: 8px; border: 1px solid #eee; border-right: 4px solid var(--warning-color); transition: 0.2s; cursor: pointer; }
-      #shippingOrdersContainer .order-row:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.05); background-color: #fafafa; }
-      .order-checkbox { transform: scale(1.3); margin-left: 15px; cursor: pointer; }
-      .wilaya-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; max-height: 200px; overflow-y: auto; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; }
-      .wilaya-checkbox-item { font-size: 0.85rem; display: flex; align-items: center; gap: 5px; }
-      .zone-card { background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-bottom: 8px; position: relative; }
-      .price-badge { padding: 2px 8px; border-radius: 4px; font-weight: bold; background: #e8f5e9; color: #2e7d32; }
-      .delete-zone-btn { position: absolute; left: 10px; top: 10px; background: #ffcdd2; color: #c62828; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
-      .loading-message { text-align: center; color: #777; padding: 20px; }
-      
-      /* Modal */
-      .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 1; visibility: visible; transition: 0.3s; }
-      .modal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-      .modal-content { background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 500px; position: relative; max-height: 90vh; overflow-y: auto; }
-      .close-modal-btn { position: absolute; left: 15px; top: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #777; }
-      .btn-delete { background: #e74c3c; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; margin-right: 10px; }
-      
-      @media (max-width: 768px) {
-          .menu-toggle { display: block; }
-          .links { display: none; flex-direction: column; width: 100%; position: absolute; top: 60px; right: 0; background: #fff; padding: 20px; box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
-          .links.open { display: flex; }
-          .settings-grid { grid-template-columns: 1fr; }
-      }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إدارة الشحن والربط</title>
+
+<!-- ربط الخط والستايل -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin-style.css">
+
 </head>
 <body>
 
-  <nav>
-    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-    <div class="logo">لوحة التحكم</div>
-    <div class="links">
-      <a href="admin-products.html" class="nav-link">المنتجات</a>
-      <a href="admin-orders.html" class="nav-link">الطلبيات النشطة</a>
-      <a href="completed-orders.html" class="nav-link">الطلبيات المكتملة</a>
-      <a href="admin-analytics.html" class="nav-link">التحليلات</a>
-      <a href="admin-settings.html" class="nav-link">الإعدادات</a>
-      <a href="admin-shipping.html" class="nav-link active">الشحن والربط</a>
-      <a href="#" id="logoutBtn" class="nav-link" style="display:none;">خروج</a>
-    </div>
-  </nav>
+<nav>
+  <button class="menu-toggle" onclick="toggleMenu()">☰</button>
 
-  <div class="container">
+  <div class="logo">لوحة التحكم</div>
+  <div class="links">
+    <a href="admin-products.html" class="nav-link">المنتجات</a>
+    <a href="admin-orders.html" class="nav-link">الطلبيات النشطة</a>
+    <a href="completed-orders.html" class="nav-link">الطلبيات المكتملة</a>
+    <a href="admin-analytics.html" class="nav-link">التحليلات</a>
+    <a href="admin-settings.html" class="nav-link">الإعدادات</a>
+    <a href="admin-reviews.html" class="nav-link">التعليقات</a>
+    <a href="admin-shipping.html" class="nav-link active">الشحن</a>
+    <a href="#" id="logoutBtn" class="nav-link" style="display: none;">تسجيل الخروج</a>
+  </div>
+</nav>
+
+<!-- مكان أيقونة الزوار الجديد -->
+<div class="visitors-wrapper">
+  <div id="liveVisitors" class="live-visitors-badge inactive">
+    <span class="live-dot"></span>
+    <span style="margin-right:5px">عدد الزوار الآن: </span>
+    <strong id="visitorsCount" style="margin:0 4px">0</strong>
+  </div>
+</div>
+
+<div class="container">
     
     <!-- القسم 1: إدارة الشركات -->
-    <h2>⚙️ إعداد شركات التوصيل (API)</h2>
+    <h2 style="margin-bottom: 20px; color: var(--primary-color);">⚙️ إعداد شركات التوصيل (API)</h2>
     <div class="form-card" style="margin-bottom: 30px;">
-        <div class="form-section-title">إضافة شركة جديدة / تعديل</div>
-        <div class="settings-grid">
+        <h4 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">إضافة شركة جديدة / تعديل</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
             <div><label>اسم الشركة:</label><input type="text" id="provName" class="search-input" placeholder="مثلاً: GroupEX"></div>
-            <div><label>رابط API (كاملاً):</label><input type="text" id="provUrl" class="search-input" placeholder="مثلاً: https://api.groupex.dz/api/v1/create"></div>
+            <div><label>رابط API (كاملاً):</label><input type="text" id="provUrl" class="search-input" placeholder="رابط الـ API"></div>
             <div><label>API Key / User ID:</label><input type="text" id="provKey" class="search-input" placeholder="رقم المستخدم"></div>
             <div><label>API Token / Password:</label><input type="text" id="provToken" class="search-input" placeholder="الكود الطويل (Token)"></div>
             <div>
@@ -100,56 +64,59 @@
                 </select>
             </div>
         </div>
-        <button id="saveProviderBtn" class="save-btn" style="margin-top:15px; width:100%;">حفظ إعدادات الشركة</button>
+        <button id="saveProviderBtn" class="save-btn" style="margin-top:15px; width:100%; background-color: var(--secondary-color); color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">حفظ إعدادات الشركة</button>
+        
         <div style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px;">
             <label>الشركات المحفوظة:</label>
-            <div id="savedProvidersList"><p class="loading-message">جاري التحميل...</p></div>
+            <div id="savedProvidersList" style="margin-top: 10px;"><p class="loading-message">جاري التحميل...</p></div>
         </div>
     </div>
 
     <!-- القسم 2: إرسال الطلبات -->
-    <h2>📦 إرسال الطلبات (Shipping)</h2>
-    <div class="form-card">
-        <div class="search-wrapper">
+    <h2 style="margin-bottom: 20px; color: var(--primary-color);">📦 إرسال الطلبات (Shipping)</h2>
+    <div class="form-card" style="margin-bottom: 30px;">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
             <div style="flex:3; min-width: 250px;">
                 <label>اختر شركة للإرسال:</label>
                 <select id="shipProviderSelect" class="search-input">
                     <option value="" disabled selected>-- اختر شركة --</option>
                 </select>
             </div>
-            <div style="flex:1; display:flex; align-items:flex-end;">
-                <button id="sendBulkBtn">📤 إرسال المحدد</button>
+            <div style="flex:1;">
+                <button id="sendBulkBtn" style="width: 100%; padding: 10px; background-color: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer;">📤 إرسال المحدد</button>
             </div>
         </div>
-        <h3 style="margin-top:20px; border-bottom:1px solid #eee; padding-bottom:10px;">الطلبات قيد التجهيز (Processing)</h3>
+        
+        <h3 style="margin-bottom:15px;">الطلبات قيد التجهيز (Processing)</h3>
         <div id="shippingOrdersContainer" class="orders-grid">
             <p class="loading-message">جاري تحميل الطلبات...</p>
         </div>
     </div>
 
-    <hr style="border: 0; border-top: 2px dashed #ccc; margin: 40px 0;">
-
     <!-- القسم 3: المناطق -->
-    <h2>💰 تسعيرات التوصيل (للمتجر)</h2>
+    <h2 style="margin-bottom: 20px; color: var(--primary-color);">💰 تسعيرات التوصيل (للمتجر)</h2>
     <div class="form-card">
-      <div class="price-inputs-row" style="display:flex; gap:10px; margin-bottom:10px;">
-           <div class="price-group" style="flex:1;"><label>سعر المنزل (Home):</label><input type="number" id="homePrice" class="search-input"></div>
-           <div class="price-group" style="flex:1;"><label>سعر المكتب (Desk):</label><input type="number" id="deskPrice" class="search-input"></div>
+      <div style="display:flex; gap:10px; margin-bottom:15px;">
+           <div style="flex:1;"><label>سعر المنزل (Home):</label><input type="number" id="homePrice" class="search-input"></div>
+           <div style="flex:1;"><label>سعر المكتب (Desk):</label><input type="number" id="deskPrice" class="search-input"></div>
       </div>
-      <div class="wilaya-controls"><button type="button" id="selectAllBtn" class="add-btn" style="padding:5px 10px; cursor:pointer;">تحديد/إلغاء الكل</button></div>
-      <div id="wilayaGrid" class="wilaya-grid"></div>
-      <button id="saveZoneBtn" class="save-btn" style="margin-top:15px;">حفظ التسعيرة</button>
+      <div style="margin-bottom: 10px;"><button type="button" id="selectAllBtn" style="padding:5px 10px; cursor:pointer; background: #eee; border: 1px solid #ddd; border-radius: 4px;">تحديد/إلغاء الكل</button></div>
+      
+      <div id="wilayaGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; max-height: 200px; overflow-y: auto; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px;"></div>
+      
+      <button id="saveZoneBtn" class="save-btn" style="margin-top:15px; width: 100%; background-color: var(--secondary-color); color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">حفظ التسعيرة</button>
     </div>
-    <div id="zonesContainer" class="orders-grid"></div>
+    
+    <div id="zonesContainer" class="orders-grid" style="margin-top: 20px;"></div>
 
-  </div>
+</div>
 
-  <!-- المودال -->
-  <div id="orderDetailModal" class="modal hidden">
+<!-- المودال -->
+<div id="orderDetailModal" class="modal hidden">
     <div class="modal-content">
       <button class="close-modal-btn" id="closeDetailModal">&times;</button>
       <h3>تعديل بيانات الطلب</h3>
-      <div class="details-section">
+      <div class="details-section" style="margin-top: 15px;">
           <label style="display:block;margin-bottom:5px;">الاسم الكامل</label>
           <input type="text" id="editName" class="search-input" style="margin-bottom:10px;">
           
@@ -176,15 +143,15 @@
 
           <input type="hidden" id="currentOrderId">
           
-          <div class="modal-actions">
-              <button id="saveChangesBtn" class="save-btn">حفظ التغييرات</button>
+          <div class="modal-actions" style="display: flex; gap: 10px; margin-top: 15px;">
+              <button id="saveChangesBtn" style="flex: 1; padding: 10px; background: var(--secondary-color); color: white; border: none; border-radius: 5px; cursor: pointer;">حفظ التغييرات</button>
               <button id="cancelOrderBtn" class="btn-delete">إلغاء الطلب</button>
           </div>
       </div>
     </div>
   </div>
 
-  <script type="module">
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getDatabase, ref, push, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
     import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
@@ -193,15 +160,40 @@
     const app = initializeApp(firebaseConfig); const db = getDatabase(app); const auth = getAuth(app);
 
     const ordersRef = ref(db, 'orders'); const settingsRef = ref(db, 'delivery_settings'); const zonesRef = ref(db, 'shipping_zones');
+    const visitorsRef = ref(db, 'site_presence');
     const shippingContainer = document.getElementById('shippingOrdersContainer');
     const shipProviderSelect = document.getElementById('shipProviderSelect');
     const savedProvidersList = document.getElementById('savedProvidersList');
+    
+    // عناصر أيقونة الزوار
+    const liveVisitorsBadge = document.getElementById('liveVisitors');
+    const visitorsCountSpan = document.getElementById('visitorsCount');
 
     onAuthStateChanged(auth, (user) => {
         if (!user) window.location.href = 'admin-login.html';
         else { document.getElementById('logoutBtn').style.display = 'block'; loadActiveProviders(); renderWilayaCheckboxes(); }
     });
     document.getElementById('logoutBtn').addEventListener('click', async () => await signOut(auth));
+
+    // --- كود متابعة الزوار ---
+    onValue(visitorsRef, (snapshot) => {
+        if (!snapshot.exists()) { updateVisitorsUI(0); return; }
+        const data = snapshot.val();
+        const count = Object.keys(data).length;
+        updateVisitorsUI(count);
+    });
+
+    function updateVisitorsUI(count) {
+        visitorsCountSpan.textContent = count;
+        if (count > 0) {
+            liveVisitorsBadge.classList.remove('inactive');
+            liveVisitorsBadge.classList.add('active');
+        } else {
+            liveVisitorsBadge.classList.remove('active');
+            liveVisitorsBadge.classList.add('inactive');
+        }
+    }
+    // -------------------------
 
     document.getElementById('saveProviderBtn').addEventListener('click', async function() {
         const name=document.getElementById('provName').value, url=document.getElementById('provUrl').value;
@@ -224,7 +216,8 @@
                 Object.entries(snap.val()).forEach(([k, p]) => {
                     const opt = document.createElement('option'); opt.value = k; opt.textContent = p.displayName; shipProviderSelect.appendChild(opt);
                     const div = document.createElement('div'); div.className = 'provider-item';
-                    div.innerHTML = `<div>${p.displayName} <small style="color:blue">(${p.driverType})</small></div><button class="btn-delete-prov" onclick="window.delProv('${k}')">حذف 🗑️</button>`;
+                    div.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border: 1px solid #ddd; padding: 10px 15px; border-radius: 8px; margin-bottom: 8px;";
+                    div.innerHTML = `<div>${p.displayName} <small style="color:blue">(${p.driverType})</small></div><button class="btn-delete-prov" onclick="window.delProv('${k}')" style="background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 5px 10px; border-radius: 5px; cursor: pointer;">حذف 🗑️</button>`;
                     savedProvidersList.appendChild(div);
                 });
             }
@@ -260,11 +253,11 @@
             if(netPrice < 0) netPrice = 0;
 
             const row = document.createElement('div'); row.className = 'order-row';
-            const isStopDesk = (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب')));
+            row.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: #fff; border-radius: 8px; margin-bottom: 8px; border: 1px solid #eee; border-right: 4px solid #f1c40f;";
             
             row.innerHTML = `
                 <div class="row-info" style="display:flex;align-items:center;">
-                    <input type="checkbox" class="order-checkbox" value="${id}">
+                    <input type="checkbox" class="order-checkbox" value="${id}" style="margin-left: 15px; transform: scale(1.3);">
                     <div style="margin-right:15px;">
                         <span class="row-name" style="font-weight:bold;">${order.customerName || order.name}</span>
                         <small> ${order.customerWilaya || order.state} | <span style="color:#27ae60;font-weight:bold;">${netPrice} دج (صافي)</span></small>
@@ -291,9 +284,6 @@
 
     const wilayaMapping = { "أدرار": "Adrar", "الشلف": "Chlef", "الأغواط": "Laghouat", "أم البواقي": "Oum El Bouaghi", "باتنة": "Batna", "بجاية": "Bejaia", "بسكرة": "Biskra", "بشار": "Bechar", "البليدة": "Blida", "البويرة": "Bouira", "تمنراست": "Tamanrasset", "تبسة": "Tebessa", "تلمسان": "Tlemcen", "تيارت": "Tiaret", "تيزي وزو": "Tizi Ouzou", "الجزائر": "Alger", "الجلفة": "Djelfa", "جيجل": "Jijel", "سطيف": "Setif", "سعيدة": "Saida", "سكيكدة": "Skikda", "سيدي بلعباس": "Sidi Bel Abbes", "عنابة": "Annaba", "قالمة": "Guelma", "قسنطينة": "Constantine", "المدية": "Medea", "مستغانم": "Mostaganem", "المسيلة": "M'sila", "معسكر": "Mascara", "ورقلة": "Ouargla", "وهران": "Oran", "البيض": "El Bayadh", "إليزي": "Illizi", "برج بوعريريج": "Bordj Bou Arreridj", "بومرداس": "Boumerdes", "الطارف": "El Tarf", "تندوف": "Tindouf", "تيسمسيلت": "Tissemsilt", "الوادي": "El Oued", "خنشلة": "Khenchela", "سوق أهراس": "Souk Ahras", "تيبازة": "Tipaza", "ميلة": "Mila", "عين الدفلى": "Ain Defla", "النعامة": "Naama", "عين تموشنت": "Ain Temouchent", "غرداية": "Ghardaia", "غليزان": "Relizane", "تيميمون": "Timimoun", "برج باجي مختار": "Bordj Badji Mokhtar", "أولاد جلال": "Ouled Djellal", "بني عباس": "Beni Abbes", "إن صالح": "In Salah", "إن قزام": "In Guezzam", "تقرت": "Touggourt", "جانت": "Djanet", "المغير": "El M'Ghair", "المنيعة": "El Meniaa" };
 
-    // ==========================================
-    // 🔥 الجزء المهم: إرسال الطلبات (معدل لـ GroupEX) 🔥
-    // ==========================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const btn = this;
         const providerId = shipProviderSelect.value;
@@ -319,7 +309,6 @@
                 if(!orderSnap.exists()) continue;
                 const order = orderSnap.val();
                 
-                // حساب السعر
                 let currentTotal = parseFloat(order.productTotal);
                 if (isNaN(currentTotal)) currentTotal = parseFloat(order.totalPrice || 0) - parseFloat(order.shippingPrice || 0);
                 
@@ -335,7 +324,6 @@
                 let finalPriceToSend = currentTotal - (marketingDiscount * qty);
                 if (finalPriceToSend < 0) finalPriceToSend = 0; 
 
-                // تجهيز بيانات الولاية والهاتف
                 let rawWilaya = order.customerWilaya || order.state || "";
                 let cleanWilaya = rawWilaya.replace(/^[0-9]+[\.\-\s]*/, '').trim();
                 let finalWilaya = apiData.wilayaFormat === 'french_name' ? (wilayaMapping[cleanWilaya] || cleanWilaya) : cleanWilaya;
@@ -349,12 +337,10 @@
                 let lastName = splitName.slice(1).join(" ") || ".";
                 const cleanOrderId = orderId.replace('#','').trim();
 
-                // === بناء البيانات بناءً على نوع الشركة ===
                 let payload = {};
                 let requestHeaders = { 'Content-Type': 'application/json' };
 
                 if (apiData.driverType === 'yalidine_style') {
-                    // إعدادات Yalidine (القديمة)
                     requestHeaders['X-API-ID'] = apiData.apiKey;
                     requestHeaders['X-API-TOKEN'] = apiData.apiToken;
                     
@@ -374,12 +360,8 @@
                         "has_exchange": false
                     }];
                 } else {
-                    // إعدادات GroupEX / Standard (المعدلة)
-                    // نضع التوكن داخل الجسم وأيضا في الهيدر للاحتياط
-                    // requestHeaders['Authorization'] = `Bearer ${apiData.apiToken}`; // بعض الشركات تتطلب هذا
-                    
                     payload = {
-                        "api_token": apiData.apiToken, // التوكن داخل البيانات (شائع في GroupEX)
+                        "api_token": apiData.apiToken,
                         "user_id": apiData.apiKey,
                         "orders": [
                             {
@@ -396,10 +378,8 @@
                             }
                         ]
                     };
-                    // ملاحظة: إذا فشل هذا، جرب إرسال كائن واحد بدون مصفوفة orders، حسب وثائق الشركة
                 }
 
-                // الإرسال عبر البروكسي
                 const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(apiData.apiUrl);
                 const res = await fetch(proxyUrl, { 
                     method: 'POST', 
@@ -409,20 +389,11 @@
                 
                 const resText = await res.text();
                 let resJson;
-                
-                // محاولة قراءة الاستجابة، وإذا فشلت نعرض الخطأ الحقيقي
-                try { 
-                    resJson = JSON.parse(resText); 
-                } catch (e) { 
-                    // إذا كان الخادم يرجع HTML (خطأ 404 أو 500)
-                    throw new Error(`استجابة الخادم غير مفهومة (تأكد من الرابط): ${resText.substring(0, 50)}...`); 
-                }
+                try { resJson = JSON.parse(resText); } catch (e) { throw new Error(`استجابة غير مفهومة: ${resText.substring(0, 50)}...`); }
 
-                // التحقق من النجاح
                 let isSuccess = false;
                 let trackingCode = "Sent";
 
-                // منطق التحقق (يتكيف مع أنواع الاستجابات المختلفة)
                 if (Array.isArray(resJson)) {
                     if (resJson[0] && (resJson[0].tracking || resJson[0].success === true)) {
                         isSuccess = true; trackingCode = resJson[0].tracking || "Sent";
@@ -449,7 +420,6 @@
         btn.textContent = "📤 إرسال المحدد"; btn.disabled = false;
     });
 
-    // باقي الدوال (تعديل الطلب، المناطق)
     window.openDetails = async (id) => {
         const orderSnap = await get(ref(db, 'orders/'+id));
         if(orderSnap.exists()) {
@@ -495,7 +465,7 @@
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     function renderWilayaCheckboxes(){ 
         const g=document.getElementById('wilayaGrid'); g.innerHTML=''; 
-        allWilayas.forEach(w=>{ g.innerHTML+=`<div class="wilaya-checkbox-item"><input type="checkbox" class="wilaya-chk" value="${w.split('. ')[1]}"><span>${w.split('. ')[1]}</span></div>`; });
+        allWilayas.forEach(w=>{ g.innerHTML+=`<div class="wilaya-checkbox-item" style="font-size: 0.85rem; display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="wilaya-chk" value="${w.split('. ')[1]}"><span>${w.split('. ')[1]}</span></div>`; });
     }
     document.getElementById('selectAllBtn').addEventListener('click',()=>{
         const c=document.querySelectorAll('.wilaya-chk'); if(c.length>0){const s=!c[0].checked;c.forEach(i=>i.checked=s);}
@@ -514,21 +484,27 @@
     if (s.exists()) Object.entries(s.val()).forEach(([k, v]) => {
         const wilayaList = v.wilayas ? v.wilayas.join('، ') : '';
         c.innerHTML += `
-            <div class="zone-card">
-                <button class="delete-zone-btn" onclick="delZ('${k}')">x</button>
+            <div class="zone-card" style="background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-bottom: 8px; position: relative;">
+                <button class="delete-zone-btn" onclick="delZ('${k}')" style="position: absolute; left: 10px; top: 10px; background: #ffcdd2; color: #c62828; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer;">x</button>
                 <div style="margin-top: 15px; margin-bottom: 10px; font-size: 0.9rem; color: #333; line-height: 1.4;">
                     <strong>الولايات المشمولة:</strong><br>
                     ${wilayaList}
                 </div>
                 <div style="border-top: 1px solid #eee; padding-top: 8px;">
-                    <span class="price-badge">🏠 ${v.homePrice} دج</span>
-                    <span class="price-badge" style="background:#e3f2fd; color:#1565c0;">🏢 ${v.deskPrice || 0} دج</span>
+                    <span class="price-badge" style="padding: 2px 8px; border-radius: 4px; font-weight: bold; background: #e8f5e9; color: #2e7d32;">🏠 ${v.homePrice} دج</span>
+                    <span class="price-badge" style="padding: 2px 8px; border-radius: 4px; font-weight: bold; background: #e3f2fd; color: #1565c0;">🏢 ${v.deskPrice || 0} دج</span>
                 </div>
             </div>`;
     });
 });
     window.delZ=(k)=>{if(confirm('حذف؟')) remove(ref(db,`shipping_zones/${k}`));};
-    window.toggleMenu = () => document.querySelector('nav .links').classList.toggle('open');
-  </script>
+</script>
+
+<script>
+    function toggleMenu() {
+      const links = document.querySelector('nav .links');
+      links.classList.toggle('open');
+    }
+</script>
 </body>
 </html>
