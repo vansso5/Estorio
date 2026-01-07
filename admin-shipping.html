@@ -264,7 +264,7 @@
 
     document.getElementById('logoutBtn').addEventListener('click', async () => { await signOut(auth); window.location.href = 'admin-login.html'; });
 
-    // 1. حفظ الشركات
+    // ================= 1. إدارة الشركات =================
     document.getElementById('saveProviderBtn').addEventListener('click', async function() {
         const name = document.getElementById('provName').value.trim();
         const url = document.getElementById('provUrl').value.trim();
@@ -315,7 +315,7 @@
     }
     window.deleteProv = async (key) => { if(confirm('حذف هذه الشركة؟')) await remove(ref(db, `delivery_settings/${key}`)); };
 
-    // ================= 2. عرض الطلبات =================
+    // ================= 2. عرض الطلبات (قيد التجهيز) =================
     onValue(ordersRef, (snapshot) => {
         shippingContainer.innerHTML = '';
         const orders = snapshot.val();
@@ -333,8 +333,9 @@
             const isStopDesk = (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب')));
             const typeIcon = isStopDesk ? '🏢' : '🏠';
             
-            // حساب المبلغ الذي سيتم إرساله (سعر المنتج فقط)
-            const productPriceOnly = (order.productTotal || 0);
+            // للعرض فقط: نعرض المبلغ الكلي الذي يجب أن يدفعه الزبون
+            // (الحسابات الحقيقية للشركة تتم عند الضغط على زر الإرسال)
+            const totalToCollect = order.totalPrice || 0;
             
             row.innerHTML = `
                 <div class="row-info" style="display:flex; justify-content: flex-start; align-items:center;">
@@ -343,7 +344,7 @@
                         <span class="row-name" style="font-weight:bold;">${order.customerName || order.name}</span>
                         <small style="color:#777;">
                             ${typeIcon} ${order.customerWilaya || order.state || 'غير محدد'} | 
-                            <span style="color:var(--success-color); font-weight:bold;">${parseFloat(productPriceOnly)} دج (شامل)</span>
+                            <span style="color:var(--success-color); font-weight:bold;">المجموع: ${totalToCollect} دج</span>
                         </small>
                     </div>
                 </div>
@@ -381,8 +382,6 @@
 
         for (const chk of checks) {
             const orderId = chk.value;
-            const cleanOrderId = orderId.replace('#', '').trim(); // تعريف cleanOrderId في النطاق الصحيح
-
             try {
                 // 1. جلب بيانات الطلب
                 const orderSnap = await get(ref(db, `orders/${orderId}`));
@@ -441,7 +440,7 @@
                 
                 if (apiData.driverType === 'yalidine_style') {
                     parcelData = {
-                        "order_id": cleanOrderId,
+                        "order_id": orderId.replace('#', ''),
                         "firstname": firstName,
                         "familyname": lastName,
                         "contact_phone": phone,
@@ -450,8 +449,8 @@
                         "to_commune_name": finalWilaya, 
                         "product_list": order.productName || "Colis",
                         
-                        "price": finalPriceToSend, 
-                        "freeshipping": false,
+                        "price": finalPriceToSend, // السعر الصافي
+                        "freeshipping": false,     // الشركة تضيف التوصيل
                         "is_stopdesk": isStopDesk,
                         "has_exchange": false
                     };
@@ -464,7 +463,8 @@
                     };
                 }
 
-                console.log("Sending Data:", parcelData);
+                // طباعة البيانات في الكونسول للتأكد
+                console.log("Sending Payload:", parcelData);
 
                 const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(apiData.apiUrl);
                 const res = await fetch(proxyUrl, { 
@@ -475,19 +475,15 @@
                 
                 const resText = await res.text();
                 let resJson;
-                try {
-                    resJson = JSON.parse(resText);
-                } catch (e) {
-                    throw new Error("استجابة السيرفر غير مفهومة: " + resText);
-                }
+                try { resJson = JSON.parse(resText); } catch (e) { throw new Error("استجابة السيرفر غير مفهومة: " + resText); }
                 
-                console.log("Server Response:", resJson); 
+                console.log("Server Response:", resJson);
 
-                // 🔥 التحقق الدقيق من النجاح (Yalidine خاصة) 🔥
+                // 🔥 التحقق الدقيق من النجاح 🔥
                 let isSuccess = false;
                 let trackingCode = "Sent";
 
-                // حالة 1: الرد مصفوفة (كما في ياليدين)
+                // حالة 1: الرد مصفوفة (Yalidine)
                 if (Array.isArray(resJson)) {
                     if (resJson[0] && (resJson[0].tracking || resJson[0].success === true)) {
                         isSuccess = true;
@@ -501,13 +497,8 @@
                     isSuccess = true;
                     trackingCode = resJson.tracking || "Sent";
                 }
-                // حالة 3: الرد يحتوي على المفتاح (كما في الصورة)
-                else if (resJson[cleanOrderId] && (resJson[cleanOrderId].success === true || resJson[cleanOrderId].tracking)) {
-                    isSuccess = true;
-                    trackingCode = resJson[cleanOrderId].tracking || resJson[cleanOrderId].tracking_code || "Sent";
-                }
-                // حالة 4: التحقق من وجود أخطاء صريحة
-                if (!isSuccess && (resJson.error || resJson.validation_error)) {
+                // حالة 3: فشل صريح
+                if (resJson.error || resJson.validation_error) {
                     throw new Error(JSON.stringify(resJson.error || resJson.validation_error));
                 }
 
