@@ -80,8 +80,8 @@
 
 <!-- سكريبت العمليات -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js ";
-import { getDatabase, ref, get, child, push, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js ";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, get, child, push, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 // إعدادات فايربيس
 const firebaseConfig = {
@@ -100,30 +100,31 @@ const db = getDatabase(app);
 const contactFooter = document.querySelector('.contact-footer .contact-container');
 
 // ==========================================
-// 1. إعداد فيسبوك بيكسل
+// 1. إعداد فيسبوك بيكسل (تعديل جذري)
 // ==========================================
+// تحميل مكتبة فيسبوك الأساسية
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 
-let globalPixelId = null;
+// متغير لتخزين البيكسل النشط حالياً (الخاص بالمنتج)
+let activePixelId = null;
 
-onValue(ref(db, 'settings/pixel_id'), (snapshot) => {
-    if (snapshot.exists()) {
-        const pixelId = snapshot.val();
-        if(pixelId && pixelId.trim() !== "") {
-            globalPixelId = pixelId;
-            fbq('init', pixelId);
-            fbq('track', 'PageView');
-            console.log("✅ Pixel Activated: " + pixelId);
-        }
-    }
-});
+// دالة لتشغيل البيكسل
+function initPixel(pixelId) {
+    if (!pixelId) return;
+    if (activePixelId) return; // منع التكرار
+
+    activePixelId = pixelId;
+    fbq('init', pixelId);
+    fbq('track', 'PageView');
+    console.log("✅ Pixel Activated for Product: " + pixelId);
+}
 
 // ==========================================
-// 2. باقي المنطق (زوار، اتصال، منتجات)
+// 2. باقي المنطق
 // ==========================================
 onValue(ref(db, 'settings/contactPhone'), (snapshot) => {
     if (snapshot.exists()) {
@@ -168,8 +169,24 @@ async function fetchProductDetails() {
     const product = snapshot.val();
     currentProductPrice = parseFloat(product.newPrice);
     
+    // ===========================================
+    // 🔥 تشغيل البيكسل الخاص بالمنتج هنا 🔥
+    // ===========================================
+    if (product.customPixelId && product.customPixelId.trim() !== "") {
+        // إذا وجدنا بيكسل خاص بالمنتج، نشغله
+        initPixel(product.customPixelId);
+    } else {
+        // إذا لم يكن للمنتج بيكسل خاص، نحاول جلب البيكسل العام (كاحتياط)
+        get(child(ref(db), 'settings/pixel_id')).then((snap) => {
+            if(snap.exists() && snap.val()) {
+                initPixel(snap.val());
+            }
+        });
+    }
+    
+    // إرسال حدث مشاهدة المحتوى (ViewContent) للبيكسل النشط
     setTimeout(() => {
-        if (typeof fbq !== 'undefined' && globalPixelId) {
+        if (typeof fbq !== 'undefined' && activePixelId) {
             fbq('track', 'ViewContent', { 
                 content_name: product.name, 
                 content_ids: [productId], 
@@ -177,10 +194,11 @@ async function fetchProductDetails() {
                 value: currentProductPrice, 
                 currency: 'DZD'
             });
-            console.log("👁️ ViewContent Sent");
+            console.log("👁️ ViewContent Sent to: " + activePixelId);
         }
-    }, 2000);
+    }, 1500);
 
+    // ... باقي كود عرض الصور والبيانات كما هو ...
     if (product.customLogo && product.customLogo.trim() !== "") {
         storeLogoImg.src = product.customLogo;
     } else {
@@ -360,8 +378,8 @@ async function fetchProductDetails() {
                 status: "الطلبات الجديدة"
             });
             
-            // 🔥 إرسال حدث الشراء (Purchase) - تم حذف رسالة التنبيه
-            if (typeof fbq !== 'undefined' && globalPixelId) {
+            // 🔥 إرسال حدث الشراء (Purchase) للبيكسل النشط فقط
+            if (typeof fbq !== 'undefined' && activePixelId) {
                 fbq('track', 'Purchase', { 
                     value: finalTotal,      
                     currency: 'DZD',        
@@ -370,7 +388,7 @@ async function fetchProductDetails() {
                     content_type: 'product',
                     num_items: qty
                 });
-                console.log("💰 Purchase Event Sent: " + finalTotal + " DZD");
+                console.log("💰 Purchase Event Sent to: " + activePixelId);
             }
 
             load.classList.add("hidden");
@@ -385,6 +403,7 @@ async function fetchProductDetails() {
         } catch(e) { console.error(e); alert("خطأ في الاتصال"); load.classList.add("hidden"); }
     });
     
+    // باقي الكود (التقييمات، المشاهدات) كما هو...
     let selectedRating = 0;
     const stars = document.querySelectorAll('#reviewStars i');
     stars.forEach(star => {
