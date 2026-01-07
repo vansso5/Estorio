@@ -446,12 +446,31 @@
         alert('تم');
         renderWilayaCheckboxes();
     });
-    onValue(zonesRef,(s)=>{
-        const c=document.getElementById('zonesContainer'); c.innerHTML='';
-        if(s.exists()) Object.entries(s.val()).forEach(([k,v])=>{
-            c.innerHTML+=`<div class="zone-card"><button class="delete-zone-btn" onclick="delZ('${k}')">x</button><b>مجموعة (${v.wilayas?v.wilayas.length:0})</b><br><small>🏠 ${v.homePrice} | 🏢 ${v.deskPrice}</small></div>`;
-        });
+    onValue(zonesRef, (s) => {
+    const c = document.getElementById('zonesContainer');
+    c.innerHTML = '';
+    if (s.exists()) Object.entries(s.val()).forEach(([k, v]) => {
+        // دمج أسماء الولايات بفاصلة
+        const wilayaList = v.wilayas ? v.wilayas.join('، ') : '';
+        
+        c.innerHTML += `
+            <div class="zone-card">
+                <button class="delete-zone-btn" onclick="delZ('${k}')">x</button>
+                
+                <!-- عرض قائمة الولايات -->
+                <div style="margin-top: 15px; margin-bottom: 10px; font-size: 0.9rem; color: #333; line-height: 1.4;">
+                    <strong>الولايات المشمولة:</strong><br>
+                    ${wilayaList}
+                </div>
+                
+                <!-- عرض الأسعار -->
+                <div style="border-top: 1px solid #eee; padding-top: 8px;">
+                    <span class="price-badge">🏠 ${v.homePrice} دج</span>
+                    <span class="price-badge" style="background:#e3f2fd; color:#1565c0;">🏢 ${v.deskPrice || 0} دج</span>
+                </div>
+            </div>`;
     });
+});
     window.delZ=(k)=>{if(confirm('حذف؟')) remove(ref(db,`shipping_zones/${k}`));};
     window.toggleMenu = () => document.querySelector('nav .links').classList.toggle('open');
   </script>
