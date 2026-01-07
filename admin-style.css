@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
 
 :root {
@@ -639,4 +638,531 @@ color: white;
 }
 .danger-zone .delete-btn:hover {
 background-color: #c0392b;
+}
+
+/* --- 1. بطاقات الطلبات النحيفة (Slim Rows) --- */
+#shippingOrdersContainer .order-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    min-height: 50px;
+    background: #fff;
+    border-radius: 6px;
+    border-right: 4px solid var(--warning-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+#shippingOrdersContainer .order-row:hover {
+    background-color: #f9fcff;
+    transform: translateX(-3px);
+}
+
+.order-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+    margin-left: 10px;
+}
+
+#shippingOrdersContainer .order-row div:last-child {
+    font-size: 0.8rem;
+    color: #999;
+    background: #f5f5f5;
+    padding: 3px 8px;
+    border-radius: 10px;
+}
+
+/* --- 2. شبكة الولايات (Wilaya Grid) --- */
+#wilayaGrid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
+    gap: 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    background: #fcfcfc;
+    border: 1px solid #e1e1e1;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+#wilayaGrid::-webkit-scrollbar { width: 6px; }
+#wilayaGrid::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 10px; }
+
+#wilayaGrid div, .wilaya-checkbox-item {
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+    background: #fff;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    transition: 0.2s;
+}
+
+#wilayaGrid div:hover {
+    border-color: var(--primary-color);
+    background: #f0f7ff;
+}
+
+/* --- 3. قسم إعدادات API --- */
+#configProviderSelect, #shipProviderSelect {
+    font-weight: 700;
+    color: var(--text-main);
+    background-color: #fff;
+    border: 1px solid var(--primary-color);
+}
+
+#shipProviderSelect option { padding: 10px; }
+
+/* --- 4. نافذة التفاصيل --- */
+#productsList {
+    background-color: #f8f9fa;
+    border: 1px dashed #cbd5e0;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 5px;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    line-height: 1.8;
+}
+
+#productsList div {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+}
+
+#productsList div:last-child { border-bottom: none; }
+
+/* ================= 15. زر إرسال الطلبات (تعديل الارتفاع) ================= */
+#sendBulkBtn {
+    height: 60px !important;       /* زيادة الارتفاع حسب الطلب */
+    min-height: 60px;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 30px;
+}
+/* ============================================================
+16. PIXEL MANAGEMENT SECTION (إدارة البيكسل المتطورة)
+============================================================ */
+
+/* وصف القسم */
+.section-desc {
+font-size: 0.9rem;
+color: var(--text-secondary);
+margin-bottom: 20px;
+}
+
+/* حاوية التحكم */
+.pixel-control-wrapper {
+display: flex;
+flex-direction: column;
+gap: 20px;
+}
+
+/* مجموعة الإدخال (المنطقة الرمادية) */
+.pixel-input-group {
+background-color: #f8f9fa;
+padding: 20px;
+border-radius: 8px;
+border: 1px dashed var(--border-color);
+display: flex;
+flex-wrap: wrap;
+gap: 15px;
+align-items: flex-end; /* لمحاذاة الزر مع الحقول */
+}
+
+/* عناصر النموذج داخل المجموعة */
+.pixel-input-group .form-group {
+flex: 1;
+min-width: 220px;
+}
+
+.pixel-input-group label {
+display: block;
+margin-bottom: 8px;
+font-weight: 700;
+color: var(--text-main);
+font-size: 0.9rem;
+}
+
+/* استخدام نفس تنسيق الحقول الموجود في المتجر */
+.pixel-input-group select,
+.pixel-input-group input {
+width: 100%;
+padding: 12px;
+border: 1px solid #ddd;
+border-radius: 8px;
+background: #fff;
+transition: border-color 0.3s;
+}
+
+.pixel-input-group select:focus,
+.pixel-input-group input:focus {
+border-color: var(--primary-color);
+outline: none;
+}
+
+/* منطقة الأزرار */
+.form-actions {
+flex-shrink: 0;
+}
+
+.form-actions .save-btn {
+background-color: var(--success-color);
+color: white;
+padding: 12px 25px;
+border: none;
+border-radius: 8px;
+cursor: pointer;
+font-weight: bold;
+height: 47px; /* لضبط الارتفاع مع الحقول */
+display: flex;
+align-items: center;
+justify-content: center;
+transition: background 0.3s;
+margin-top: 0; /* إلغاء المارجن القديم */
+}
+
+.form-actions .save-btn:hover {
+background-color: #219150;
+}
+
+/* --- قائمة البطاقات (Pixel Cards List) --- */
+.pixel-cards-list {
+display: flex;
+flex-direction: column;
+gap: 12px;
+margin-top: 10px;
+}
+
+/* تصميم البطاقة الواحدة */
+.pixel-card {
+display: flex;
+align-items: center;
+background: var(--card-bg);
+padding: 12px 15px;
+border-radius: 8px;
+border: 1px solid var(--border-color);
+border-right: 4px solid var(--success-color); /* شريط أخضر جمالي */
+box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pixel-card:hover {
+transform: translateX(-5px);
+box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+background-color: #fcfcfc;
+}
+
+/* صورة المنتج داخل البطاقة */
+.pixel-card-img {
+width: 55px;
+height: 55px;
+object-fit: cover;
+border-radius: 6px;
+border: 1px solid #eee;
+margin-left: 15px;
+}
+
+/* معلومات المنتج والبيكسل */
+.pixel-card-info {
+flex: 1;
+}
+
+.pixel-card-name {
+font-weight: 700;
+color: var(--text-main);
+font-size: 0.95rem;
+margin-bottom: 4px;
+}
+
+.pixel-card-id {
+font-family: monospace; /* ليكون شكل الأرقام واضحاً */
+font-size: 0.85rem;
+color: var(--text-secondary);
+background-color: #f0f2f5;
+padding: 3px 8px;
+border-radius: 4px;
+display: inline-block;
+border: 1px solid #eee;
+}
+
+/* زر الحذف المصغر */
+.pixel-card .delete-pixel-btn {
+background-color: #fff0f0;
+color: var(--error-color);
+border: 1px solid #fadbd8;
+padding: 8px 15px;
+border-radius: 6px;
+cursor: pointer;
+font-size: 0.9rem;
+font-weight: 600;
+transition: 0.2s;
+}
+
+.pixel-card .delete-pixel-btn:hover {
+background-color: var(--error-color);
+color: #fff;
+border-color: var(--error-color);
+}
+
+/* رسالة القائمة الفارغة */
+.empty-msg {
+text-align: center;
+color: var(--text-secondary);
+padding: 20px;
+background: #f9f9f9;
+border-radius: 8px;
+font-size: 0.9rem;
+}
+
+/* استجابة للهاتف (Responsive) */
+@media (max-width: 768px) {
+.pixel-input-group {
+flex-direction: column;
+align-items: stretch;
+}
+
+.form-actions .save-btn {
+width: 100%;
+}
+
+.pixel-card {
+flex-wrap: wrap;
+}
+
+.pixel-card .delete-pixel-btn {
+width: 100%;
+margin-top: 10px;
+text-align: center;
+}
+}
+
+/* 1. تنسيق مربعات الإحصائيات (الأرقام 9 و 3) */
+.orders-stats {
+display: flex;
+gap: 15px;
+margin-bottom: 20px;
+}
+
+.orders-stats .stat-card {
+background: rgba(255, 255, 255, 0.05); /* خلفية شفافة قليلاً لتناسب الوضع الداكن */
+border: 1px solid rgba(255, 255, 255, 0.1);
+padding: 15px 10px;
+border-radius: 8px;
+flex: 1; /* تمدد بالتساوي */
+min-width: auto; /* إلغاء العرض القديم */
+box-shadow: none;
+}
+
+.orders-stats h3 {
+font-size: 0.85rem;
+opacity: 0.8;
+margin-bottom: 5px;
+}
+
+.orders-stats span {
+font-size: 1.8rem;
+font-weight: 700;
+color: #3498db; /* لون أزرق للأرقام */
+}
+
+/* 2. تنسيق حقول الإدخال (القائمة والتواريخ) */
+.time-period-selector select,
+.date-inputs input[type="date"] {
+width: 100%;
+padding: 12px 15px;
+background-color: #fff; /* خلفية بيضاء للحقل لضمان الوضوح */
+color: #333; /* نص غامق */
+border: 1px solid #ccc;
+border-radius: 8px;
+font-family: 'Cairo', sans-serif;
+font-size: 0.95rem;
+margin-top: 5px;
+outline: none;
+box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+appearance: none; /* إزالة الستايل الافتراضي للمتصفح */
+}
+
+/* تنسيق خاص عند الضغط على الحقل */
+.time-period-selector select:focus,
+.date-inputs input[type="date"]:focus {
+border-color: #3498db;
+box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+/* 3. تنسيق صف التواريخ (من - إلى) ليكون بجانب بعض */
+.date-inputs {
+display: flex;
+gap: 15px;
+margin-top: 15px;
+}
+
+.input-wrap {
+flex: 1; /* كل حقل يأخذ نصف المساحة */
+}
+
+.input-wrap label {
+display: block;
+font-size: 0.9rem;
+margin-bottom: 5px;
+font-weight: 600;
+opacity: 0.9;
+}
+
+/* 4. تنسيق الرسالة المنقطة (سيتم مسح...) */
+.period-summary {
+margin-top: 20px;
+margin-bottom: 15px;
+padding: 12px;
+border: 1px dashed rgba(255, 255, 255, 0.3); /* حدود منقطة خفيفة */
+background: rgba(0, 0, 0, 0.2);
+border-radius: 6px;
+text-align: center;
+font-size: 0.9rem;
+color: #fff;
+}
+/* 1. رأس القسم (العنوان وزر الإظهار/الإخفاء) */
+.policy-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 15px;
+padding-bottom: 10px;
+border-bottom: 2px solid #f0f2f5;
+}
+
+.policy-header h3 {
+margin: 0;
+color: var(--text-main);
+font-size: 1.1rem;
+}
+
+/* زر التبديل (عرض/إخفاء) */
+.toggle-btn {
+background-color: #f1f2f6;
+color: var(--text-secondary);
+border: 1px solid #ddd;
+padding: 6px 15px;
+border-radius: 6px;
+cursor: pointer;
+font-size: 0.9rem;
+transition: 0.3s;
+font-family: 'Cairo', sans-serif;
+}
+
+.toggle-btn:hover {
+background-color: #e1e2e6;
+color: var(--text-main);
+}
+
+/* 2. حاوية المحتوى المخفي */
+.hidden-content {
+/* يتم التحكم في display عبر الجافاسكريبت، هنا نضيف تأثير حركي */
+animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+from { opacity: 0; transform: translateY(-5px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+/* 3. تصميم بطاقة السياسة الواحدة */
+.policy-item {
+background-color: #fff;
+border: 1px solid #eee;
+border-right: 4px solid var(--info-color); /* شريط أزرق جمالي */
+padding: 15px;
+border-radius: 8px;
+margin-bottom: 15px;
+box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+transition: transform 0.2s;
+position: relative;
+}
+
+.policy-item:hover {
+transform: translateX(-3px);
+box-shadow: 0 5px 10px rgba(0,0,0,0.06);
+}
+
+/* 4. حقول الإدخال داخل السياسة (العنوان والمحتوى) */
+.policy-input,
+.policy-textarea {
+width: 100%;
+padding: 10px;
+border: 1px solid #ddd;
+border-radius: 6px;
+margin-bottom: 10px;
+font-family: 'Cairo', sans-serif;
+box-sizing: border-box;
+background-color: #fcfcfc;
+transition: 0.3s;
+}
+
+.policy-input {
+font-weight: 700;
+color: var(--text-main);
+border-color: #e0e0e0;
+}
+
+.policy-textarea {
+min-height: 80px;
+resize: vertical; /* يسمح بتكبير الحقل عمودياً */
+font-size: 0.95rem;
+color: #555;
+line-height: 1.5;
+}
+
+.policy-input:focus,
+.policy-textarea:focus {
+border-color: var(--primary-color);
+background-color: #fff;
+outline: none;
+}
+
+/* 5. زر الحذف داخل السياسة */
+.policy-item .delete-btn {
+background-color: #fff0f0;
+color: var(--error-color);
+border: 1px solid #fadbd8;
+width: auto; /* لتصحيح العرض */
+display: inline-block;
+padding: 6px 15px;
+font-size: 0.85rem;
+border-radius: 4px;
+cursor: pointer;
+transition: 0.2s;
+}
+
+.policy-item .delete-btn:hover {
+background-color: var(--error-color);
+color: #fff;
+}
+
+/* 6. أزرار الإضافة والحفظ الكلية */
+.policy-section .add-btn {
+background-color: var(--info-color);
+color: #fff;
+margin-top: 15px;
+margin-bottom: 10px;
+}
+.policy-section .add-btn:hover {
+background-color: #2980b9;
+}
+
+.policy-section .save-btn {
+background-color: var(--success-color);
+color: #fff;
+}
+.policy-section .save-btn:hover {
+background-color: #219150;
 }
