@@ -166,7 +166,8 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getDatabase, ref, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+// ✅ التصحيح 1: تمت إضافة 'get' هنا رغم أننا سنحذف السطر المسبب للمشكلة للاحتياط
+import { getDatabase, ref, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -203,7 +204,7 @@ const closeDetailModal = document.getElementById('closeDetailModal');
 const modalDetailsBody = document.getElementById('modalDetailsBody');
 const updateStatusBtn = document.getElementById('updateStatusBtn');
 const deleteOrderBtn = document.getElementById('deleteOrderBtn');
-const editBtnContainer = document.getElementById('editBtnContainer'); // حاوية زر التعديل
+const editBtnContainer = document.getElementById('editBtnContainer'); 
 
 const liveVisitorsBadge = document.getElementById('liveVisitors');
 const visitorsCountSpan = document.getElementById('visitorsCount');
@@ -280,24 +281,23 @@ function getNextAction(status) {
   }
 }
 
-// دالة فتح التفاصيل (تم التعديل لإضافة ميزة التحرير)
+// دالة فتح التفاصيل
 function openOrderDetails(order, id) {
   currentOpenOrderId = id;
   detailModal.classList.remove('hidden');
 
   const action = getNextAction(order.status);
   updateStatusBtn.textContent = action.text;
-  updateStatusBtn.style.display = 'inline-block'; // إظهار زر تغيير الحالة
+  updateStatusBtn.style.display = 'inline-block'; 
   
   updateStatusBtn.onclick = async () => {
      await updateOrderStatus(id, action.nextStatus);
   };
 
-  // التحقق هل الطلب جديد لإظهار زر التعديل
   const st = (order.status || '').toLowerCase();
   const isNew = (!st || st.includes('new') || st.includes('جديد'));
   
-  editBtnContainer.innerHTML = ''; // مسح الأزرار القديمة
+  editBtnContainer.innerHTML = ''; 
 
   if(isNew) {
       const editBtn = document.createElement('button');
@@ -307,7 +307,6 @@ function openOrderDetails(order, id) {
       editBtnContainer.appendChild(editBtn);
   }
 
-  // تجهيز HTML المنتجات
   let productsHtml = '';
   if (order.items) {
     const items = Array.isArray(order.items) ? order.items : Object.values(order.items);
@@ -330,7 +329,6 @@ function openOrderDetails(order, id) {
      `;
   }
 
-  // عرض البيانات (نضيف IDs للحقول ليسهل استبدالها)
   modalDetailsBody.innerHTML = `
     <div class="details-section">
       <h4>👤 معلومات العميل</h4>
@@ -369,9 +367,7 @@ function openOrderDetails(order, id) {
   `;
 }
 
-// دالة تفعيل وضع التعديل
 function enableEditMode(order) {
-    // تحويل النصوص إلى حقول إدخال
     const nameVal = order.customerName || order.name || '';
     const phoneVal = order.customerPhone || order.phone || '';
     const wilayaVal = order.customerWilaya || order.state || '';
@@ -384,7 +380,6 @@ function enableEditMode(order) {
     document.getElementById('disp-commune').innerHTML = `<input type="text" id="edit-commune" class="edit-input" value="${communeVal}" placeholder="البلدية">`;
     document.getElementById('disp-address').innerHTML = `<input type="text" id="edit-address" class="edit-input" value="${addressVal}">`;
 
-    // تغيير الزر من "تعديل" إلى "حفظ"
     editBtnContainer.innerHTML = '';
     const saveBtn = document.createElement('button');
     saveBtn.textContent = '💾 حفظ';
@@ -392,11 +387,10 @@ function enableEditMode(order) {
     saveBtn.onclick = () => saveOrderDetails(currentOpenOrderId);
     editBtnContainer.appendChild(saveBtn);
 
-    // إخفاء زر "تغيير الحالة" مؤقتاً حتى يحفظ التعديلات
     updateStatusBtn.style.display = 'none';
 }
 
-// دالة حفظ التعديلات في Firebase
+// ✅ دالة الحفظ المصححة (تم حذف الكود المسبب للخطأ)
 async function saveOrderDetails(id) {
     if(!id) return;
     
@@ -422,13 +416,8 @@ async function saveOrderDetails(id) {
         
         alert("✅ تم حفظ البيانات بنجاح");
         
-        // إعادة فتح المودال لإظهار البيانات الجديدة وزر "تجهيز الطلب"
-        // نحتاج لجلب البيانات المحدثة أولاً
-        const snapshot = await get(ref(database, 'orders/' + id)); // استيراد get ضروري، لكن onValue يعمل في الخلفية
-        // بما أن onValue شغال، المتغير currentOrders سيتحدث تلقائياً،
-        // لكن المودال يحتاج إعادة رسم.
-        
-        // حل سريع: إغلاق المودال
+        // ✅ تم حذف السطر المسبب للمشكلة (get)
+        // نغلق المودال مباشرة بعد الحفظ بنجاح
         detailModal.classList.add('hidden');
         
     } catch(error) {
@@ -537,13 +526,6 @@ searchInput.addEventListener('input', (e) => {
   searchKeyword = e.target.value.trim().toLowerCase();
   renderAllOrders(currentOrders);
 });
-</script>
-
-<script>
-    function toggleMenu() {
-      const links = document.querySelector('nav .links');
-      links.classList.toggle('open');
-    }
 </script>
 </body>
 </html>
