@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>إدارة الشحن (النسخة المصححة)</title>
+  <title>إدارة الشحن (النسخة النهائية)</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin-style.css">
@@ -105,8 +105,8 @@
     <h2>💰 تسعيرات التوصيل (للمتجر)</h2>
     <div class="form-card">
       <div class="price-inputs-row" style="display:flex; gap:10px; margin-bottom:10px;">
-           <div class="price-group" style="flex:1;"><label>سعر المنزل:</label><input type="number" id="homePrice" class="search-input"></div>
-           <div class="price-group" style="flex:1;"><label>سعر المكتب:</label><input type="number" id="deskPrice" class="search-input"></div>
+           <div class="price-group" style="flex:1;"><label>سعر المنزل (Home):</label><input type="number" id="homePrice" class="search-input"></div>
+           <div class="price-group" style="flex:1;"><label>سعر المكتب (Desk):</label><input type="number" id="deskPrice" class="search-input"></div>
       </div>
       <div class="wilaya-controls"><button type="button" id="selectAllBtn" class="add-btn">تحديد/إلغاء الكل</button></div>
       <div id="wilayaGrid" class="wilaya-grid"></div>
@@ -116,7 +116,7 @@
 
   </div>
 
-  <!-- المودال (تم إضافة خانة تعديل السعر) -->
+  <!-- المودال -->
   <div id="orderDetailModal" class="modal hidden">
     <div class="modal-content">
       <button class="close-modal-btn" id="closeDetailModal">&times;</button>
@@ -142,17 +142,10 @@
           <label style="display:block;margin-bottom:5px;">العنوان</label>
           <input type="text" id="editAddress" class="search-input" style="margin-bottom:10px;">
           
-          <label style="display:block;margin-bottom:5px;">نوع التوصيل</label>
-          <select id="editDeliveryType" class="search-input" style="margin-bottom:10px;">
-              <option value="home">🏠 توصيل للمنزل</option>
-              <option value="desk">🏢 توصيل للمكتب</option>
-          </select>
+          <label style="color:var(--primary-color); font-weight:bold; display:block; margin-bottom:5px;">سعر المنتج الصافي (بعد خصم الشحن):</label>
+          <input type="number" id="editProductPrice" class="search-input" style="margin-bottom:10px; border:2px solid var(--primary-color); background:#f0f8ff; font-weight:bold; font-size:1.1rem;">
+          <small style="color:#666; display:block; margin-bottom:10px;">⚠️ هذا هو المبلغ الذي سيتم إرساله لشركة التوصيل.</small>
 
-          <!-- 🔥 خانة تعديل السعر الجديدة 🔥 -->
-          <label style="color:var(--primary-color); font-weight:bold; display:block; margin-bottom:5px;">سعر المنتج (الصافي):</label>
-          <input type="number" id="editProductTotal" class="search-input" style="margin-bottom:10px; border:2px solid var(--primary-color);">
-          
-          <div id="productsList" style="margin:15px 0; background:#f9f9f9; padding:10px;"></div>
           <input type="hidden" id="currentOrderId">
           
           <div class="modal-actions">
@@ -182,7 +175,6 @@
     });
     document.getElementById('logoutBtn').addEventListener('click', async () => await signOut(auth));
 
-    // 1. حفظ الشركة
     document.getElementById('saveProviderBtn').addEventListener('click', async function() {
         const name=document.getElementById('provName').value, url=document.getElementById('provUrl').value;
         const key=document.getElementById('provKey').value, token=document.getElementById('provToken').value;
@@ -204,7 +196,7 @@
                 Object.entries(snap.val()).forEach(([k, p]) => {
                     const opt = document.createElement('option'); opt.value = k; opt.textContent = p.displayName; shipProviderSelect.appendChild(opt);
                     const div = document.createElement('div'); div.className = 'provider-item';
-                    div.innerHTML = `<div>${p.displayName}</div><button class="btn-delete-prov" onclick="window.delProv('${k}')">حذف</button>`;
+                    div.innerHTML = `<div>${p.displayName}</div><button class="btn-delete-prov" onclick="window.delProv('${k}')">حذف 🗑️</button>`;
                     savedProvidersList.appendChild(div);
                 });
             }
@@ -212,24 +204,45 @@
     }
     window.delProv = async (k) => { if(confirm('حذف؟')) await remove(ref(db, `delivery_settings/${k}`)); };
 
-    // 2. عرض الطلبات
-    onValue(ordersRef, (snapshot) => {
+    // 🔥 دالة الرسم المعدلة (لتظهر السعر الصافي في البطاقة الخارجية) 🔥
+    onValue(ordersRef, async (snapshot) => {
         shippingContainer.innerHTML = '';
         const orders = snapshot.val() || {};
         const sorted = Object.entries(orders).sort((a,b) => b[1].timestamp - a[1].timestamp);
         let count = 0;
+        
+        // جلب المنتجات لحساب الخصم (للعرض الصحيح)
+        const productsSnap = await get(ref(db, 'products'));
+        const products = productsSnap.exists() ? productsSnap.val() : {};
+
         sorted.forEach(([id, order]) => {
             const status = (order.status || '').toLowerCase();
             if(!status.includes('processing') && !status.includes('تجهيز')) return;
             count++;
-            const productPriceOnly = calculateProductOnlyPrice(order); 
+            
+            // حساب السعر الصافي للعرض
+            let currentTotal = parseFloat(order.productTotal);
+            if(isNaN(currentTotal)) currentTotal = calculateProductOnlyPrice(order);
+            
+            let discount = 0;
+            if (order.productId && products[order.productId]) {
+                discount = parseFloat(products[order.productId].marketingDiscount || 0);
+            }
+            
+            const qty = parseInt(order.quantity || 1);
+            let netPrice = currentTotal - (discount * qty);
+            if(netPrice < 0) netPrice = 0;
+
             const row = document.createElement('div'); row.className = 'order-row';
+            const isStopDesk = (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب')));
+            const typeIcon = isStopDesk ? '🏢' : '🏠';
+            
             row.innerHTML = `
                 <div class="row-info" style="display:flex;align-items:center;">
                     <input type="checkbox" class="order-checkbox" value="${id}">
                     <div style="margin-right:15px;">
                         <span class="row-name" style="font-weight:bold;">${order.customerName || order.name}</span>
-                        <small> ${order.customerWilaya || order.state} | <span style="color:#27ae60;font-weight:bold;">${productPriceOnly} دج</span></small>
+                        <small> ${order.customerWilaya || order.state} | <span style="color:#27ae60;font-weight:bold;">${netPrice} دج (صافي)</span></small>
                     </div>
                 </div>
                 <div onclick="window.openDetails('${id}')" style="cursor:pointer;color:blue;">تعديل</div>`;
@@ -238,7 +251,6 @@
         if(count === 0) shippingContainer.innerHTML = '<p class="loading-message">لا توجد طلبات للتجهيز.</p>';
     });
 
-    // دالة حساب السعر الصافي
     function calculateProductOnlyPrice(order) {
         if (order.productTotal && !isNaN(order.productTotal)) return parseFloat(order.productTotal);
         if (order.items) {
@@ -252,17 +264,8 @@
         return (total - ship) > 0 ? (total - ship) : total;
     }
 
-    // 🔥 القائمة الكاملة للولايات (58 ولاية) 🔥
-    const allWilayas = [ 
-        "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة"
-    ];
-    
-    // خريطة الأسماء لضمان التوافق (تم توسيعها لتشمل عينة، والباقي يعتمد على الاسم بالعربية كما هو)
-    const wilayaMapping = { "أدرار": "Adrar", "الشلف": "Chlef", "الأغواط": "Laghouat", "أم البواقي": "Oum El Bouaghi", "باتنة": "Batna", "بجاية": "Béjaïa", "بسكرة": "Biskra", "بشار": "Béchar", "البليدة": "Blida", "البويرة": "Bouira", "تمنراست": "Tamanrasset", "تبسة": "Tébessa", "تلمسان": "Tlemcen", "تيارت": "Tiaret", "تيزي وزو": "Tizi Ouzou", "الجزائر": "Alger", "الجلفة": "Djelfa", "جيجل": "Jijel", "سطيف": "Sétif", "سعيدة": "Saïda", "سكيكدة": "Skikda", "سيدي بلعباس": "Sidi Bel Abbès", "عنابة": "Annaba", "قالمة": "Guelma", "قسنطينة": "Constantine", "المدية": "Médéa", "مستغانم": "Mostaganem", "المسيلة": "M'Sila", "معسكر": "Mascara", "ورقلة": "Ouargla", "وهران": "Oran", "البيض": "El Bayadh", "إليزي": "Illizi", "برج بوعريريج": "Bordj Bou Arreridj", "بومرداس": "Boumerdès", "الطارف": "El Tarf", "تندوف": "Tindouf", "تيسمسيلت": "Tissemsilt", "الوادي": "El Oued", "خنشلة": "Khenchela", "سوق أهراس": "Souk Ahras", "تيبازة": "Tipaza", "ميلة": "Mila", "عين الدفلى": "Aïn Defla", "النعامة": "Naâma", "عين تموشنت": "Aïn Témouchent", "غرداية": "Ghardaïa", "غليزان": "Relizane", "تيميمون": "Timimoun", "برج باجي مختار": "Bordj Badji Mokhtar", "أولاد جلال": "Ouled Djellal", "بني عباس": "Béni Abbès", "إن صالح": "In Salah", "إن قزام": "In Guezzam", "تقرت": "Touggourt", "جانت": "Djanet", "المغير": "El M'Ghair", "المنيعة": "El Meniaa" };
+    const wilayaMapping = { "أدرار": "Adrar", "الشلف": "Chlef", "الأغواط": "Laghouat", "أم البواقي": "Oum El Bouaghi", "باتنة": "Batna", "بجاية": "Bejaia", "بسكرة": "Biskra", "بشار": "Bechar", "البليدة": "Blida", "البويرة": "Bouira", "تمنراست": "Tamanrasset", "تبسة": "Tebessa", "تلمسان": "Tlemcen", "تيارت": "Tiaret", "تيزي وزو": "Tizi Ouzou", "الجزائر": "Alger", "الجلفة": "Djelfa", "جيجل": "Jijel", "سطيف": "Setif", "سعيدة": "Saida", "سكيكدة": "Skikda", "سيدي بلعباس": "Sidi Bel Abbes", "عنابة": "Annaba", "قالمة": "Guelma", "قسنطينة": "Constantine", "المدية": "Medea", "مستغانم": "Mostaganem", "المسيلة": "M'sila", "معسكر": "Mascara", "ورقلة": "Ouargla", "وهران": "Oran", "البيض": "El Bayadh", "إليزي": "Illizi", "برج بوعريريج": "Bordj Bou Arreridj", "بومرداس": "Boumerdes", "الطارف": "El Tarf", "تندوف": "Tindouf", "تيسمسيلت": "Tissemsilt", "الوادي": "El Oued", "خنشلة": "Khenchela", "سوق أهراس": "Souk Ahras", "تيبازة": "Tipaza", "ميلة": "Mila", "عين الدفلى": "Ain Defla", "النعامة": "Naama", "عين تموشنت": "Ain Temouchent", "غرداية": "Ghardaia", "غليزان": "Relizane", "تيميمون": "Timimoun", "برج باجي مختار": "Bordj Badji Mokhtar", "أولاد جلال": "Ouled Djellal", "بني عباس": "Beni Abbes", "إن صالح": "In Salah", "إن قزام": "In Guezzam", "تقرت": "Touggourt", "جانت": "Djanet", "المغير": "El M'Ghair", "المنيعة": "El Meniaa" };
 
-    // ===============================================
-    // 🔥 زر الإرسال (مع كشف الأخطاء المتقدم) 🔥
-    // ===============================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const btn = this;
         const providerId = shipProviderSelect.value;
@@ -288,41 +291,61 @@
                 if(!orderSnap.exists()) continue;
                 const order = orderSnap.val();
                 
-                const productOnlyPrice = calculateProductOnlyPrice(order);
+                let currentTotal = parseFloat(order.productTotal);
+                if (isNaN(currentTotal)) {
+                    currentTotal = parseFloat(order.totalPrice || 0) - parseFloat(order.shippingPrice || 0);
+                }
+                
+                let marketingDiscount = 0;
+                if(order.productId) {
+                    try {
+                        const prodSnap = await get(ref(db, `products/${order.productId}`));
+                        if(prodSnap.exists()) {
+                            marketingDiscount = parseFloat(prodSnap.val().marketingDiscount || 0);
+                        }
+                    } catch(e) { console.log("Fetch Error", e); }
+                }
 
-                // تحضير البيانات
+                const qty = parseInt(order.quantity || 1);
+                let finalPriceToSend = currentTotal - (marketingDiscount * qty);
+                if (finalPriceToSend < 0) finalPriceToSend = 0; 
+
                 let rawWilaya = order.customerWilaya || order.state || "";
                 let cleanWilaya = rawWilaya.replace(/^[0-9]+[\.\-\s]*/, '').trim();
                 let finalWilaya = apiData.wilayaFormat === 'french_name' ? (wilayaMapping[cleanWilaya] || cleanWilaya) : cleanWilaya;
                 let phone = (order.customerPhone || order.phone || "").replace(/[^0-9]/g, '');
                 if(phone.length === 9) phone = '0'+phone;
                 
-                let isStopDesk = (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب')));
+                let isStopDesk = (order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب')));
                 let fullName = (order.customerName || order.name || "Client").trim();
                 let splitName = fullName.split(" ");
                 let firstName = splitName[0];
                 let lastName = splitName.slice(1).join(" ") || ".";
 
+                const cleanOrderId = orderId.replace('#','').trim();
+
                 let parcelData = {};
-                // Yalidine Driver
                 if (apiData.driverType === 'yalidine_style') {
+                    let finalCommune = finalWilaya;
+                    if(finalWilaya === "Alger") finalCommune = "Alger Centre";
+
                     parcelData = {
-                        "order_id": orderId.replace('#',''),
+                        "order_id": cleanOrderId,
                         "firstname": firstName, "familyname": lastName, "contact_phone": phone,
                         "address": order.customerAddress || cleanWilaya,
-                        "to_wilaya_name": finalWilaya, "to_commune_name": finalWilaya,
+                        "to_wilaya_name": finalWilaya, 
+                        "to_commune_name": finalCommune,
                         "product_list": order.productName || "Colis",
-                        "price": productOnlyPrice,
-                        "freeshipping": false, // ترك الشحن للشركة
+                        
+                        "price": finalPriceToSend, 
+                        "freeshipping": false,     
                         "is_stopdesk": isStopDesk,
                         "has_exchange": false
                     };
                 } else {
-                    // Standard Driver
-                    parcelData = { "name": fullName, "phone": phone, "price": productOnlyPrice, "free_shipping": 0 };
+                    parcelData = { "name": fullName, "phone": phone, "price": finalPriceToSend, "free_shipping": 0 };
                 }
 
-                // الإرسال
                 const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(apiData.apiUrl);
                 const res = await fetch(proxyUrl, { 
                     method: 'POST', 
@@ -332,43 +355,27 @@
                 
                 const resText = await res.text();
                 let resJson;
-                try { resJson = JSON.parse(resText); } catch (e) { throw new Error("Server Error: " + resText); }
+                try { resJson = JSON.parse(resText); } catch (e) { throw new Error("Server Error"); }
 
-                // 🔥 التحقق من النجاح (المصحح 100%) 🔥
                 let isSuccess = false;
                 let trackingCode = "Sent";
 
-                // فحص Yalidine (مصفوفة)
                 if (Array.isArray(resJson)) {
                     if (resJson[0] && (resJson[0].tracking || resJson[0].success === true)) {
-                        isSuccess = true;
-                        trackingCode = resJson[0].tracking || "Sent";
-                    } else if (resJson[0] && resJson[0].error) {
-                        throw new Error(JSON.stringify(resJson[0].error));
+                        isSuccess = true; trackingCode = resJson[0].tracking || "Sent";
                     }
-                } 
-                // فحص الكائن المباشر (مثل الصورة التي أرسلتها سابقا: المفتاح هو رقم الطلب)
-                else if (resJson[orderId.replace('#','')] && (resJson[orderId.replace('#','')].success === true || resJson[orderId.replace('#','')].tracking)) {
-                    isSuccess = true;
-                    const key = orderId.replace('#','');
-                    trackingCode = resJson[key].tracking || resJson[key].tracking_code || "Sent";
+                } else if (resJson.tracking || resJson.success === true) {
+                    isSuccess = true; trackingCode = resJson.tracking || "Sent";
+                } else if (resJson[cleanOrderId] && (resJson[cleanOrderId].success === true || resJson[cleanOrderId].tracking)) {
+                    isSuccess = true; 
+                    trackingCode = resJson[cleanOrderId].tracking || "Sent";
                 }
-                // فحص عام
-                else if (resJson.tracking || resJson.success === true) {
-                    isSuccess = true;
-                    trackingCode = resJson.tracking || "Sent";
-                }
-                // تحقق من الأخطاء الصريحة
-                if (resJson.error || resJson.validation_error) {
-                    throw new Error(JSON.stringify(resJson.error || resJson.validation_error));
-                }
-
-                if(isSuccess) {
+                
+                if (isSuccess) {
                     await update(ref(db, `orders/${orderId}`), { status: 'Shipped', deliveryProvider: apiData.displayName, trackingCode: trackingCode, shippedAt: Date.now() });
                     successCount++;
                 } else {
-                    // إذا لم نجد علامة نجاح، نعتبره فشل
-                    throw new Error("رفض غامض: " + JSON.stringify(resJson));
+                    failCount++; errorDetails += `\n❌ ${firstName}: ${JSON.stringify(resJson)}`;
                 }
 
             } catch(e) { console.error(e); failCount++; errorDetails += `\n⚠️ ${orderId}: ${e.message}`; }
@@ -380,10 +387,10 @@
         btn.textContent = "📤 إرسال المحدد"; btn.disabled = false;
     });
 
-    // المودال (فتح وحفظ السعر المعدل)
-    window.openDetails = (id) => {
-        get(ref(db, 'orders/'+id)).then(s => {
-            const o = s.val();
+    window.openDetails = async (id) => {
+        const orderSnap = await get(ref(db, 'orders/'+id));
+        if(orderSnap.exists()) {
+            const o = orderSnap.val();
             document.getElementById('currentOrderId').value = id;
             document.getElementById('editName').value = o.customerName || o.name;
             document.getElementById('editPhone').value = o.customerPhone || o.phone;
@@ -391,28 +398,39 @@
             document.getElementById('editCommune').value = o.customerCommune||'';
             document.getElementById('editAddress').value = o.customerAddress || o.address;
             
-            // تعبئة السعر في المودال (استخدام الدالة لحساب السعر الحالي)
-            document.getElementById('editProductTotal').value = calculateProductOnlyPrice(o); 
+            let currentTotal = parseFloat(o.productTotal);
+            if(isNaN(currentTotal)) currentTotal = calculateProductOnlyPrice(o);
+
+            let marketingDiscount = 0;
+            if(o.productId) {
+                const prodSnap = await get(ref(db, `products/${o.productId}`));
+                if(prodSnap.exists()) marketingDiscount = parseFloat(prodSnap.val().marketingDiscount || 0);
+            }
+            
+            const qty = parseInt(o.quantity || 1);
+            let netPrice = currentTotal - (marketingDiscount * qty);
+            if(netPrice < 0) netPrice = 0;
+
+            document.getElementById('editProductPrice').value = netPrice;
             
             document.getElementById('orderDetailModal').classList.remove('hidden');
-        });
+        }
     }
+
     document.getElementById('closeDetailModal').addEventListener('click',()=>document.getElementById('orderDetailModal').classList.add('hidden'));
     
-    // زر حفظ التغييرات في المودال
     document.getElementById('saveChangesBtn').addEventListener('click',async()=>{
         const id=document.getElementById('currentOrderId').value;
         await update(ref(db,'orders/'+id), {
-            customerName:document.getElementById('editName').value, 
-            customerPhone:document.getElementById('editPhone').value,
-            customerWilaya:document.getElementById('editWilaya').value, 
-            customerAddress:document.getElementById('editAddress').value,
-            productTotal: parseFloat(document.getElementById('editProductTotal').value) // حفظ السعر المعدل
+            customerName:document.getElementById('editName').value, customerPhone:document.getElementById('editPhone').value,
+            customerWilaya:document.getElementById('editWilaya').value, customerAddress:document.getElementById('editAddress').value,
+            productTotal: parseFloat(document.getElementById('editProductPrice').value)
         });
         document.getElementById('orderDetailModal').classList.add('hidden');
         alert("✅ تم حفظ التعديلات");
     });
 
+    const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     function renderWilayaCheckboxes(){ 
         const g=document.getElementById('wilayaGrid'); g.innerHTML=''; 
         allWilayas.forEach(w=>{ g.innerHTML+=`<div class="wilaya-checkbox-item"><input type="checkbox" class="wilaya-chk" value="${w.split('. ')[1]}"><span>${w.split('. ')[1]}</span></div>`; });
@@ -426,6 +444,13 @@
         if(!h||sel.length==0) return alert('خطأ');
         await push(zonesRef,{homePrice:h,deskPrice:d,wilayas:sel});
         alert('تم');
+        renderWilayaCheckboxes();
+    });
+    onValue(zonesRef,(s)=>{
+        const c=document.getElementById('zonesContainer'); c.innerHTML='';
+        if(s.exists()) Object.entries(s.val()).forEach(([k,v])=>{
+            c.innerHTML+=`<div class="zone-card"><button class="delete-zone-btn" onclick="delZ('${k}')">x</button><b>مجموعة (${v.wilayas?v.wilayas.length:0})</b><br><small>🏠 ${v.homePrice} | 🏢 ${v.deskPrice}</small></div>`;
+        });
     });
     window.delZ=(k)=>{if(confirm('حذف؟')) remove(ref(db,`shipping_zones/${k}`));};
     window.toggleMenu = () => document.querySelector('nav .links').classList.toggle('open');
