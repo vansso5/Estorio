@@ -18,7 +18,6 @@
     }
     #storePolicySection.open h3::after { transform: rotate(180deg); }
     
-    /* تعديل اللون إلى الأخضر */
     .price-summary { background: #f9f9f9; padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px solid #eee; }
     .final-price { color: #27ae60; font-weight: bold; font-size: 1.2em; }
 </style>
@@ -83,7 +82,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getDatabase, ref, get, child, push, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-// إعدادات فايربيس
 const firebaseConfig = {
   apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4",
   authDomain: "myestore-34f65.firebaseapp.com",
@@ -100,27 +98,22 @@ const db = getDatabase(app);
 const contactFooter = document.querySelector('.contact-footer .contact-container');
 
 // ==========================================
-// 1. إعداد فيسبوك بيكسل (تعديل جذري)
+// 1. إعداد فيسبوك بيكسل
 // ==========================================
-// تحميل مكتبة فيسبوك الأساسية
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 
-// متغير لتخزين البيكسل النشط حالياً (الخاص بالمنتج)
 let activePixelId = null;
 
-// دالة لتشغيل البيكسل
 function initPixel(pixelId) {
     if (!pixelId) return;
-    if (activePixelId) return; // منع التكرار
-
+    if (activePixelId) return; 
     activePixelId = pixelId;
     fbq('init', pixelId);
     fbq('track', 'PageView');
-    console.log("✅ Pixel Activated for Product: " + pixelId);
 }
 
 // ==========================================
@@ -145,7 +138,7 @@ const closePreview = document.getElementById('closePreview');
 const storeLogoImg = document.getElementById('storeLogo');
 
 let currentProductId = null;
-let currentProductPrice = 0;
+let currentProductPrice = 0; // سيتم تخزين (السعر + الخصم) هنا
 let shippingZones = []; 
 
 onValue(ref(db, 'shipping_zones'), (snapshot) => {
@@ -167,24 +160,24 @@ async function fetchProductDetails() {
     if (!snapshot.exists()) { container.innerHTML = '<p class="error-text">المنتج غير موجود.</p>'; return; }
 
     const product = snapshot.val();
-    currentProductPrice = parseFloat(product.newPrice);
     
     // ===========================================
-    // 🔥 تشغيل البيكسل الخاص بالمنتج هنا 🔥
+    // 🔥 التعديل هنا فقط 🔥
     // ===========================================
+    // نقوم بجمع (السعر الأصلي + مبلغ الخصم التسويقي)
+    // هذا السعر هو الذي سيظهر للزبون في كل مكان في الصفحة
+    const marketingDiscount = parseFloat(product.marketingDiscount || 0);
+    currentProductPrice = parseFloat(product.newPrice) + marketingDiscount;
+
+    // تشغيل البيكسل
     if (product.customPixelId && product.customPixelId.trim() !== "") {
-        // إذا وجدنا بيكسل خاص بالمنتج، نشغله
         initPixel(product.customPixelId);
     } else {
-        // إذا لم يكن للمنتج بيكسل خاص، نحاول جلب البيكسل العام (كاحتياط)
         get(child(ref(db), 'settings/pixel_id')).then((snap) => {
-            if(snap.exists() && snap.val()) {
-                initPixel(snap.val());
-            }
+            if(snap.exists() && snap.val()) initPixel(snap.val());
         });
     }
     
-    // إرسال حدث مشاهدة المحتوى (ViewContent) للبيكسل النشط
     setTimeout(() => {
         if (typeof fbq !== 'undefined' && activePixelId) {
             fbq('track', 'ViewContent', { 
@@ -194,11 +187,9 @@ async function fetchProductDetails() {
                 value: currentProductPrice, 
                 currency: 'DZD'
             });
-            console.log("👁️ ViewContent Sent to: " + activePixelId);
         }
     }, 1500);
 
-    // ... باقي كود عرض الصور والبيانات كما هو ...
     if (product.customLogo && product.customLogo.trim() !== "") {
         storeLogoImg.src = product.customLogo;
     } else {
@@ -227,7 +218,7 @@ async function fetchProductDetails() {
       <div class="product-header">
         <h2>${product.name}</h2>
         <div class="price-badge">
-            ${Number(product.newPrice).toLocaleString()} دج
+            ${Number(currentProductPrice).toLocaleString()} دج <!-- السعر المرتفع يظهر هنا -->
             ${product.oldPrice ? `<small>${Number(product.oldPrice).toLocaleString()}</small>` : ''}
         </div>
         <div id="liveViewersWrapper" style="display: none; text-align: center; margin-top: 10px; color: #c0392b; font-weight: bold;">
@@ -322,11 +313,13 @@ async function fetchProductDetails() {
     let shipPrice = 0;
 
     function updatePrice() {
-        const pPrice = currentProductPrice * qty;
+        const pPrice = currentProductPrice * qty; // السعر (المضاف له الخصم) * الكمية
         
         const zone = shippingZones.find(z => z.wilayas && z.wilayas.includes(wilayaSel.value));
         if (zone) {
+            // 🔥 هنا الشحن يبقى كما هو (لم يتم التعديل عليه) 🔥
             shipPrice = (delSel.value === "المنزل") ? parseFloat(zone.homePrice || 0) : parseFloat(zone.deskPrice || 0);
+            
             document.getElementById("shippingText").textContent = `(+${shipPrice} دج توصيل)`;
             document.getElementById("shippingText").style.color = "#27ae60";
         } else {
@@ -357,14 +350,14 @@ async function fetchProductDetails() {
         try {
             const refOrd = push(ref(db, "orders"));
             
-            const productTotalAmount = currentProductPrice * qty;
+            const productTotalAmount = currentProductPrice * qty; // المجموع باستخدام السعر المرتفع
             const finalTotal = productTotalAmount + shipPrice; 
 
             await set(refOrd, {
                 id: refOrd.key,
                 productId: productId,
                 productName: product.name,
-                productPrice: currentProductPrice,
+                productPrice: currentProductPrice, // حفظ السعر المرتفع في الطلب
                 quantity: qty,
                 productTotal: productTotalAmount,
                 shippingPrice: shipPrice,
@@ -378,7 +371,6 @@ async function fetchProductDetails() {
                 status: "الطلبات الجديدة"
             });
             
-            // 🔥 إرسال حدث الشراء (Purchase) للبيكسل النشط فقط
             if (typeof fbq !== 'undefined' && activePixelId) {
                 fbq('track', 'Purchase', { 
                     value: finalTotal,      
@@ -388,7 +380,6 @@ async function fetchProductDetails() {
                     content_type: 'product',
                     num_items: qty
                 });
-                console.log("💰 Purchase Event Sent to: " + activePixelId);
             }
 
             load.classList.add("hidden");
@@ -403,7 +394,6 @@ async function fetchProductDetails() {
         } catch(e) { console.error(e); alert("خطأ في الاتصال"); load.classList.add("hidden"); }
     });
     
-    // باقي الكود (التقييمات، المشاهدات) كما هو...
     let selectedRating = 0;
     const stars = document.querySelectorAll('#reviewStars i');
     stars.forEach(star => {
