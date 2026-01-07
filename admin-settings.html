@@ -30,14 +30,14 @@
   <div class="container">
     <h2>⚙️ الإعدادات</h2>
     
-    <div class="analytics-grid" style="display: flex; flex-direction: column; gap: 30px;">
+    <div class="analytics-grid">
 
       <!-- قسم مسح الطلبيات المكتملة -->
-      <div class="stat-card danger-zone" style="text-align: right; align-items: stretch;">
-        <h3 style="border-bottom: 1px solid #ffcccc; padding-bottom: 10px; margin-top: 0;">🗑️ مسح الطلبيات المكتملة</h3>
+      <div class="stat-card danger-zone">
+        <h3 class="section-title">🗑️ مسح الطلبيات المكتملة</h3>
         
         <div class="setting-item">
-          <div class="orders-stats" style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <div class="orders-stats">
             <div class="stat-card">
               <h3>الطلبيات المكتملة</h3>
               <span id="completedOrdersCount">0</span>
@@ -59,49 +59,48 @@
             </select>
           </div>
 
-          <div id="customDateRange" style="display: none; margin-top: 10px;">
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <div style="flex: 1;">
+          <div id="customDateRange" class="hidden-section">
+            <div class="date-inputs">
+              <div class="input-wrap">
                 <label>من تاريخ:</label>
                 <input type="date" id="startDate">
               </div>
-              <div style="flex: 1;">
+              <div class="input-wrap">
                 <label>إلى تاريخ:</label>
                 <input type="date" id="endDate">
               </div>
             </div>
           </div>
 
-          <div id="periodSummary" class="period-summary" style="margin-top: 10px;">
+          <div id="periodSummary" class="period-summary">
             <p>سيتم مسح <strong id="periodCount">0</strong> طلبية بشكل نهائي.</p>
           </div>
           
           <p class="warning-message">⚠️ تحذير: هذا الإجراء لا يمكن التراجع عنه!</p>
           
           <div class="product-actions">
-            <button class="delete-btn" onclick="clearCompletedOrders()" style="width: 100%; padding: 12px; font-size: 1rem;">
+            <button class="delete-btn" onclick="clearCompletedOrders()">
               🗑️ تأكيد مسح الطلبيات
             </button>
           </div>
         </div>
       </div>
 
-      <!-- قسم إدارة السياسات (المعدل) -->
+      <!-- قسم إدارة السياسات -->
       <div class="policy-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h3 style="margin: 0;">📜 إدارة السياسات</h3>
-            <button id="policyToggleBtn" onclick="togglePolicies()" style="padding: 8px 15px; cursor: pointer; border-radius: 5px; border: 1px solid #ccc; background: #f8f9fa; font-family: inherit;">🔽 إظهار السياسات</button>
+        <div class="policy-header">
+            <h3>📜 إدارة السياسات</h3>
+            <button id="policyToggleBtn" onclick="togglePolicies()" class="toggle-btn">🔽 إظهار السياسات</button>
         </div>
         
-        <!-- الحاوية المخفية التي تضم المحتوى -->
-        <div id="policyContentWrapper" style="display: none; border-top: 1px solid #eee; padding-top: 15px;">
+        <div id="policyContentWrapper" class="hidden-content">
             <div id="policiesContainer"></div>
             <button onclick="addPolicyField()" class="add-btn">➕ إضافة سياسة جديدة</button>
             <button onclick="saveAllPolicies()" class="save-btn">💾 حفظ كل السياسات</button>
         </div>
       </div>
 
-      <!-- قسم التحكم في رقم الهاتف (اتصل بنا) -->
+      <!-- قسم رقم الهاتف -->
       <div class="contact-section">
         <h3>📞 رقم الهاتف - اتصل بنا</h3>
         <input type="text" id="contactPhone" placeholder="أدخل رقم الهاتف">
@@ -109,14 +108,44 @@
         <div id="phoneSaveMsg" class="success-msg">✅ تم حفظ الرقم بنجاح</div>
       </div>
 
-      <!-- قسم فيسبوك بيكسل -->
+      <!-- ============================================== -->
+      <!-- 🔥 قسم فيسبوك بيكسل (بدون ستايل وبدون العام) 🔥 -->
+      <!-- ============================================== -->
       <div class="pixel-section contact-section">
-        <h3>📊 تتبع فيسبوك (Facebook Pixel)</h3>
-        <p style="font-size: 13px; color: #666; margin-bottom: 10px;">أدخل رقم البيكسل (ID) فقط لربط المتجر بالإعلانات.</p>
-        <input type="text" id="pixelIdInput" placeholder="أدخل Pixel ID (مثال: 1234567890)">
-        <button id="savePixelBtn" style="background-color: #1877f2;">💾 حفظ البيكسل</button>
-        <div id="pixelSaveMsg" class="success-msg">✅ تم حفظ البيكسل بنجاح</div>
+        <h3>📊 facebook pixel ID</h3>
+        <p class="section-desc">
+            قم بربط كل منتج بالبيكسل الخاص به ليتم تتبعه بشكل منفصل.
+        </p>
+        
+        <div class="pixel-control-wrapper">
+            <!-- نموذج الإدخال -->
+            <div class="pixel-input-group">
+                <div class="form-group">
+                    <label>اختر المنتج:</label>
+                    <select id="productSelectDropdown">
+                        <option value="">-- جارٍ التحميل --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>رقم البيكسل (Pixel ID):</label>
+                    <input type="text" id="customProductPixelInput" placeholder="أدخل ID الخاص بالمنتج">
+                </div>
+                <div class="form-actions">
+                    <button id="assignPixelBtn" class="save-btn">💾 حفظ التخصيص</button>
+                </div>
+            </div>
+            
+            <div id="customPixelMsg" class="success-msg">✅ تم تخصيص البيكسل للمنتج بنجاح</div>
+
+            <!-- قائمة البطاقات -->
+            <h4>📋 المنتجات المربوطة ببيكسل خاص:</h4>
+            <div id="pixelCardsContainer" class="pixel-cards-list">
+                <!-- سيتم ملء البطاقات هنا تلقائياً -->
+            </div>
+        </div>
       </div>
+      <!-- ============================================== -->
+
     </div>
   </div>
 
@@ -148,6 +177,8 @@
         logoutBtn.style.display = 'block';
         loadStatistics();
         loadPolicies();
+        loadPhone();     
+        loadPixelData(); // دالة تحميل بيانات بيكسل المنتجات
       } else {
         logoutBtn.style.display = 'none';
         alert("يرجى تسجيل الدخول للوصول إلى الإعدادات");
@@ -158,6 +189,117 @@
     logoutBtn.addEventListener('click', async () => {
       await signOut(auth);
       window.location.href = 'admin-login.html';
+    });
+
+    // ===============================================
+    // 🔥 كود إدارة بيكسل المنتجات (بدون البيكسل العام)
+    // ===============================================
+    
+    const prodSelect = document.getElementById('productSelectDropdown');
+    const customInput = document.getElementById('customProductPixelInput');
+    const assignBtn = document.getElementById('assignPixelBtn');
+    const customMsg = document.getElementById('customPixelMsg');
+    const cardsContainer = document.getElementById('pixelCardsContainer');
+
+    function loadPixelData() {
+        const productsRef = ref(database, 'products');
+        onValue(productsRef, (snapshot) => {
+            prodSelect.innerHTML = '<option value="">-- اختر المنتج --</option>';
+            cardsContainer.innerHTML = '';
+            
+            let hasCustom = false;
+
+            if (snapshot.exists()) {
+                snapshot.forEach((childSnapshot) => {
+                    const prod = childSnapshot.val();
+                    const prodId = childSnapshot.key;
+
+                    // 1. إضافة للقائمة المنسدلة
+                    const option = document.createElement('option');
+                    option.value = prodId;
+                    option.textContent = prod.name;
+                    prodSelect.appendChild(option);
+
+                    // 2. إذا كان المنتج له بيكسل خاص، ارسم بطاقة
+                    if (prod.customPixelId && prod.customPixelId.trim() !== "") {
+                        hasCustom = true;
+                        
+                        let imgUrl = "https://via.placeholder.com/50?text=Prod";
+                        if (Array.isArray(prod.images) && prod.images.length > 0) imgUrl = prod.images[0];
+                        else if (typeof prod.images === 'string' && prod.images !== "") imgUrl = prod.images;
+
+                        renderPixelCard(prodId, prod.name, imgUrl, prod.customPixelId);
+                    }
+                });
+            }
+
+            if (!hasCustom) {
+                cardsContainer.innerHTML = '<p class="empty-msg">لا توجد منتجات مخصصة حالياً.</p>';
+            }
+        });
+    }
+
+    // رسم البطاقة (تم استخدام كلاسات فقط بدون ستايل داخلي)
+    function renderPixelCard(id, name, image, pixelId) {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'pixel-card';
+        cardDiv.innerHTML = `
+            <img src="${image}" alt="صورة المنتج" class="pixel-card-img">
+            <div class="pixel-card-info">
+                <div class="pixel-card-name">${name}</div>
+                <div class="pixel-card-id">Pixel ID: ${pixelId}</div>
+            </div>
+            <button class="delete-pixel-btn" onclick="deleteProductPixel('${id}')">
+                🗑️ حذف
+            </button>
+        `;
+        cardsContainer.appendChild(cardDiv);
+    }
+
+    // زر الحفظ
+    assignBtn.addEventListener('click', async () => {
+        const selectedProdId = prodSelect.value;
+        const pixelVal = customInput.value.trim();
+
+        if (!selectedProdId) { alert("⚠️ اختر المنتج أولاً من القائمة"); return; }
+        if (!pixelVal) { alert("⚠️ أدخل رقم البيكسل"); return; }
+
+        await update(ref(database, `products/${selectedProdId}`), {
+            customPixelId: pixelVal
+        });
+
+        customMsg.style.display = 'block';
+        setTimeout(() => customMsg.style.display = 'none', 3000);
+        prodSelect.value = "";
+        customInput.value = "";
+    });
+
+    // دالة الحذف
+    window.deleteProductPixel = async function(productId) {
+        if(confirm("هل أنت متأكد من حذف البيكسل الخاص لهذا المنتج؟")) {
+            await update(ref(database, `products/${productId}`), {
+                customPixelId: null
+            });
+        }
+    };
+
+    // ===============================================
+    // باقي الوظائف (كما هي تماماً)
+    // ===============================================
+
+    function loadPhone() {
+        const phoneRef = ref(database, 'settings/contactPhone');
+        onValue(phoneRef, snapshot => {
+          const num = snapshot.val();
+          if(num) document.getElementById('contactPhone').value = num;
+        });
+    }
+    document.getElementById('savePhoneBtn').addEventListener('click', async () => {
+      const number = document.getElementById('contactPhone').value.trim();
+      if(!number) return alert('⚠️ يرجى إدخال رقم الهاتف أولاً');
+      await set(ref(database, 'settings/contactPhone'), number);
+      const msg = document.getElementById('phoneSaveMsg');
+      msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000);
     });
 
     function isOrderCompleted(order) {
@@ -179,7 +321,10 @@
 
     function updatePeriodSelection() {
       const period = document.getElementById('timePeriod').value;
-      document.getElementById('customDateRange').style.display = (period === 'custom') ? 'block' : 'none';
+      const customDateRange = document.getElementById('customDateRange');
+      if (customDateRange) {
+        customDateRange.style.display = (period === 'custom') ? 'block' : 'none';
+      }
       updatePeriodCount();
     }
 
@@ -215,10 +360,12 @@
           startDate.setMonth(now.getMonth() - 3);
           break;
         case 'custom':
-          const cs = document.getElementById('startDate').value;
-          const ce = document.getElementById('endDate').value;
-          if(cs && ce) {
-            return orders.filter(order => {
+          const csElem = document.getElementById('startDate');
+          const ceElem = document.getElementById('endDate');
+          if(csElem && ceElem && csElem.value && ceElem.value) {
+             const cs = csElem.value;
+             const ce = ceElem.value;
+             return orders.filter(order => {
               const orderDate = new Date(order.timestamp).toISOString().split('T')[0];
               return orderDate >= cs && orderDate <= ce;
             });
@@ -283,9 +430,9 @@
       div.dataset.id = id;
       
       div.innerHTML = `
-        <input type="text" placeholder="عنوان السياسة" value="${title}" style="width:100%;margin-bottom:5px;padding:8px" />
-        <textarea placeholder="محتوى السياسة" style="width:100%;min-height:100px;padding:8px">${content}</textarea>
-        <button class="delete-btn" style="margin-top:5px" onclick="this.parentElement.remove()">🗑️ حذف</button>
+        <input type="text" placeholder="عنوان السياسة" value="${title}" class="policy-input" />
+        <textarea placeholder="محتوى السياسة" class="policy-textarea">${content}</textarea>
+        <button class="delete-btn" onclick="this.parentElement.remove()">🗑️ حذف</button>
       `;
       policiesContainer.appendChild(div);
     }
@@ -296,9 +443,9 @@
       div.dataset.id = id;
       
       div.innerHTML = `
-        <input type="text" placeholder="عنوان السياسة" value="${title}" style="width:100%;margin-bottom:5px;padding:8px" />
-        <textarea placeholder="محتوى السياسة" style="width:100%;min-height:100px;padding:8px">${content}</textarea>
-        <button class="delete-btn" style="margin-top:5px" onclick="this.parentElement.remove()">🗑️ حذف</button>
+        <input type="text" placeholder="عنوان السياسة" value="${title}" class="policy-input" />
+        <textarea placeholder="محتوى السياسة" class="policy-textarea">${content}</textarea>
+        <button class="delete-btn" onclick="this.parentElement.remove()">🗑️ حذف</button>
       `;
       policiesContainer.appendChild(div);
     }
@@ -330,74 +477,30 @@
       alert('✅ تم حفظ السياسات بنجاح');
     }
 
-    // ===== دالة إظهار وإخفاء السياسات (الجديدة) =====
     function togglePolicies() {
       const wrapper = document.getElementById('policyContentWrapper');
       const btn = document.getElementById('policyToggleBtn');
       
-      if (wrapper.style.display === 'none') {
+      if (wrapper.style.display === 'none' || wrapper.classList.contains('hidden-content')) {
         wrapper.style.display = 'block';
+        wrapper.classList.remove('hidden-content');
         btn.textContent = '🔼 إغلاق السياسات';
       } else {
         wrapper.style.display = 'none';
         btn.textContent = '🔽 إظهار السياسات';
       }
     }
-
-    // ===== التحكم في رقم الهاتف =====
-    const phoneInput = document.getElementById('contactPhone');
-    const phoneSaveBtn = document.getElementById('savePhoneBtn');
-    const phoneSaveMsg = document.getElementById('phoneSaveMsg');
-
-    // تحميل الرقم عند فتح الصفحة من Firebase
-    const phoneRef = ref(database, 'settings/contactPhone');
-    onValue(phoneRef, snapshot => {
-      const num = snapshot.val();
-      if(num) phoneInput.value = num;
-    });
-
-    phoneSaveBtn.addEventListener('click', async () => {
-      const number = phoneInput.value.trim();
-      if(!number) return alert('⚠️ يرجى إدخال رقم الهاتف أولاً');
-
-      await set(ref(database, 'settings/contactPhone'), number);
-      phoneSaveMsg.style.display = 'block';
-      setTimeout(() => phoneSaveMsg.style.display = 'none', 3000);
-    });
-
-    // ===== التحكم في فيسبوك بيكسل =====
-    const pixelInput = document.getElementById('pixelIdInput');
-    const pixelSaveBtn = document.getElementById('savePixelBtn');
-    const pixelSaveMsg = document.getElementById('pixelSaveMsg');
-
-    const pixelRef = ref(database, 'settings/pixel_id');
-    onValue(pixelRef, snapshot => {
-      const pid = snapshot.val();
-      if (pid) pixelInput.value = pid;
-    });
-
-    pixelSaveBtn.addEventListener('click', async () => {
-      const pixelId = pixelInput.value.trim();
-      await set(ref(database, 'settings/pixel_id'), pixelId);
-      
-      pixelSaveMsg.style.display = 'block';
-      setTimeout(() => pixelSaveMsg.style.display = 'none', 3000);
-    });
     
-    // ربط الدوال بالنافذة لتكون متاحة لـ onclick
+    // ربط الدوال بالنافذة
     window.addPolicyField = addPolicyField;
     window.saveAllPolicies = saveAllPolicies;
     window.loadPolicies = loadPolicies;
     window.clearCompletedOrders = clearCompletedOrders;
     window.updatePeriodSelection = updatePeriodSelection;
-    window.togglePolicies = togglePolicies; // ربط الدالة الجديدة
-
-    // تحميل السياسات فور فتح الصفحة
-    loadPolicies();
+    window.togglePolicies = togglePolicies;
 
   </script>
 
-  <!-- السكربت السفلي يجب أن يحتوي على القائمة فقط -->
   <script>
     function toggleMenu() {
       const links = document.querySelector('nav .links');
