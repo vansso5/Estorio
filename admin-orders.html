@@ -1,13 +1,80 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>الطلبيات النشطة</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الطلبيات النشطة</title>
 
-<!-- ربط الخط والستايل -->
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="admin-style.css">
+  <!-- ربط الخط والستايل -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin-style.css">
+
+  <style>
+    /* === تنسيقات المودال والحقول === */
+    .modal-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+    .modal-label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+    .modal-input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: 'Cairo'; }
+    
+    /* تنسيق حقول التعديل */
+    .edit-input {
+      width: 100%;
+      padding: 8px;
+      border: 2px solid #3498db;
+      border-radius: 6px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 0.95rem;
+      background-color: #fafdff;
+      color: #333;
+      font-weight: bold;
+    }
+
+    /* === 🔥 تصميم الأزرار السفلية (المعدل للتناسق) 🔥 === */
+    
+    .modal-actions {
+        display: flex; /* وضع الأزرار بجانب بعض */
+        justify-content: space-between; /* توزيع المسافات */
+        gap: 8px; /* مسافة صغيرة بين الأزرار لتناسب شاشة الهاتف */
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    /* الشكل الموحد لجميع الأزرار */
+    .modal-actions button {
+        flex: 1; /* يجعل جميع الأزرار تأخذ نفس العرض بالتساوي */
+        height: 45px; /* ✅ إجبار جميع الأزرار على نفس الارتفاع */
+        padding: 0 5px; /* تقليل الحشو الجانبي */
+        border: none;
+        border-radius: 8px;
+        font-family: 'Cairo', sans-serif;
+        font-weight: 700;
+        font-size: 0.85rem; /* ✅ تصغير الخط قليلاً ليناسب العرض */
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center; /* توسيط الكلام والأيقونة */
+        gap: 5px;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        white-space: nowrap; /* ✅ منع النص من النزول لسطر ثاني */
+        overflow: hidden; /* إخفاء أي زيادة */
+    }
+
+    /* تأثير الضغط */
+    .modal-actions button:active { transform: scale(0.98); }
+
+    /* الألوان */
+    #deleteOrderBtn, .btn-delete { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    #updateStatusBtn, .btn-status { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+    .btn-edit { background: linear-gradient(135deg, #3498db, #2980b9); }
+    .btn-save-changes { background: linear-gradient(135deg, #16a085, #1abc9c); }
+
+    /* حالات الطلب */
+    .status-badge { padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; }
+    .status-new { background: #e3f2fd; color: #1565c0; }
+    .status-processing { background: #fff3e0; color: #ef6c00; }
+    .status-shipped { background: #e8f5e9; color: #2e7d32; }
+</style>
 
 </head>
 <body>
@@ -28,7 +95,7 @@
   </div>
 </nav>
 
-<!-- مكان أيقونة الزوار الجديد (أسفل الناف بار مباشرة) -->
+<!-- مكان أيقونة الزوار الجديد -->
 <div class="visitors-wrapper">
   <div id="liveVisitors" class="live-visitors-badge inactive">
     <span class="live-dot"></span>
@@ -85,9 +152,13 @@
   <div class="modal-content">
     <button class="close-modal-btn" id="closeDetailModal">&times;</button>
     <h3 style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">تفاصيل الطلب</h3>
+    
     <div id="modalDetailsBody"></div>
-    <div class="modal-actions">
+    
+    <div class="modal-actions" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
       <button id="deleteOrderBtn" class="btn-delete">🗑️ حذف</button>
+      <!-- زر التعديل سيتم إضافته ديناميكياً هنا -->
+      <span id="editBtnContainer"></span>
       <button id="updateStatusBtn" class="btn-status">تغيير الحالة</button>
     </div>
   </div>
@@ -113,7 +184,7 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
 const ordersRef = ref(database, 'orders');
-const visitorsRef = ref(database, 'site_presence'); // مرجع الزوار
+const visitorsRef = ref(database, 'site_presence');
 
 const logoutBtn = document.getElementById('logoutBtn');
 const newOrdersCount = document.getElementById('newOrdersCount');
@@ -132,8 +203,8 @@ const closeDetailModal = document.getElementById('closeDetailModal');
 const modalDetailsBody = document.getElementById('modalDetailsBody');
 const updateStatusBtn = document.getElementById('updateStatusBtn');
 const deleteOrderBtn = document.getElementById('deleteOrderBtn');
+const editBtnContainer = document.getElementById('editBtnContainer'); // حاوية زر التعديل
 
-// عناصر أيقونة الزوار
 const liveVisitorsBadge = document.getElementById('liveVisitors');
 const visitorsCountSpan = document.getElementById('visitorsCount');
 
@@ -159,10 +230,7 @@ logoutBtn.addEventListener('click', async () => {
 
 // --- كود متابعة الزوار ---
 onValue(visitorsRef, (snapshot) => {
-    if (!snapshot.exists()) {
-        updateVisitorsUI(0);
-        return;
-    }
+    if (!snapshot.exists()) { updateVisitorsUI(0); return; }
     const data = snapshot.val();
     const count = Object.keys(data).length;
     updateVisitorsUI(count);
@@ -178,7 +246,6 @@ function updateVisitorsUI(count) {
         liveVisitorsBadge.classList.add('inactive');
     }
 }
-// -------------------------
 
 statCards.forEach(card => {
   card.addEventListener('click', () => {
@@ -213,16 +280,34 @@ function getNextAction(status) {
   }
 }
 
+// دالة فتح التفاصيل (تم التعديل لإضافة ميزة التحرير)
 function openOrderDetails(order, id) {
   currentOpenOrderId = id;
   detailModal.classList.remove('hidden');
 
   const action = getNextAction(order.status);
   updateStatusBtn.textContent = action.text;
+  updateStatusBtn.style.display = 'inline-block'; // إظهار زر تغيير الحالة
+  
   updateStatusBtn.onclick = async () => {
      await updateOrderStatus(id, action.nextStatus);
   };
 
+  // التحقق هل الطلب جديد لإظهار زر التعديل
+  const st = (order.status || '').toLowerCase();
+  const isNew = (!st || st.includes('new') || st.includes('جديد'));
+  
+  editBtnContainer.innerHTML = ''; // مسح الأزرار القديمة
+
+  if(isNew) {
+      const editBtn = document.createElement('button');
+      editBtn.textContent = '✏️ تعديل البيانات';
+      editBtn.className = 'btn-edit';
+      editBtn.onclick = () => enableEditMode(order);
+      editBtnContainer.appendChild(editBtn);
+  }
+
+  // تجهيز HTML المنتجات
   let productsHtml = '';
   if (order.items) {
     const items = Array.isArray(order.items) ? order.items : Object.values(order.items);
@@ -245,14 +330,17 @@ function openOrderDetails(order, id) {
      `;
   }
 
+  // عرض البيانات (نضيف IDs للحقول ليسهل استبدالها)
   modalDetailsBody.innerHTML = `
     <div class="details-section">
       <h4>👤 معلومات العميل</h4>
-      <div class="details-row"><span class="details-label">الاسم:</span> ${order.customerName || order.name || '-'}</div>
-      <div class="details-row"><span class="details-label">الهاتف:</span> <a href="tel:${order.customerPhone || order.phone}" style="color:var(--primary-color);text-decoration:none;">${order.customerPhone || order.phone || '-'}</a></div>
-      <div class="details-row"><span class="details-label">الولاية:</span> ${order.customerWilaya || order.state || '-'}</div>
-      <div class="details-row"><span class="details-label">البلدية:</span> ${order.customerCommune || order.city || '-'}</div>
-      <div class="details-row"><span class="details-label">العنوان:</span> ${order.customerAddress || order.address || '-'}</div>
+      <div class="details-row"><span class="details-label">الاسم:</span> <span id="disp-name">${order.customerName || order.name || '-'}</span></div>
+      <div class="details-row"><span class="details-label">الهاتف:</span> <a id="disp-phone-link" href="tel:${order.customerPhone || order.phone}" style="color:var(--primary-color);text-decoration:none;"><span id="disp-phone">${order.customerPhone || order.phone || '-'}</span></a></div>
+      
+      <div class="details-row"><span class="details-label">الولاية:</span> <span id="disp-wilaya">${order.customerWilaya || order.state || '-'}</span></div>
+      <div class="details-row"><span class="details-label">البلدية:</span> <span id="disp-commune" style="color:${!order.customerCommune?'red':'inherit'}">${order.customerCommune || order.city || '(غير محددة)'}</span></div>
+      
+      <div class="details-row"><span class="details-label">العنوان:</span> <span id="disp-address">${order.customerAddress || order.address || '-'}</span></div>
       <div class="details-row"><span class="details-label">التوصيل:</span> ${order.deliveryOption || '-'}</div>
       <div class="details-row" style="background:#fff3cd; padding:5px; border-radius:4px;"><span class="details-label">ملاحظات:</span> ${order.note || 'لا يوجد'}</div>
     </div>
@@ -279,6 +367,73 @@ function openOrderDetails(order, id) {
       <div class="details-row"><span class="details-label">الحالة الحالية:</span> ${order.status || 'جديد'}</div>
     </div>
   `;
+}
+
+// دالة تفعيل وضع التعديل
+function enableEditMode(order) {
+    // تحويل النصوص إلى حقول إدخال
+    const nameVal = order.customerName || order.name || '';
+    const phoneVal = order.customerPhone || order.phone || '';
+    const wilayaVal = order.customerWilaya || order.state || '';
+    const communeVal = order.customerCommune || order.city || '';
+    const addressVal = order.customerAddress || order.address || '';
+
+    document.getElementById('disp-name').innerHTML = `<input type="text" id="edit-name" class="edit-input" value="${nameVal}">`;
+    document.getElementById('disp-phone-link').outerHTML = `<input type="text" id="edit-phone" class="edit-input" value="${phoneVal}">`;
+    document.getElementById('disp-wilaya').innerHTML = `<input type="text" id="edit-wilaya" class="edit-input" value="${wilayaVal}">`;
+    document.getElementById('disp-commune').innerHTML = `<input type="text" id="edit-commune" class="edit-input" value="${communeVal}" placeholder="البلدية">`;
+    document.getElementById('disp-address').innerHTML = `<input type="text" id="edit-address" class="edit-input" value="${addressVal}">`;
+
+    // تغيير الزر من "تعديل" إلى "حفظ"
+    editBtnContainer.innerHTML = '';
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = '💾 حفظ';
+    saveBtn.className = 'btn-save-changes';
+    saveBtn.onclick = () => saveOrderDetails(currentOpenOrderId);
+    editBtnContainer.appendChild(saveBtn);
+
+    // إخفاء زر "تغيير الحالة" مؤقتاً حتى يحفظ التعديلات
+    updateStatusBtn.style.display = 'none';
+}
+
+// دالة حفظ التعديلات في Firebase
+async function saveOrderDetails(id) {
+    if(!id) return;
+    
+    const newName = document.getElementById('edit-name').value;
+    const newPhone = document.getElementById('edit-phone').value;
+    const newWilaya = document.getElementById('edit-wilaya').value;
+    const newCommune = document.getElementById('edit-commune').value;
+    const newAddress = document.getElementById('edit-address').value;
+
+    if(!newName || !newPhone) {
+        alert("الاسم والهاتف ضروريان");
+        return;
+    }
+
+    try {
+        await update(ref(database, 'orders/' + id), {
+            customerName: newName,
+            customerPhone: newPhone,
+            customerWilaya: newWilaya,
+            customerCommune: newCommune,
+            customerAddress: newAddress
+        });
+        
+        alert("✅ تم حفظ البيانات بنجاح");
+        
+        // إعادة فتح المودال لإظهار البيانات الجديدة وزر "تجهيز الطلب"
+        // نحتاج لجلب البيانات المحدثة أولاً
+        const snapshot = await get(ref(database, 'orders/' + id)); // استيراد get ضروري، لكن onValue يعمل في الخلفية
+        // بما أن onValue شغال، المتغير currentOrders سيتحدث تلقائياً،
+        // لكن المودال يحتاج إعادة رسم.
+        
+        // حل سريع: إغلاق المودال
+        detailModal.classList.add('hidden');
+        
+    } catch(error) {
+        alert("خطأ في الحفظ: " + error.message);
+    }
 }
 
 async function updateOrderStatus(id, newStatus) {
@@ -382,14 +537,13 @@ searchInput.addEventListener('input', (e) => {
   searchKeyword = e.target.value.trim().toLowerCase();
   renderAllOrders(currentOrders);
 });
-  </script>
+</script>
 
-  <!-- سكربت القائمة الجانبية للموبايل -->
-  <script>
+<script>
     function toggleMenu() {
       const links = document.querySelector('nav .links');
       links.classList.toggle('open');
     }
-  </script>
+</script>
 </body>
 </html>
