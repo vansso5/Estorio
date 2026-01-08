@@ -129,6 +129,7 @@
           <input type="hidden" id="currentOrderId">
           
           <div class="modal-actions" style="display: flex; gap: 10px; margin-top: 15px;">
+              <!-- الزر الأخضر كما طلبت -->
               <button id="saveChangesBtn" style="flex: 1; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size:1rem; font-weight:bold;">💾 حفظ التغييرات</button>
               <button id="cancelOrderBtn" class="btn-delete">إلغاء الطلب</button>
           </div>
@@ -150,69 +151,76 @@
     const shipProviderSelect = document.getElementById('shipProviderSelect');
     const savedProvidersList = document.getElementById('savedProvidersList');
     
-    // قائمة الولايات الرسمية (للعرض في الـ Checkbox فقط)
+    // قائمة الولايات الرسمية (للعرض فقط)
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     
-    // قاموس الترجمة الذكي (يحتوي على الأشكال المختلفة لأسماء الولايات)
+    // ============================================
+    // القاموس الذكي المحدث (شامل لكل الاختلافات)
+    // ============================================
     const wilayaMapping = {
+        // 01 - 10
         "adrar": 1, "أدرار": 1, "adr": 1, "aderar": 1,
         "chlef": 2, "الشلف": 2, "شلف": 2, "chleff": 2,
-        "laghouat": 3, "الأغواط": 3, "أغواط": 3,
+        "laghouat": 3, "الأغواط": 3, "أغواط": 3, "laghouat": 3,
         "oum el bouaghi": 4, "أم البواقي": 4, "ام البواقي": 4, "oeb": 4,
-        "batna": 5, "باتنة": 5, "باتنه": 5,
-        "bejaia": 6, "بجاية": 6, "bgayet": 6,
-        "biskra": 7, "بسكرة": 7,
+        "batna": 5, "باتنة": 5, "باتنه": 5, "batna": 5,
+        "bejaia": 6, "بجاية": 6, "بجايه": 6, "bgayet": 6,
+        "biskra": 7, "بسكرة": 7, "بسكره": 7,
         "bechar": 8, "بشار": 8,
-        "blida": 9, "البليدة": 9, "بليدة": 9,
-        "bouira": 10, "البويرة": 10, "بويرة": 10,
-        "tamanrasset": 11, "تمنراست": 11, "tam": 11,
-        "tebessa": 12, "تبسة": 12,
+        "blida": 9, "البليدة": 9, "بليدة": 9, "البليده": 9, "بليده": 9, "blida": 9,
+        "bouira": 10, "البويرة": 10, "بويرة": 10, "البويره": 10, "بويره": 10, "bouira": 10,
+
+        // 11 - 20
+        "tamanrasset": 11, "تمنراست": 11, "tam": 11, "tamanrasset": 11,
+        "tebessa": 12, "تبسة": 12, "تبسه": 12,
         "tlemcen": 13, "تلمسان": 13,
         "tiaret": 14, "تيارت": 14,
         "tizi ouzou": 15, "تيزي وزو": 15, "tizi": 15, "to": 15,
         "alger": 16, "الجزائر": 16, "جزائر": 16, "algiers": 16, "djazair": 16, "دزاير": 16, "العاصمة": 16, "عاصمة": 16,
-        "djelfa": 17, "الجلفة": 17, "جلفة": 17,
+        "djelfa": 17, "الجلفة": 17, "جلفة": 17, "الجلفه": 17, "جلفه": 17, "djelfa": 17,
         "jijel": 18, "جيجل": 18,
         "setif": 19, "سطيف": 19,
-        "saida": 20, "سعيدة": 20,
-        "skikda": 21, "سكيكدة": 21,
+        "saida": 20, "سعيدة": 20, "سعيده": 20,
+        "skikda": 21, "سكيكدة": 21, "سكيكده": 21,
         "sidi bel abbes": 22, "سيدي بلعباس": 22, "sba": 22,
-        "annaba": 23, "عنابة": 23,
-        "guelma": 24, "قالمة": 24,
-        "constantine": 25, "قسنطينة": 25, "qsentina": 25,
-        "medea": 26, "المدية": 26, "مدية": 26,
+        "annaba": 23, "عنابة": 23, "عنابه": 23,
+        "guelma": 24, "قالمة": 24, "قالمه": 24, 
+        "constantine": 25, "قسنطينة": 25, "قسنطينه": 25, "constantine": 25,
+        "medea": 26, "المدية": 26, "مدية": 26, "المديه": 26, "مديه": 26, "medea": 26,
         "mostaganem": 27, "مستغانم": 27, "mosta": 27,
-        "msila": 28, "المسيلة": 28, "مسيلة": 28, "m'sila": 28,
+        "msila": 28, "المسيلة": 28, "مسيلة": 28, "المسيله": 28, "مسيله": 28, "msila": 28,
         "mascara": 29, "معسكر": 29,
-        "ouargla": 30, "ورقلة": 30,
+        "ouargla": 30, "ورقلة": 30, "ورقله": 30,
+
+        // 31 - 40
         "oran": 31, "وهران": 31, "wahran": 31,
-        "el bayadh": 32, "البيض": 32, "بيض": 32, "bayadh": 32,
+        "el bayadh": 32, "البيض": 32, "بيض": 32, "el bayadh": 32, "bayadh": 32,
         "illizi": 33, "إليزي": 33, "اليزي": 33,
         "bordj bou arreridj": 34, "برج بوعريريج": 34, "برج": 34, "bba": 34,
         "boumerdes": 35, "بومرداس": 35,
-        "el tarf": 36, "الطارف": 36, "طارف": 36, "tarf": 36,
+        "el tarf": 36, "الطارف": 36, "طارف": 36, "el tarf": 36, "tarf": 36,
         "tindouf": 37, "تندوف": 37,
         "tissemsilt": 38, "تيسمسيلت": 38,
         "el oued": 39, "الوادي": 39, "وادي": 39, "oued souf": 39, "واد سوف": 39, "oued": 39, "سوف": 39,
-        "khenchela": 40, "خنشلة": 40,
+        "khenchela": 40, "خنشلة": 40, "خنشله": 40,
         "souk ahras": 41, "سوق أهراس": 41,
-        "tipaza": 42, "تيبازة": 42, "tipa": 42,
-        "mila": 43, "ميلة": 43,
+        "tipaza": 42, "تيبازة": 42, "تيبازه": 42, "tipa": 42,
+        "mila": 43, "ميلة": 43, "ميله": 43,
         "ain defla": 44, "عين الدفلى": 44,
-        "naama": 45, "النعامة": 45, "نعامة": 45,
+        "naama": 45, "النعامة": 45, "نعامة": 45, "النعامه": 45, "نعامه": 45, "naama": 45,
         "ain temouchent": 46, "عين تموشنت": 46,
-        "ghardaia": 47, "غرداية": 47,
+        "ghardaia": 47, "غرداية": 47, "غردايه": 47,
         "relizane": 48, "غليزان": 48,
         "timimoun": 49, "تيميمون": 49,
         "bordj badji mokhtar": 50, "برج باجي مختار": 50, "bbm": 50,
         "ouled djellal": 51, "أولاد جلال": 51, "ولاد جلال": 51, "odj": 51,
         "beni abbes": 52, "بني عباس": 52,
-        "in salah": 53, "إن صالح": 53, "عين صالح": 53, "ain salah": 53,
-        "in guezzam": 54, "إن قزام": 54, "عين قزام": 54, "ain guezzam": 54,
+        "in salah": 53, "إن صالح": 53, "عين صالح": 53,
+        "in guezzam": 54, "إن قزام": 54, "عين قزام": 54,
         "touggourt": 55, "تقرت": 55,
         "djanet": 56, "جانت": 56,
         "el mghair": 57, "المغير": 57, "مغير": 57,
-        "el meniaa": 58, "المنيعة": 58, "منيعة": 58
+        "el meniaa": 58, "المنيعة": 58, "منيعة": 58, "المنيعه": 58, "منيعه": 58
     };
 
     const OFFLINE_CENTERS = {
@@ -248,53 +256,61 @@
     let allWilayasApiCache = JSON.parse(localStorage.getItem('yal_wilayas')) || [];
     let allCommunesApiCache = JSON.parse(localStorage.getItem('yal_communes')) || [];
 
-    // دالة تنظيف النص (محدثة لتدعم الحروف العربية بشكل أفضل)
+    // =====================================
+    // دالة تنظيف النص (محسنة)
+    // =====================================
     function normalizeText(text) {
         if (!text) return "";
         let str = text.toLowerCase().trim();
-        str = str.replace(/(آ|إ|أ)/g, 'ا').replace(/ة/g, 'ه').replace(/ئ/g, 'ي').replace(/ى/g, 'ي');
-        // السماح بالحروف العربية (\u0600-\u06FF) والمسافات
+        // توحيد الألف فقط، وترك التاء المربوطة والهاء كما هي للمقارنة الدقيقة
+        str = str.replace(/(آ|إ|أ)/g, 'ا'); 
         str = str.replace(/[^a-z0-9\u0600-\u06FF\s]/g, ""); 
         return str.trim();
     }
 
-    // الدالة الذكية للبحث عن رقم الولاية
+    // =====================================
+    // دالة البحث الذكي عن الولاية (The Smart Finder)
+    // =====================================
     function getWilayaIdByName(rawName) {
         if (!rawName) return null;
         
-        // إذا كان إدخال رقمي مباشر
         const matchNum = rawName.match(/^(\d+)/);
         if (matchNum) return parseInt(matchNum[1]);
 
-        // تنظيف النص
         let cleanName = normalizeText(rawName); 
         cleanName = cleanName.replace("wilaya", "").trim();
 
-        // 1. البحث المباشر (التطابق التام)
+        // 1. التطابق التام
         if (wilayaMapping[cleanName]) return wilayaMapping[cleanName];
         
-        // 2. محاولة إزالة "ال" التعريف (مثل: "المدية" -> "مدية")
+        // 2. إزالة "ال" (المدية -> مدية)
         if (cleanName.startsWith("ال")) {
             const withoutAl = cleanName.substring(2).trim();
             if (wilayaMapping[withoutAl]) return wilayaMapping[withoutAl];
         }
 
-        // 3. محاولة إضافة "ال" التعريف (مثل: "مدية" -> "المدية")
+        // 3. إضافة "ال" (مدية -> المدية)
         const withAl = "ال" + cleanName;
         if (wilayaMapping[withAl]) return wilayaMapping[withAl];
 
-        // 4. محاولة إضافة "el" للكلمات اللاتينية (مثل: "tarf" -> "el tarf")
+        // 4. تبديل التاء المربوطة بالهاء والعكس (لضمان تغطية الأخطاء الإملائية)
+        let altName = cleanName;
+        if (cleanName.endsWith("ة")) altName = cleanName.slice(0, -1) + "ه";
+        else if (cleanName.endsWith("ه")) altName = cleanName.slice(0, -1) + "ة";
+        if (wilayaMapping[altName]) return wilayaMapping[altName];
+
+        // 5. الفرنسية
         const withEl = "el " + cleanName;
         if (wilayaMapping[withEl]) return wilayaMapping[withEl];
 
-        // 5. البحث الجزئي (Fallback) - يبحث إذا كانت الكلمة جزء من اسم الولاية
+        // 6. البحث الجزئي
         for (const [key, val] of Object.entries(wilayaMapping)) {
             if (key.length > 2 && (cleanName.includes(key) || key.includes(cleanName))) {
                 return val;
             }
         }
 
-        // 6. البحث في كاش الـ API (الفرنسي الرسمي)
+        // 7. البحث في الـ API Cache
         if (allWilayasApiCache.length > 0) {
             const foundInApi = allWilayasApiCache.find(w => normalizeText(w.name) === cleanName);
             if (foundInApi) return foundInApi.id;
@@ -461,7 +477,6 @@
         }
     }
 
-    // عرض الطلبات (بدون القائمة المنسدلة، فقط شارة توضيحية)
     onValue(ordersRef, async (snapshot) => {
         shippingContainer.innerHTML = '';
         const orders = snapshot.val() || {};
@@ -508,7 +523,7 @@
     });
 
     // ============================================================
-    //  زر الإرسال المحدث (Validation -> Translation -> Sending)
+    //  زر الإرسال (مع الفحص المسبق والتحقق الصارم)
     // ============================================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const btn = this; 
@@ -518,9 +533,8 @@
         if(!providerId) return alert('⚠️ الرجاء اختيار شركة التوصيل أولاً.');
         if(checks.length === 0) return alert('⚠️ لم تقم بتحديد أي طلبيات.');
         
-        // التحقق من تحميل البيانات الأساسية
         if(allCentersCache.length === 0) {
-           if(!confirm("⚠️ تحذير: قائمة المكاتب غير محملة. هل تود الاستمرار بالبيانات الاحتياطية؟")) return;
+           if(!confirm("⚠️ تحذير: قائمة المكاتب غير محملة من السيرفر. هل تود الاستمرار بالبيانات الاحتياطية؟")) return;
         }
 
         btn.textContent = "🔍 جاري الفحص والترجمة..."; 
@@ -539,13 +553,12 @@
             return; 
         }
 
-        // تحديث البيانات إذا لزم الأمر
         if(apiData.driverType === 'yalidine_style' && allCentersCache.length === 0) {
             await fetchGuepexData(apiData.apiUrl, apiData.apiKey, apiData.apiToken);
         }
 
         // ============================================================
-        // المرحلة الأولى: الترجمة والتجهيز (Validation & Preparation)
+        // المرحلة الأولى: التحقق (Validation Phase)
         // ============================================================
         let readyToSendList = []; 
         let errorMessages = [];   
@@ -574,16 +587,17 @@
                 let finalPriceToSend = currentTotal - (marketingDiscount * qty); 
                 if (finalPriceToSend < 0) finalPriceToSend = 0; 
 
-                // 3. الترجمة الذكية للولاية
+                // 3. التحقق من الولاية (هنا يحدث السحر)
                 let rawWilaya = order.customerWilaya || order.state || "";
                 let rawCommune = (order.customerCommune || "").trim();
-                let wilayaId = getWilayaIdByName(rawWilaya); // استخدام القاموس الذكي
+                let wilayaId = getWilayaIdByName(rawWilaya); 
 
+                // إذا لم يتم التعرف على الولاية، نوقف العملية لهذا الطلب
                 if (!wilayaId) {
-                    throw new Error(`لم يتم التعرف على الولاية: "${rawWilaya}".`);
+                    throw new Error(`لم يتم التعرف على الولاية: "${rawWilaya}". يرجى تصحيح الاسم.`);
                 }
 
-                // محاولة إيجاد الوجهة الصحيحة
+                // محاولة إيجاد الوجهة (البلدية أو المكتب)
                 let destination = resolveGuepexDestination(
                     { wilayaId, rawCommune, isStopDesk, address: order.customerAddress || rawCommune },
                     allCentersCache, allWilayasApiCache, allCommunesApiCache
@@ -592,7 +606,7 @@
                 let phone = (order.customerPhone || order.phone || "").replace(/[^0-9]/g, ''); 
                 if(phone.length === 9) phone = '0'+phone;
 
-                // تجهيز البيانات
+                // تجهيز كائن البيانات
                 let parcelObj = {
                     "order_id": cleanOrderId,
                     "firstname": fullName,
@@ -622,6 +636,7 @@
                 });
 
             } catch(err) {
+                // تجميع الأخطاء
                 errorMessages.push(`❌ ${fullName}: ${err.message}`);
             }
         }
@@ -637,11 +652,11 @@
             msg += errorMessages.join("\n");
             msg += "\n\nالرجاء تصحيح هذه الطلبات يدوياً ثم المحاولة مرة أخرى.";
             alert(msg);
-            return; 
+            return; // توقف تام
         }
 
         // ============================================================
-        // المرحلة الثانية: الإرسال الفعلي
+        // المرحلة الثانية: الإرسال (Execution Phase)
         // ============================================================
         if(!confirm(`✅ تمت ترجمة جميع العناوين بنجاح (${readyToSendList.length} طلب).\nهل أنت متأكد من الإرسال الآن؟`)) {
             btn.textContent = "📤 إرسال المحدد"; 
@@ -781,7 +796,7 @@
     window.delZ=(k)=>{if(confirm('حذف المنطقة؟')) remove(ref(db,`shipping_zones/${k}`));};
 
     // =======================================================
-    // دوال فتح البطاقة والحفظ مع القائمة المنسدلة
+    // دوال فتح البطاقة والحفظ
     // =======================================================
     window.openDetails = async (id) => { 
         const orderSnap = await get(ref(db, 'orders/'+id)); 
@@ -794,7 +809,6 @@
             document.getElementById('editCommune').value = o.customerCommune||''; 
             document.getElementById('editAddress').value = o.customerAddress || o.address; 
             
-            // حساب السعر
             let currentTotal = parseFloat(o.productTotal); 
             if(isNaN(currentTotal)) currentTotal = calculateProductOnlyPrice(o); 
             let marketingDiscount = 0; 
@@ -809,7 +823,7 @@
             if(netPrice < 0) netPrice = 0; 
             document.getElementById('editProductPrice').value = netPrice; 
 
-            // ضبط القائمة المنسدلة داخل البطاقة
+            // ضبط القائمة المنسدلة
             const isDesk = (o.deliveryOption && (o.deliveryOption.includes('desk') || o.deliveryOption.includes('مكتب')));
             document.getElementById('editDeliveryOption').value = isDesk ? 'desk' : 'home';
 
@@ -831,7 +845,7 @@
             customerCommune:document.getElementById('editCommune').value, 
             customerAddress:document.getElementById('editAddress').value, 
             productTotal: parseFloat(document.getElementById('editProductPrice').value),
-            deliveryOption: delOptionText // حفظ خيار التوصيل الجديد
+            deliveryOption: delOptionText 
         }); 
         document.getElementById('orderDetailModal').classList.add('hidden'); 
         alert("✅ تم حفظ جميع بيانات الطلب بنجاح"); 
