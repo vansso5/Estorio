@@ -24,14 +24,6 @@
   </div>
 </nav>
 
-<div class="visitors-wrapper">
-  <div id="liveVisitors" class="live-visitors-badge inactive">
-    <span class="live-dot"></span>
-    <span style="margin-right:5px">عدد الزوار الآن: </span>
-    <strong id="visitorsCount" style="margin:0 4px">0</strong>
-  </div>
-</div>
-
 <div class="container">
     <h2 style="margin-bottom: 20px; color: var(--primary-color);">⚙️ إعداد شركات التوصيل (API)</h2>
     <div class="form-card" style="margin-bottom: 30px;">
@@ -96,7 +88,6 @@
     <div id="zonesContainer" class="orders-grid" style="margin-top: 20px;"></div>
 </div>
 
-<!-- المودال -->
 <div id="orderDetailModal" class="modal hidden">
     <div class="modal-content">
       <button class="close-modal-btn" id="closeDetailModal">&times;</button>
@@ -141,17 +132,24 @@
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     
     // ==========================================
-    // 🌍 المكاتب الرئيسية (احتياط)
+    // 🌍 المكاتب الرئيسية لكل ولاية (Backup)
     // ==========================================
     const OFFLINE_CENTERS = {
-        1: 10101, 2: 20101, 3: 30101, 4: 40101, 5: 50101, 6: 60101, 7: 70101, 8: 80101,
-        9: 90101, 10: 100101, 11: 110101, 12: 120101, 13: 130101, 14: 140101, 15: 150101, 16: 163001,
-        17: 170101, 18: 180101, 19: 190101, 20: 200101, 21: 210101, 22: 220101, 23: 230101, 24: 240101,
-        25: 250101, 26: 260101, 27: 270101, 28: 280101, 29: 290101, 30: 300101, 31: 310101, 32: 320101,
-        33: 330101, 34: 340101, 35: 350101, 36: 360101, 37: 370101, 38: 380101, 39: 390101, 40: 400101,
-        41: 410101, 42: 420101, 43: 430101, 44: 440101, 45: 450101, 46: 460101, 47: 470101, 48: 480101,
-        49: 490101, 50: 500101, 51: 510101, 52: 520101, 53: 530101, 54: 540101, 55: 550101, 56: 560101,
-        57: 570101, 58: 580101
+        1: { id: 10101, commune: "Adrar" }, 2: { id: 20101, commune: "Chlef" }, 3: { id: 30101, commune: "Laghouat" }, 4: { id: 40101, commune: "Oum El Bouaghi" },
+        5: { id: 50101, commune: "Batna" }, 6: { id: 60101, commune: "Bejaia" }, 7: { id: 70101, commune: "Biskra" }, 8: { id: 80101, commune: "Bechar" },
+        9: { id: 90101, commune: "Blida" }, 10: { id: 100101, commune: "Bouira" }, 11: { id: 110101, commune: "Tamanrasset" }, 12: { id: 120101, commune: "Tebessa" },
+        13: { id: 130101, commune: "Tlemcen" }, 14: { id: 140101, commune: "Tiaret" }, 15: { id: 150101, commune: "Tizi Ouzou" }, 16: { id: 163001, commune: "Bordj El Kiffan" },
+        17: { id: 170101, commune: "Djelfa" }, 18: { id: 180101, commune: "Jijel" }, 19: { id: 190101, commune: "Setif" }, 20: { id: 200101, commune: "Saida" },
+        21: { id: 210101, commune: "Skikda" }, 22: { id: 220101, commune: "Sidi Bel Abbes" }, 23: { id: 230101, commune: "Annaba" }, 24: { id: 240101, commune: "Guelma" },
+        25: { id: 250101, commune: "Constantine" }, 26: { id: 260101, commune: "Medea" }, 27: { id: 270101, commune: "Mostaganem" }, 28: { id: 280101, commune: "M'Sila" },
+        29: { id: 290101, commune: "Mascara" }, 30: { id: 300101, commune: "Ouargla" }, 31: { id: 310101, commune: "Oran" }, 32: { id: 320101, commune: "El Bayadh" },
+        33: { id: 330101, commune: "Illizi" }, 34: { id: 340101, commune: "Bordj Bou Arreridj" }, 35: { id: 350101, commune: "Boumerdes" }, 36: { id: 360101, commune: "El Tarf" },
+        37: { id: 370101, commune: "Tindouf" }, 38: { id: 380101, commune: "Tissemsilt" }, 39: { id: 390101, commune: "El Oued" }, 40: { id: 400101, commune: "Khenchela" },
+        41: { id: 410101, commune: "Souk Ahras" }, 42: { id: 420101, commune: "Tipaza" }, 43: { id: 430101, commune: "Mila" }, 44: { id: 440101, commune: "Ain Defla" },
+        45: { id: 450101, commune: "Naama" }, 46: { id: 460101, commune: "Ain Temouchent" }, 47: { id: 470101, commune: "Ghardaia" }, 48: { id: 480101, commune: "Relizane" },
+        49: { id: 490101, commune: "Timimoun" }, 50: { id: 500101, commune: "Bordj Badji Mokhtar" }, 51: { id: 510101, commune: "Ouled Djellal" }, 52: { id: 520101, commune: "Beni Abbes" },
+        53: { id: 530101, commune: "In Salah" }, 54: { id: 540101, commune: "In Guezzam" }, 55: { id: 550101, commune: "Touggourt" }, 56: { id: 560101, commune: "Djanet" },
+        57: { id: 570101, commune: "El M'Ghair" }, 58: { id: 580101, commune: "El Meniaa" }
     };
 
     // قاموس الترجمة
@@ -168,13 +166,16 @@
 
     let allCentersCache = []; 
     let allWilayasApiCache = []; 
-    let allCommunesApiCache = []; // 🔥 قائمة البلديات
+    let allCommunesApiCache = []; 
 
+    // 🔥 دالة Normalization المحسنة 🔥
     function normalizeText(text) {
         if (!text) return "";
         let str = text.toLowerCase().trim();
-        str = str.replace(/(آ|إ|أ)/g, 'ا').replace(/ة/g, 'ه').replace(/ئ/g, 'ي').replace(/ى/g, 'ي');
-        str = str.replace(/^ال/, ''); 
+        str = str.replace(/(آ|إ|أ|a|à|â)/g, 'a').replace(/(ة|e|é|è|ê)/g, 'e').replace(/(i|ï|î)/g, 'i').replace(/(o|ô)/g, 'o').replace(/(u|ù|û)/g, 'u').replace(/(ç)/g, 'c');
+        // حذف البادئات الشائعة للمقارنة الدقيقة
+        str = str.replace(/\b(el|al|ben|beni|bou|sidi|lalla|ouled)\b/g, '');
+        str = str.replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
         return str;
     }
 
@@ -236,9 +237,9 @@
     });
 
     // ==========================================
-    // 🔥 Resolve Function: المنطق الذكي لتحديد الوجهة 🔥
+    // 🔥 الدالة الذهبية: resolveGuepexDestination
     // ==========================================
-    function resolveDestination(orderData, centersList, communesList, wilayasList) {
+    function resolveGuepexDestination(orderData, centersList, wilayasList, communesList) {
         const { wilayaId, rawCommune, isStopDesk } = orderData;
         
         // 1. تحديد اسم الولاية الرسمي (من API)
@@ -247,8 +248,8 @@
         if (foundWilaya) finalWilayaName = foundWilaya.name;
 
         // 2. معالجة اسم البلدية (ترجمة)
-        let searchCommune = rawCommune;
-        if (communeMap[rawCommune]) searchCommune = communeMap[rawCommune];
+        let searchCommune = rawCommune || "";
+        if (communeMap[searchCommune]) searchCommune = communeMap[searchCommune];
         const normalizedSearch = normalizeText(searchCommune);
 
         // --- الحالة أ: توصيل للمكتب (Stop Desk) ---
@@ -256,30 +257,29 @@
             let stopDeskId = null;
             
             // البحث في المكاتب (Centers)
-            // فلترة حسب الولاية أولاً
             const centersInWilaya = centersList.filter(c => c.wilaya_id == wilayaId);
             
-            // محاولة إيجاد تطابق في اسم المكتب أو اسم بلدية المكتب
+            // محاولة إيجاد تطابق
             const foundCenter = centersInWilaya.find(c => 
-                c.name.toLowerCase().includes(normalizedSearch) || 
+                normalizeText(c.name).includes(normalizedSearch) || 
                 (c.commune_name && normalizeText(c.commune_name).includes(normalizedSearch))
             );
 
             if (foundCenter) {
                 stopDeskId = foundCenter.center_id || foundCenter.id;
             } else {
-                // استخدام المكتب الاحتياطي للولاية
-                if (OFFLINE_CENTERS[wilayaId]) stopDeskId = OFFLINE_CENTERS[wilayaId];
+                // استخدام المكتب الاحتياطي
+                if (OFFLINE_CENTERS[wilayaId]) stopDeskId = OFFLINE_CENTERS[wilayaId].id;
                 else if (centersInWilaya.length > 0) stopDeskId = centersInWilaya[0].center_id || centersInWilaya[0].id;
             }
 
-            if (!stopDeskId) throw new Error(`لا توجد مكاتب في ولاية ${finalWilayaName}`);
+            if (!stopDeskId) throw new Error(`لا توجد مكاتب متاحة في ولاية ${finalWilayaName}`);
 
             return {
                 to_wilaya_name: finalWilayaName,
                 is_stopdesk: true,
-                stopdesk_id: stopDeskId 
-                // ⚠️ هام: لا نرسل to_commune_name مع stopdesk_id
+                stopdesk_id: stopDeskId
+                // ⚠️ لا نعيد to_commune_name
             };
         }
 
@@ -287,29 +287,27 @@
         else {
             let finalCommuneName = null;
 
-            // 1. البحث الدقيق في قائمة البلديات (Communes List)
+            // 1. البحث في قائمة البلديات (Communes List)
             const exactCommune = communesList.find(c => c.wilaya_id == wilayaId && normalizeText(c.name) === normalizedSearch);
             
             if (exactCommune) {
                 finalCommuneName = exactCommune.name;
             } else {
-                // 2. البحث التقريبي في قائمة البلديات
+                // 2. البحث التقريبي
                 const partialCommune = communesList.find(c => c.wilaya_id == wilayaId && normalizeText(c.name).includes(normalizedSearch));
                 if (partialCommune) {
                     finalCommuneName = partialCommune.name;
                 } else {
-                    // 3. الملاذ الأخير: إرسال اسم الولاية كبلدية (Chef-lieu) لتفادي الرفض
-                    // هذا مقبول في Guepex لتوصيل المنزل
+                    // 3. الملاذ الأخير: اسم الولاية (Chef-lieu) لضمان عدم إرجاع null
                     finalCommuneName = finalWilayaName;
-                    
-                    // تصحيح خاص للجزائر العاصمة
-                    if (finalWilayaName.toLowerCase() === 'alger') finalCommuneName = "Alger Centre";
+                    // تصحيح خاص للجزائر
+                    if (normalizeText(finalWilayaName) === 'alger') finalCommuneName = "Alger Centre";
                 }
             }
 
             return {
                 to_wilaya_name: finalWilayaName,
-                to_commune_name: finalCommuneName,
+                to_commune_name: finalCommuneName, // ✅ لن يكون null أبداً
                 is_stopdesk: false
             };
         }
@@ -396,14 +394,14 @@
                 let wilayaId = getWilayaIdByName(rawWilaya); 
                 let rawCommune = (order.customerCommune || "").trim();
 
-                // 🔥 استخدام دالة الحل الذكية (Resolve Function) 🔥
+                // 🔥 استدعاء الدالة المصححة بالترتيب الصحيح 🔥
                 let destination = null;
                 try {
-                    destination = resolveDestination(
+                    destination = resolveGuepexDestination(
                         { wilayaId, rawCommune, isStopDesk },
-                        allCentersCache,
-                        allCommunesApiCache,
-                        allWilayasApiCache
+                        allCentersCache,      // مراكز
+                        allWilayasApiCache,   // ولايات 
+                        allCommunesApiCache   // بلديات
                     );
                 } catch(err) {
                     failCount++; errorDetails += `\n❌ ${order.customerName}: ${err.message}`; continue;
@@ -426,7 +424,7 @@
                         "price": finalPriceToSend, "freeshipping": false, "do_insurance": false, "declared_value": finalPriceToSend,
                         "has_exchange": false,
                         "height": 10, "width": 20, "length": 30, "weight": 1,
-                        ...destination // دمج البيانات الناتجة من الدالة (التي تضمن الصحة)
+                        ...destination // ✅ دمج النتيجة المضمونة
                     };
                     
                     payload = [parcelObj];
