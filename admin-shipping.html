@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>إدارة الشحن والربط</title>
 
-<!-- ربط الخط والستايل -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin-style.css">
 
@@ -14,7 +13,6 @@
 
 <nav>
   <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-
   <div class="logo">لوحة التحكم</div>
   <div class="links">
     <a href="admin-products.html" class="nav-link">المنتجات</a>
@@ -27,6 +25,14 @@
     <a href="#" id="logoutBtn" class="nav-link" style="display: none;">تسجيل الخروج</a>
   </div>
 </nav>
+
+<div class="visitors-wrapper">
+  <div id="liveVisitors" class="live-visitors-badge inactive">
+    <span class="live-dot"></span>
+    <span style="margin-right:5px">عدد الزوار الآن: </span>
+    <strong id="visitorsCount" style="margin:0 4px">0</strong>
+  </div>
+</div>
 
 <div class="container">
     
@@ -142,9 +148,6 @@
     </div>
   </div>
 
-<!-- ============================================== -->
-<!-- 1. كود Javascript الأساسي (Module) -->
-<!-- ============================================== -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getDatabase, ref, push, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
@@ -159,11 +162,24 @@
     const shipProviderSelect = document.getElementById('shipProviderSelect');
     const savedProvidersList = document.getElementById('savedProvidersList');
     
-    // قائمة الولايات الأساسية للبحث عن الرقم
+    // قائمة الولايات لاستخراج الرقم (مهمة جداً)
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
+    
+    // ==========================================
+    // 🚑 قائمة الطوارئ للمكاتب (Fallback Centers)
+    // في حال فشل الاتصال أو لم يجد مكتباً، سيأخذ الرقم من هنا
+    // ==========================================
+    const MANUAL_CENTER_IDS = {
+        16: 163001, // الجزائر - برج الكيفان
+        1: 10101,   // أدرار
+        19: 190201, // سطيف
+        31: 310101, // وهران
+        6: 60101,   // بجاية
+        // يمكنك إضافة المزيد هنا إذا واجهت مشاكل في ولايات أخرى
+    };
 
     let allCentersCache = []; 
-    let allWilayasApiCache = []; // لتخزين بيانات الولايات
+    let allWilayasApiCache = [];
 
     function normalizeText(text) {
         if (!text) return "";
@@ -177,6 +193,7 @@
         if(!arabicName) return null;
         const matchNum = arabicName.match(/^(\d+)/);
         if (matchNum) return parseInt(matchNum[1]);
+
         const cleanName = normalizeText(arabicName);
         const match = allWilayas.find(w => normalizeText(w.split('. ')[1]) === cleanName);
         if(match) return parseInt(match.split('.')[0]); 
@@ -189,9 +206,7 @@
     });
     document.getElementById('logoutBtn').addEventListener('click', async () => await signOut(auth));
 
-    // ============================================
-    // جلب البيانات من Guepex (مع دعم التصفح Pagination)
-    // ============================================
+    // جلب كل الصفحات (لتفادي نقص البيانات)
     async function fetchAllPages(url, headers) {
         let allData = [];
         let page = 1;
@@ -199,23 +214,17 @@
 
         while(hasMore) {
             try {
-                // استخدام الرمز & أو ? حسب الرابط
                 const sep = url.includes('?') ? '&' : '?';
                 const finalUrl = `${url}${sep}page=${page}&page_size=1000`;
                 
                 const res = await fetch('https://corsproxy.io/?' + encodeURIComponent(finalUrl), { headers });
                 const json = await res.json();
                 
-                if (json.data) {
-                    allData = allData.concat(json.data);
-                }
+                if (json.data) allData = allData.concat(json.data);
                 
                 hasMore = json.has_more;
                 page++;
-                
-                // حماية من الحلقات اللانهائية
-                if(page > 10) hasMore = false; 
-
+                if(page > 15) hasMore = false; // حماية
             } catch(e) {
                 console.error("Error fetching page " + page, e);
                 hasMore = false;
@@ -233,14 +242,9 @@
         const headers = { 'X-API-ID': apiId, 'X-API-TOKEN': apiToken };
 
         try {
-            console.log("جاري جلب كل البيانات من شركة التوصيل...");
-            
-            // جلب كل الولايات
+            console.log("جاري جلب البيانات من شركة التوصيل...");
             allWilayasApiCache = await fetchAllPages(`${baseUrl}/wilayas`, headers);
-            
-            // جلب كل المراكز
             allCentersCache = await fetchAllPages(`${baseUrl}/centers`, headers);
-
             console.log(`تم تحميل ${allWilayasApiCache.length} ولاية و ${allCentersCache.length} مكتب.`);
         } catch(e) { console.error("خطأ API:", e); }
     }
@@ -335,10 +339,8 @@
         return (total - ship) > 0 ? (total - ship) : total;
     }
 
-    const wilayaMapping = { "أدرار": "Adrar", "الشلف": "Chlef", "الأغواط": "Laghouat", "أم البواقي": "Oum El Bouaghi", "باتنة": "Batna", "بجاية": "Bejaia", "بسكرة": "Biskra", "بشار": "Bechar", "البليدة": "Blida", "البويرة": "Bouira", "تمنراست": "Tamanrasset", "تبسة": "Tebessa", "تلمسان": "Tlemcen", "تيارت": "Tiaret", "تيزي وزو": "Tizi Ouzou", "الجزائر": "Alger", "الجلفة": "Djelfa", "جيجل": "Jijel", "سطيف": "Setif", "سعيدة": "Saida", "سكيكدة": "Skikda", "سيدي بلعباس": "Sidi Bel Abbes", "عنابة": "Annaba", "قالمة": "Guelma", "قسنطينة": "Constantine", "المدية": "Medea", "مستغانم": "Mostaganem", "المسيلة": "M'sila", "معسكر": "Mascara", "ورقلة": "Ouargla", "وهران": "Oran", "البيض": "El Bayadh", "إليزي": "Illizi", "برج بوعريريج": "Bordj Bou Arreridj", "بومرداس": "Boumerdes", "الطارف": "El Tarf", "تندوف": "Tindouf", "تيسمسيلت": "Tissemsilt", "الوادي": "El Oued", "خنشلة": "Khenchela", "سوق أهراس": "Souk Ahras", "تيبازة": "Tipaza", "ميلة": "Mila", "عين الدفلى": "Ain Defla", "النعامة": "Naama", "عين تموشنت": "Ain Temouchent", "غرداية": "Ghardaia", "غليزان": "Relizane", "تيميمون": "Timimoun", "برج باجي مختار": "Bordj Badji Mokhtar", "أولاد جلال": "Ouled Djellal", "بني عباس": "Beni Abbes", "إن صالح": "In Salah", "إن قزام": "In Guezzam", "تقرت": "Touggourt", "جانت": "Djanet", "المغير": "El M'Ghair", "المنيعة": "El Meniaa" };
-
     // ==========================================
-    // 🔥 زر الإرسال مع تحميل كل الصفحات 🔥
+    // 🔥 زر الإرسال مع التصحيحات الشاملة 🔥
     // ==========================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const btn = this; const providerId = shipProviderSelect.value; const checks = document.querySelectorAll('.order-checkbox:checked');
@@ -352,7 +354,6 @@
             if(setSnap.exists()) apiData = setSnap.val(); else throw new Error("بيانات الشركة مفقودة");
         } catch(e) { alert(e.message); btn.textContent = "📤 إرسال المحدد"; btn.disabled = false; return; }
 
-        // تحميل البيانات الحقيقية من Guepex (جميع الصفحات)
         if(apiData.driverType === 'yalidine_style') {
             await fetchGuepexData(apiData.apiUrl, apiData.apiKey, apiData.apiToken);
         }
@@ -388,9 +389,8 @@
                     if (foundWilaya) finalWilayaName = foundWilaya.name;
                 } else {
                     let tempW = rawWilaya.replace(/^[0-9]+[\.\-\s]*/, '').trim(); 
-                    if(wilayaMapping[tempW]) finalWilayaName = wilayaMapping[tempW];
+                    if(normalizeText(tempW) === 'الجزائر') finalWilayaName = 'Alger';
                     else finalWilayaName = tempW;
-                    if(normalizeText(finalWilayaName) === 'الجزائر') finalWilayaName = 'Alger';
                 }
 
                 // 2. تحديد البلدية
@@ -411,9 +411,10 @@
                     }
                 }
 
-                // 3. تحديد المكتب
+                // 3. تحديد المكتب (Stop Desk ID)
                 let stopDeskId = null;
                 if (isStopDesk && apiData.driverType === 'yalidine_style') {
+                    // تصفية المكاتب في الولاية المحددة
                     let centersInWilaya = allCentersCache.filter(c => c.wilaya_id == wilayaId);
                     
                     if(centersInWilaya.length === 0) {
@@ -429,12 +430,18 @@
                         if (foundCenter) {
                             stopDeskId = foundCenter.center_id || foundCenter.id;
                         } else {
-                            // الحل السحري: أخذ أول مكتب في القائمة
+                            // الحل السحري 1: أخذ أول مكتب في القائمة
                             stopDeskId = centersInWilaya[0].center_id || centersInWilaya[0].id;
                             errorDetails += `\n⚠️ تنبيه: تم اختيار مكتب (${centersInWilaya[0].name}) تلقائياً.`;
                         }
                     } else {
-                        failCount++; errorDetails += `\n⛔ لا توجد مكاتب في ${finalWilayaName} (ID: ${wilayaId})`; continue;
+                        // الحل السحري 2: القائمة اليدوية (إذا كانت القائمة فارغة من الـ API)
+                        if (MANUAL_CENTER_IDS[wilayaId]) {
+                            stopDeskId = MANUAL_CENTER_IDS[wilayaId];
+                            errorDetails += `\n⚠️ تم استخدام المكتب الاحتياطي للولاية ${wilayaId} (ربما هناك مشكلة في الاتصال بالمكاتب).`;
+                        } else {
+                            failCount++; errorDetails += `\n⛔ لا توجد مكاتب في ${finalWilayaName} (ID: ${wilayaId})`; continue;
+                        }
                     }
                 }
 
@@ -494,6 +501,7 @@
         btn.textContent = "📤 إرسال المحدد"; btn.disabled = false;
     });
 
+    // ... باقي الدوال (التفاصيل، الحذف، المناطق) ...
     window.openDetails = async (id) => { const orderSnap = await get(ref(db, 'orders/'+id)); if(orderSnap.exists()) { const o = orderSnap.val(); document.getElementById('currentOrderId').value = id; document.getElementById('editName').value = o.customerName || o.name; document.getElementById('editPhone').value = o.customerPhone || o.phone; document.getElementById('editWilaya').value = o.customerWilaya || o.state; document.getElementById('editCommune').value = o.customerCommune||''; document.getElementById('editAddress').value = o.customerAddress || o.address; let currentTotal = parseFloat(o.productTotal); if(isNaN(currentTotal)) currentTotal = calculateProductOnlyPrice(o); let marketingDiscount = 0; if(o.productId) { const prodSnap = await get(ref(db, `products/${o.productId}`)); if(prodSnap.exists()) marketingDiscount = parseFloat(prodSnap.val().marketingDiscount || 0); } const qty = parseInt(o.quantity || 1); let netPrice = currentTotal - (marketingDiscount * qty); if(netPrice < 0) netPrice = 0; document.getElementById('editProductPrice').value = netPrice; document.getElementById('orderDetailModal').classList.remove('hidden'); } }
     document.getElementById('closeDetailModal').addEventListener('click',()=>document.getElementById('orderDetailModal').classList.add('hidden'));
     document.getElementById('saveChangesBtn').addEventListener('click',async()=>{ const id=document.getElementById('currentOrderId').value; await update(ref(db,'orders/'+id), { customerName:document.getElementById('editName').value, customerPhone:document.getElementById('editPhone').value, customerWilaya:document.getElementById('editWilaya').value, customerCommune:document.getElementById('editCommune').value, customerAddress:document.getElementById('editAddress').value, productTotal: parseFloat(document.getElementById('editProductPrice').value) }); document.getElementById('orderDetailModal').classList.add('hidden'); alert("✅ تم حفظ التعديلات"); });
