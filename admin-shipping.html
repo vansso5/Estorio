@@ -24,15 +24,10 @@
   </div>
 </nav>
 
-<div class="visitors-wrapper">
-  <div id="liveVisitors" class="live-visitors-badge inactive">
-    <span class="live-dot"></span>
-    <span style="margin-right:5px">عدد الزوار الآن: </span>
-    <strong id="visitorsCount" style="margin:0 4px">0</strong>
-  </div>
-</div>
 
 <div class="container">
+    
+    <!-- القسم 1: إعدادات الشركة -->
     <h2 style="margin-bottom: 20px; color: var(--primary-color);">⚙️ إعداد شركات التوصيل (API)</h2>
     <div class="form-card" style="margin-bottom: 30px;">
         <h4 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">إضافة شركة جديدة / تعديل</h4>
@@ -64,6 +59,7 @@
         </div>
     </div>
 
+    <!-- القسم 2: إرسال الطلبات -->
     <h2 style="margin-bottom: 20px; color: var(--primary-color);">📦 إرسال الطلبات (Shipping)</h2>
     <div class="form-card" style="margin-bottom: 30px;">
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
@@ -83,6 +79,7 @@
         </div>
     </div>
 
+    <!-- القسم 3: المناطق -->
     <h2 style="margin-bottom: 20px; color: var(--primary-color);">💰 تسعيرات التوصيل (للمتجر)</h2>
     <div class="form-card">
       <div style="display:flex; gap:10px; margin-bottom:15px;">
@@ -96,6 +93,7 @@
     <div id="zonesContainer" class="orders-grid" style="margin-top: 20px;"></div>
 </div>
 
+<!-- المودال -->
 <div id="orderDetailModal" class="modal hidden">
     <div class="modal-content">
       <button class="close-modal-btn" id="closeDetailModal">&times;</button>
@@ -136,38 +134,38 @@
     const shipProviderSelect = document.getElementById('shipProviderSelect');
     const savedProvidersList = document.getElementById('savedProvidersList');
     
-    // قائمة الولايات
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     
-    // المكاتب الرئيسية لكل ولاية (Backup)
-    const OFFLINE_CENTERS = {
-        1: { id: 10101, commune: "Adrar" }, 2: { id: 20101, commune: "Chlef" }, 3: { id: 30101, commune: "Laghouat" }, 4: { id: 40101, commune: "Oum El Bouaghi" },
-        5: { id: 50101, commune: "Batna" }, 6: { id: 60101, commune: "Bejaia" }, 7: { id: 70101, commune: "Biskra" }, 8: { id: 80101, commune: "Bechar" },
-        9: { id: 90101, commune: "Blida" }, 10: { id: 100101, commune: "Bouira" }, 11: { id: 110101, commune: "Tamanrasset" }, 12: { id: 120101, commune: "Tebessa" },
-        13: { id: 130101, commune: "Tlemcen" }, 14: { id: 140101, commune: "Tiaret" }, 15: { id: 150101, commune: "Tizi Ouzou" }, 16: { id: 163001, commune: "Bordj El Kiffan" },
-        17: { id: 170101, commune: "Djelfa" }, 18: { id: 180101, commune: "Jijel" }, 19: { id: 190101, commune: "Setif" }, 20: { id: 200101, commune: "Saida" },
-        21: { id: 210101, commune: "Skikda" }, 22: { id: 220101, commune: "Sidi Bel Abbes" }, 23: { id: 230101, commune: "Annaba" }, 24: { id: 240101, commune: "Guelma" },
-        25: { id: 250101, commune: "Constantine" }, 26: { id: 260101, commune: "Medea" }, 27: { id: 270101, commune: "Mostaganem" }, 28: { id: 280101, commune: "M'Sila" },
-        29: { id: 290101, commune: "Mascara" }, 30: { id: 300101, commune: "Ouargla" }, 31: { id: 310101, commune: "Oran" }, 32: { id: 320101, commune: "El Bayadh" },
-        33: { id: 330101, commune: "Illizi" }, 34: { id: 340101, commune: "Bordj Bou Arreridj" }, 35: { id: 350101, commune: "Boumerdes" }, 36: { id: 360101, commune: "El Tarf" },
-        37: { id: 370101, commune: "Tindouf" }, 38: { id: 380101, commune: "Tissemsilt" }, 39: { id: 390101, commune: "El Oued" }, 40: { id: 400101, commune: "Khenchela" },
-        41: { id: 410101, commune: "Souk Ahras" }, 42: { id: 420101, commune: "Tipaza" }, 43: { id: 430101, commune: "Mila" }, 44: { id: 440101, commune: "Ain Defla" },
-        45: { id: 450101, commune: "Naama" }, 46: { id: 460101, commune: "Ain Temouchent" }, 47: { id: 470101, commune: "Ghardaia" }, 48: { id: 480101, commune: "Relizane" },
-        49: { id: 490101, commune: "Timimoun" }, 50: { id: 500101, commune: "Bordj Badji Mokhtar" }, 51: { id: 510101, commune: "Ouled Djellal" }, 52: { id: 520101, commune: "Beni Abbes" },
-        53: { id: 530101, commune: "In Salah" }, 54: { id: 540101, commune: "In Guezzam" }, 55: { id: 550101, commune: "Touggourt" }, 56: { id: 560101, commune: "Djanet" },
-        57: { id: 570101, commune: "El M'Ghair" }, 58: { id: 580101, commune: "El Meniaa" }
+    // ==========================================
+    // 🌍 القائمة الذهبية: البلديات الرسمية لكل ولاية (Chef-lieu)
+    // لتفادي خطأ Unknown to_commune_name نهائياً عند التوصيل للمنزل
+    // ==========================================
+    const WILAYA_MAIN_COMMUNES = {
+        1: "Adrar", 2: "Chlef", 3: "Laghouat", 4: "Oum El Bouaghi", 5: "Batna", 6: "Bejaia", 
+        7: "Biskra", 8: "Bechar", 9: "Blida", 10: "Bouira", 11: "Tamanrasset", 12: "Tebessa", 
+        13: "Tlemcen", 14: "Tiaret", 15: "Tizi Ouzou", 16: "Alger Centre", // ملاحظة: الجزائر العاصمة
+        17: "Djelfa", 18: "Jijel", 19: "Setif", 20: "Saida", 21: "Skikda", 22: "Sidi Bel Abbes", 
+        23: "Annaba", 24: "Guelma", 25: "Constantine", 26: "Medea", 27: "Mostaganem", 28: "M'Sila", 
+        29: "Mascara", 30: "Ouargla", 31: "Oran", 32: "El Bayadh", 33: "Illizi", 34: "Bordj Bou Arreridj", 
+        35: "Boumerdes", 36: "El Tarf", 37: "Tindouf", 38: "Tissemsilt", 39: "El Oued", 40: "Khenchela", 
+        41: "Souk Ahras", 42: "Tipaza", 43: "Mila", 44: "Ain Defla", 45: "Naama", 46: "Ain Temouchent", 
+        47: "Ghardaia", 48: "Relizane", 49: "Timimoun", 50: "Bordj Badji Mokhtar", 51: "Ouled Djellal", 
+        52: "Beni Abbes", 53: "In Salah", 54: "In Guezzam", 55: "Touggourt", 56: "Djanet", 
+        57: "El M'Ghair", 58: "El Meniaa"
     };
 
-    // قاموس الترجمة
+    // المكاتب الاحتياطية (للطوارئ)
+    const OFFLINE_CENTERS = {
+        1: { id: 10101, commune: "Adrar" }, 16: { id: 163001, commune: "Bordj El Kiffan" }, 
+        19: { id: 190201, commune: "Aïn Arnat" }, 31: { id: 310101, commune: "Oran" }, 
+        6: { id: 60101, commune: "Bejaia" }, 5: { id: 50101, commune: "Batna" }
+    };
+
+    // قاموس الترجمة اليدوي
     const communeMap = {
-        "زرالدة": "Zeralda", "الجزائر": "Alger Centre", "الجزائر الوسطى": "Alger Centre", "الرويبة": "Rouiba",
-        "بئر مراد رايس": "Bir Mourad Rais", "حيدرة": "Hydra", "بن عكنون": "Ben Aknoun", "بوزريعة": "Bouzareah",
-        "الشراقة": "Cheraga", "دالي ابراهيم": "Dely Ibrahim", "القبة": "Kouba", "حسين داي": "Hussein Dey",
-        "باب الزوار": "Bab Ezzouar", "الدار البيضاء": "Dar El Beida", "الحراش": "El Harrach",
-        "بئر توتة": "Birtouta", "سيدي عبد الله": "Sidi Abdellah", "عين بنيان": "Ain Benian",
-        "سطاوالي": "Staoueli", "بابا حسن": "Baba Hassen",
-        "وهران": "Oran", "السانية": "Es Senia", "بئر الجير": "Bir El Djir", "أرزيو": "Arzew",
-        "سطيف": "Setif", "العلمة": "El Eulma", "عين ولمان": "Ain Oulmene", "البليدة": "Blida", "بوفاريك": "Boufarik"
+        "زرالدة": "Zeralda", "الجزائر": "Alger Centre", "الجزائر الوسطى": "Alger Centre", 
+        "وهران": "Oran", "سطيف": "Setif", "قسنطينة": "Constantine", "عنابة": "Annaba",
+        "البليدة": "Blida", "بوفاريك": "Boufarik"
     };
 
     let allCentersCache = []; 
@@ -178,7 +176,7 @@
         if (!text) return "";
         let str = text.toLowerCase().trim();
         str = str.replace(/(آ|إ|أ)/g, 'ا').replace(/ة/g, 'e').replace(/ئ/g, 'i').replace(/ى/g, 'i');
-        str = str.replace(/[^a-z0-9]/g, ""); // حذف كل الرموز
+        str = str.replace(/[^a-z0-9]/g, ""); 
         return str;
     }
 
@@ -239,7 +237,7 @@
     });
 
     // ==========================================
-    // 🔥 الدالة الذهبية المصححة: تضمن إرسال البلدية دائماً 🔥
+    // 🔥 الدالة النهائية (الخالية من الأخطاء) 🔥
     // ==========================================
     function resolveGuepexDestination(orderData, centersList, wilayasList, communesList) {
         const { wilayaId, rawCommune, isStopDesk } = orderData;
@@ -259,10 +257,7 @@
             let stopDeskId = null;
             let centerCommuneName = null;
             
-            // البحث في المكاتب (Centers)
             const centersInWilaya = centersList.filter(c => c.wilaya_id == wilayaId);
-            
-            // محاولة إيجاد تطابق
             const foundCenter = centersInWilaya.find(c => 
                 normalizeText(c.name).includes(normalizedSearch) || 
                 (c.commune_name && normalizeText(c.commune_name).includes(normalizedSearch))
@@ -272,11 +267,12 @@
                 stopDeskId = foundCenter.center_id || foundCenter.id;
                 centerCommuneName = foundCenter.commune_name;
             } else {
-                // استخدام المكتب الاحتياطي
+                // استخدام المكتب الاحتياطي (الأوفلاين)
                 if (OFFLINE_CENTERS[wilayaId]) {
                     stopDeskId = OFFLINE_CENTERS[wilayaId].id;
                     centerCommuneName = OFFLINE_CENTERS[wilayaId].commune;
                 }
+                // أو أول مكتب في القائمة (الأونلاين)
                 else if (centersInWilaya.length > 0) {
                     stopDeskId = centersInWilaya[0].center_id || centersInWilaya[0].id;
                     centerCommuneName = centersInWilaya[0].commune_name;
@@ -285,10 +281,9 @@
 
             if (!stopDeskId) throw new Error(`لا توجد مكاتب متاحة في ولاية ${finalWilayaName}`);
 
-            // ⚠️ التصحيح: إرسال اسم البلدية دائماً، حتى مع stopdesk_id
             return {
                 to_wilaya_name: finalWilayaName,
-                to_commune_name: centerCommuneName || finalWilayaName, // ضمان عدم إرسال null
+                to_commune_name: centerCommuneName || WILAYA_MAIN_COMMUNES[wilayaId], // ✅ إجبار إرسال اسم بلدية صحيح
                 is_stopdesk: true,
                 stopdesk_id: stopDeskId
             };
@@ -298,28 +293,23 @@
         else {
             let finalCommuneName = null;
 
-            // 1. البحث في قائمة البلديات (Communes List)
+            // 1. البحث في قائمة البلديات (Communes API)
             const exactCommune = communesList.find(c => c.wilaya_id == wilayaId && normalizeText(c.name) === normalizedSearch);
-            
-            if (exactCommune) {
-                finalCommuneName = exactCommune.name;
-            } else {
-                // 2. البحث التقريبي
+            if (exactCommune) finalCommuneName = exactCommune.name;
+            else {
                 const partialCommune = communesList.find(c => c.wilaya_id == wilayaId && normalizeText(c.name).includes(normalizedSearch));
-                if (partialCommune) {
-                    finalCommuneName = partialCommune.name;
-                } else {
-                    // 3. الملاذ الأخير: استخدام اسم البلدية الاحتياطية (من OFFLINE_CENTERS) أو اسم الولاية
-                    if(OFFLINE_CENTERS[wilayaId]) finalCommuneName = OFFLINE_CENTERS[wilayaId].commune;
-                    else finalCommuneName = finalWilayaName;
-                    
-                    if (normalizeText(finalWilayaName) === 'alger') finalCommuneName = "Alger Centre";
-                }
+                if (partialCommune) finalCommuneName = partialCommune.name;
+            }
+
+            // ⚠️ الحل السحري: إذا لم نجد الاسم، استخدم البلدية المركزية (Chef-lieu) بدلاً من الاسم الخاطئ
+            if (!finalCommuneName) {
+                finalCommuneName = WILAYA_MAIN_COMMUNES[wilayaId]; 
+                if(!finalCommuneName) finalCommuneName = finalWilayaName; // ملاذ أخير
             }
 
             return {
                 to_wilaya_name: finalWilayaName,
-                to_commune_name: finalCommuneName, // ✅ لن يكون null أبداً
+                to_commune_name: finalCommuneName, // ✅ لن يكون null، وسيكون اسماً مقبولاً
                 is_stopdesk: false
             };
         }
@@ -436,7 +426,7 @@
                         "price": finalPriceToSend, "freeshipping": false, "do_insurance": false, "declared_value": finalPriceToSend,
                         "has_exchange": false,
                         "height": 10, "width": 20, "length": 30, "weight": 1,
-                        ...destination // ✅ دمج النتيجة (الآن تحتوي على to_commune_name دائماً)
+                        ...destination // ✅ دمج النتيجة المضمونة
                     };
                     
                     payload = [parcelObj];
