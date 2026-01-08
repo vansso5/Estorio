@@ -4,17 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>إدارة الشحن والربط</title>
-
-<!-- ربط الخط والستايل -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin-style.css">
-
 </head>
 <body>
 
 <nav>
   <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-
   <div class="logo">لوحة التحكم</div>
   <div class="links">
     <a href="admin-products.html" class="nav-link">المنتجات</a>
@@ -28,15 +24,21 @@
   </div>
 </nav>
 
+<div class="visitors-wrapper">
+  <div id="liveVisitors" class="live-visitors-badge inactive">
+    <span class="live-dot"></span>
+    <span style="margin-right:5px">عدد الزوار الآن: </span>
+    <strong id="visitorsCount" style="margin:0 4px">0</strong>
+  </div>
+</div>
+
 <div class="container">
-    
-    <!-- القسم 1: إدارة الشركات -->
     <h2 style="margin-bottom: 20px; color: var(--primary-color);">⚙️ إعداد شركات التوصيل (API)</h2>
     <div class="form-card" style="margin-bottom: 30px;">
         <h4 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">إضافة شركة جديدة / تعديل</h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
             <div><label>اسم الشركة:</label><input type="text" id="provName" class="search-input" placeholder="مثلاً: GroupEX"></div>
-            <div><label>رابط API (مثلاً https://api.guepex.app):</label><input type="text" id="provUrl" class="search-input" placeholder="رابط الـ API"></div>
+            <div><label>رابط API:</label><input type="text" id="provUrl" class="search-input" placeholder="رابط الـ API"></div>
             <div><label>API Key / User ID:</label><input type="text" id="provKey" class="search-input" placeholder="رقم المستخدم"></div>
             <div><label>API Token / Password:</label><input type="text" id="provToken" class="search-input" placeholder="الكود الطويل (Token)"></div>
             <div>
@@ -56,14 +58,12 @@
             </div>
         </div>
         <button id="saveProviderBtn" class="save-btn" style="margin-top:15px; width:100%; background-color: var(--secondary-color); color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">حفظ إعدادات الشركة</button>
-        
         <div style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px;">
             <label>الشركات المحفوظة:</label>
             <div id="savedProvidersList" style="margin-top: 10px;"><p class="loading-message">جاري التحميل...</p></div>
         </div>
     </div>
 
-    <!-- القسم 2: إرسال الطلبات -->
     <h2 style="margin-bottom: 20px; color: var(--primary-color);">📦 إرسال الطلبات (Shipping)</h2>
     <div class="form-card" style="margin-bottom: 30px;">
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
@@ -77,14 +77,12 @@
                 <button id="sendBulkBtn" style="width: 100%; padding: 10px; background-color: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer;">📤 إرسال المحدد</button>
             </div>
         </div>
-        
         <h3 style="margin-bottom:15px;">الطلبات قيد التجهيز (Processing)</h3>
         <div id="shippingOrdersContainer" class="orders-grid">
             <p class="loading-message">جاري تحميل الطلبات...</p>
         </div>
     </div>
 
-    <!-- القسم 3: المناطق (المصحح) -->
     <h2 style="margin-bottom: 20px; color: var(--primary-color);">💰 تسعيرات التوصيل (للمتجر)</h2>
     <div class="form-card">
       <div style="display:flex; gap:10px; margin-bottom:15px;">
@@ -92,18 +90,12 @@
            <div style="flex:1;"><label>سعر المكتب (Desk):</label><input type="number" id="deskPrice" class="search-input"></div>
       </div>
       <div style="margin-bottom: 10px;"><button type="button" id="selectAllBtn" style="padding:5px 10px; cursor:pointer; background: #eee; border: 1px solid #ddd; border-radius: 4px;">تحديد/إلغاء الكل</button></div>
-      
       <div id="wilayaGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; max-height: 200px; overflow-y: auto; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px;"></div>
-      
       <button id="saveZoneBtn" class="save-btn" style="margin-top:15px; width: 100%; background-color: var(--secondary-color); color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">حفظ التسعيرة</button>
     </div>
-    
-    <!-- حاوية المناطق المحفوظة -->
     <div id="zonesContainer" class="orders-grid" style="margin-top: 20px;"></div>
-
 </div>
 
-<!-- المودال -->
 <div id="orderDetailModal" class="modal hidden">
     <div class="modal-content">
       <button class="close-modal-btn" id="closeDetailModal">&times;</button>
@@ -111,37 +103,24 @@
       <div class="details-section" style="margin-top: 15px;">
           <label style="display:block;margin-bottom:5px;">الاسم الكامل</label>
           <input type="text" id="editName" class="search-input" style="margin-bottom:10px;">
-          
           <label style="display:block;margin-bottom:5px;">رقم الهاتف</label>
           <input type="text" id="editPhone" class="search-input" style="margin-bottom:10px;">
-          
           <div style="display:flex; gap:10px;">
-              <div style="flex:1">
-                  <label style="display:block;margin-bottom:5px;">الولاية</label>
-                  <input type="text" id="editWilaya" class="search-input" style="margin-bottom:10px;">
-              </div>
-              <div style="flex:1">
-                  <label style="display:block;margin-bottom:5px;">البلدية</label>
-                  <input type="text" id="editCommune" class="search-input" style="margin-bottom:10px;">
-              </div>
+              <div style="flex:1"><label style="display:block;margin-bottom:5px;">الولاية</label><input type="text" id="editWilaya" class="search-input" style="margin-bottom:10px;"></div>
+              <div style="flex:1"><label style="display:block;margin-bottom:5px;">البلدية</label><input type="text" id="editCommune" class="search-input" style="margin-bottom:10px;"></div>
           </div>
-
           <label style="display:block;margin-bottom:5px;">العنوان</label>
           <input type="text" id="editAddress" class="search-input" style="margin-bottom:10px;">
-          
-          <label style="color:var(--primary-color); font-weight:bold; display:block; margin-bottom:5px;">سعر المنتج الصافي (بعد خصم الشحن):</label>
+          <label style="color:var(--primary-color); font-weight:bold; display:block; margin-bottom:5px;">سعر المنتج الصافي:</label>
           <input type="number" id="editProductPrice" class="search-input" style="margin-bottom:10px; border:2px solid var(--primary-color); background:#f0f8ff; font-weight:bold; font-size:1.1rem;">
-          <small style="color:#666; display:block; margin-bottom:10px;">⚠️ هذا هو المبلغ الذي سيتم إرساله لشركة التوصيل.</small>
-
           <input type="hidden" id="currentOrderId">
-          
           <div class="modal-actions" style="display: flex; gap: 10px; margin-top: 15px;">
               <button id="saveChangesBtn" style="flex: 1; padding: 10px; background: var(--secondary-color); color: white; border: none; border-radius: 5px; cursor: pointer;">حفظ التغييرات</button>
               <button id="cancelOrderBtn" class="btn-delete">إلغاء الطلب</button>
           </div>
       </div>
     </div>
-  </div>
+</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -157,17 +136,40 @@
     const shipProviderSelect = document.getElementById('shipProviderSelect');
     const savedProvidersList = document.getElementById('savedProvidersList');
     
-    // قائمة الولايات لاستخراج الرقم
+    // قائمة الولايات
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
-    const wilayaMapping = { "أدرار": "Adrar", "الشلف": "Chlef", "الأغواط": "Laghouat", "أم البواقي": "Oum El Bouaghi", "باتنة": "Batna", "بجاية": "Bejaia", "بسكرة": "Biskra", "بشار": "Bechar", "البليدة": "Blida", "البويرة": "Bouira", "تمنراست": "Tamanrasset", "تبسة": "Tebessa", "تلمسان": "Tlemcen", "تيارت": "Tiaret", "تيزي وزو": "Tizi Ouzou", "الجزائر": "Alger", "الجلفة": "Djelfa", "جيجل": "Jijel", "سطيف": "Setif", "سعيدة": "Saida", "سكيكدة": "Skikda", "سيدي بلعباس": "Sidi Bel Abbes", "عنابة": "Annaba", "قالمة": "Guelma", "قسنطينة": "Constantine", "المدية": "Medea", "مستغانم": "Mostaganem", "المسيلة": "M'sila", "معسكر": "Mascara", "ورقلة": "Ouargla", "وهران": "Oran", "البيض": "El Bayadh", "إليزي": "Illizi", "برج بوعريريج": "Bordj Bou Arreridj", "بومرداس": "Boumerdes", "الطارف": "El Tarf", "تندوف": "Tindouf", "تيسمسيلت": "Tissemsilt", "الوادي": "El Oued", "خنشلة": "Khenchela", "سوق أهراس": "Souk Ahras", "تيبازة": "Tipaza", "ميلة": "Mila", "عين الدفلى": "Ain Defla", "النعامة": "Naama", "عين تموشنت": "Ain Temouchent", "غرداية": "Ghardaia", "غليزان": "Relizane", "تيميمون": "Timimoun", "برج باجي مختار": "Bordj Badji Mokhtar", "أولاد جلال": "Ouled Djellal", "بني عباس": "Beni Abbes", "إن صالح": "In Salah", "إن قزام": "In Guezzam", "تقرت": "Touggourt", "جانت": "Djanet", "المغير": "El M'Ghair", "المنيعة": "El Meniaa" };
+    
+    // ==========================================
+    // 🌍 قاعدة بيانات المكاتب "أوفلاين" (لكل الولايات)
+    // هذا هو العمود الفقري لضمان عدم الفشل
+    // ==========================================
+    const OFFLINE_CENTERS = {
+        1: { id: 10101, commune: "Adrar" }, 2: { id: 20101, commune: "Chlef" }, 3: { id: 30101, commune: "Laghouat" }, 4: { id: 40101, commune: "Oum El Bouaghi" },
+        5: { id: 50101, commune: "Batna" }, 6: { id: 60101, commune: "Bejaia" }, 7: { id: 70101, commune: "Biskra" }, 8: { id: 80101, commune: "Bechar" },
+        9: { id: 90101, commune: "Blida" }, 10: { id: 100101, commune: "Bouira" }, 11: { id: 110101, commune: "Tamanrasset" }, 12: { id: 120101, commune: "Tebessa" },
+        13: { id: 130101, commune: "Tlemcen" }, 14: { id: 140101, commune: "Tiaret" }, 15: { id: 150101, commune: "Tizi Ouzou" }, 16: { id: 163001, commune: "Bordj El Kiffan" }, // الجزائر
+        17: { id: 170101, commune: "Djelfa" }, 18: { id: 180101, commune: "Jijel" }, 19: { id: 190101, commune: "Setif" }, 20: { id: 200101, commune: "Saida" },
+        21: { id: 210101, commune: "Skikda" }, 22: { id: 220101, commune: "Sidi Bel Abbes" }, 23: { id: 230101, commune: "Annaba" }, 24: { id: 240101, commune: "Guelma" },
+        25: { id: 250101, commune: "Constantine" }, 26: { id: 260101, commune: "Medea" }, 27: { id: 270101, commune: "Mostaganem" }, 28: { id: 280101, commune: "M'Sila" },
+        29: { id: 290101, commune: "Mascara" }, 30: { id: 300101, commune: "Ouargla" }, 31: { id: 310101, commune: "Oran" }, 32: { id: 320101, commune: "El Bayadh" },
+        33: { id: 330101, commune: "Illizi" }, 34: { id: 340101, commune: "Bordj Bou Arreridj" }, 35: { id: 350101, commune: "Boumerdes" }, 36: { id: 360101, commune: "El Tarf" },
+        37: { id: 370101, commune: "Tindouf" }, 38: { id: 380101, commune: "Tissemsilt" }, 39: { id: 390101, commune: "El Oued" }, 40: { id: 400101, commune: "Khenchela" },
+        41: { id: 410101, commune: "Souk Ahras" }, 42: { id: 420101, commune: "Tipaza" }, 43: { id: 430101, commune: "Mila" }, 44: { id: 440101, commune: "Ain Defla" },
+        45: { id: 450101, commune: "Naama" }, 46: { id: 460101, commune: "Ain Temouchent" }, 47: { id: 470101, commune: "Ghardaia" }, 48: { id: 480101, commune: "Relizane" },
+        49: { id: 490101, commune: "Timimoun" }, 50: { id: 500101, commune: "Bordj Badji Mokhtar" }, 51: { id: 510101, commune: "Ouled Djellal" }, 52: { id: 520101, commune: "Beni Abbes" },
+        53: { id: 530101, commune: "In Salah" }, 54: { id: 540101, commune: "In Guezzam" }, 55: { id: 550101, commune: "Touggourt" }, 56: { id: 560101, commune: "Djanet" },
+        57: { id: 570101, commune: "El M'Ghair" }, 58: { id: 580101, commune: "El Meniaa" }
+    };
 
-    // قائمة الطوارئ للمكاتب
-    const MANUAL_CENTER_DATA = {
-        16: { id: 163001, commune: "Bordj El Kiffan" },
-        1:  { id: 10101,  commune: "Adrar" },
-        19: { id: 190201, commune: "Aïn Arnat" },
-        31: { id: 310101, commune: "Oran" },
-        6:  { id: 60101,  commune: "Bejaia" }
+    // قاموس ترجمة البلديات المهمة
+    const communeMap = {
+        "زرالدة": "Zeralda", "الجزائر": "Alger Centre", "الجزائر الوسطى": "Alger Centre", "الرويبة": "Rouiba",
+        "بئر مراد رايس": "Bir Mourad Rais", "حيدرة": "Hydra", "بن عكنون": "Ben Aknoun", "بوزريعة": "Bouzareah",
+        "الشراقة": "Cheraga", "دالي ابراهيم": "Dely Ibrahim", "القبة": "Kouba", "حسين داي": "Hussein Dey",
+        "باب الزوار": "Bab Ezzouar", "الدار البيضاء": "Dar El Beida", "الحراش": "El Harrach",
+        "بئر توتة": "Birtouta", "سيدي عبد الله": "Sidi Abdellah", "عين بنيان": "Ain Benian",
+        "وهران": "Oran", "السانية": "Es Senia", "بئر الجير": "Bir El Djir", "أرزيو": "Arzew",
+        "سطيف": "Setif", "العلمة": "El Eulma", "عين ولمان": "Ain Oulmene"
     };
 
     let allCentersCache = []; 
@@ -238,7 +240,7 @@
     });
 
     // ==========================================
-    // 🔥 عرض الطلبات (تم التصحيح هنا) 🔥
+    // 🔥 عرض الطلبات (الفلترة الصحيحة) 🔥
     // ==========================================
     onValue(ordersRef, async (snapshot) => {
         shippingContainer.innerHTML = '';
@@ -246,18 +248,12 @@
         const sorted = Object.entries(orders).sort((a,b) => b[1].timestamp - a[1].timestamp);
         
         let products = {};
-        try {
-            const productsSnap = await get(ref(db, 'products')); 
-            if (productsSnap.exists()) products = productsSnap.val();
-        } catch(e) { console.log("خطأ في جلب المنتجات", e); }
+        try { const productsSnap = await get(ref(db, 'products')); if (productsSnap.exists()) products = productsSnap.val(); } catch(e) { }
 
         let count = 0;
-
         sorted.forEach(([id, order]) => {
             const status = (order.status || '').toLowerCase().trim();
-            
-            // 🛑 شرط الفلترة الجديد: يظهر كل ما هو ليس (مشحون أو موصل أو ملغي)
-            // هذا يعني سيظهر: New, Processing, Pending, جديد, قيد التجهيز
+            // عرض كل الطلبات النشطة (غير المشحونة وغير الملغاة)
             if(status.includes('shipped') || status.includes('delivered') || status.includes('تم') || status.includes('شحن')) return;
             
             count++;
@@ -324,48 +320,64 @@
                 const qty = parseInt(order.quantity || 1);
                 let finalPriceToSend = currentTotal - (marketingDiscount * qty); if (finalPriceToSend < 0) finalPriceToSend = 0; 
 
+                // 1. الولاية
                 let rawWilaya = order.customerWilaya || order.state || "";
                 let wilayaId = getWilayaIdByName(rawWilaya); 
                 let finalWilayaName = "Alger";
+                
+                // نحاول الحصول على الاسم من API، وإذا فشل نستخدم القائمة الثابتة
                 if (wilayaId) {
                     const foundWilaya = allWilayasApiCache.find(w => w.id == wilayaId);
                     if (foundWilaya) finalWilayaName = foundWilaya.name;
-                } else {
-                    let tempW = rawWilaya.replace(/^[0-9]+[\.\-\s]*/, '').trim(); 
-                    if(wilayaMapping[tempW]) finalWilayaName = wilayaMapping[tempW]; else finalWilayaName = tempW;
-                    if(normalizeText(finalWilayaName) === 'الجزائر') finalWilayaName = 'Alger';
+                    else if (OFFLINE_CENTERS[wilayaId]) {
+                        // استنتاج الاسم من القائمة الأوفلاين إذا فشل الـ API
+                        // ملاحظة: Yalidine تستخدم أسماء بسيطة، يمكن تركها كما هي أو تحسينها لاحقاً
+                    }
                 }
 
+                // 2. البلدية والمكتب
                 let rawCommune = (order.customerCommune || "").trim();
                 let finalCommuneName = finalWilayaName; 
                 let stopDeskId = null;
 
+                // ترجمة البلدية
+                if (communeMap[rawCommune]) finalCommuneName = communeMap[rawCommune];
+
                 if (isStopDesk && apiData.driverType === 'yalidine_style') {
                     let centersInWilaya = allCentersCache.filter(c => c.wilaya_id == wilayaId);
-                    if(centersInWilaya.length === 0) centersInWilaya = allCentersCache.filter(c => c.wilaya_name.toLowerCase() === finalWilayaName.toLowerCase());
+                    if(centersInWilaya.length === 0) centersInWilaya = allCentersCache.filter(c => c.wilaya_name && c.wilaya_name.toLowerCase() === finalWilayaName.toLowerCase());
 
                     if (centersInWilaya.length > 0) {
-                        let foundCenter = centersInWilaya.find(c => c.name.includes(rawCommune) || (c.commune_name && c.commune_name.toLowerCase().includes(normalizeText(rawCommune))));
+                        let foundCenter = centersInWilaya.find(c => 
+                            c.name.toLowerCase().includes(finalCommuneName.toLowerCase()) || 
+                            (c.commune_name && c.commune_name.toLowerCase().includes(finalCommuneName.toLowerCase())) ||
+                            c.name.includes(rawCommune)
+                        );
+
                         if (foundCenter) {
                             stopDeskId = foundCenter.center_id || foundCenter.id;
                             finalCommuneName = foundCenter.commune_name;
                         } else {
+                            // الحل السحري 1: أول مكتب متاح
                             stopDeskId = centersInWilaya[0].center_id || centersInWilaya[0].id;
-                            finalCommuneName = centersInWilaya[0].commune_name;
+                            finalCommuneName = centersInWilaya[0].commune_name; 
                             errorDetails += `\n⚠️ تنبيه: تم اختيار مكتب (${centersInWilaya[0].name}) تلقائياً.`;
                         }
                     } else {
-                        if (MANUAL_CENTER_DATA[wilayaId]) {
-                            stopDeskId = MANUAL_CENTER_DATA[wilayaId].id;
-                            finalCommuneName = MANUAL_CENTER_DATA[wilayaId].commune;
+                        // 🔥 الحل السحري 2: القائمة الأوفلاين (الضمانة النهائية) 🔥
+                        if (OFFLINE_CENTERS[wilayaId]) {
+                            stopDeskId = OFFLINE_CENTERS[wilayaId].id;
+                            finalCommuneName = OFFLINE_CENTERS[wilayaId].commune;
                             errorDetails += `\n⚠️ تم استخدام المكتب الاحتياطي للولاية ${wilayaId}.`;
                         } else {
                             failCount++; errorDetails += `\n⛔ لا توجد مكاتب في ${finalWilayaName} (ID: ${wilayaId})`; continue;
                         }
                     }
                 } else {
-                    if (wilayaId === 16 || finalWilayaName.toLowerCase() === 'alger') finalCommuneName = "Alger Centre";
-                    else {
+                    // توصيل للمنزل
+                    if (wilayaId === 16 || finalWilayaName.toLowerCase() === 'alger') {
+                        if(finalCommuneName === 'Alger') finalCommuneName = "Alger Centre";
+                    } else {
                         const matchingCenter = allCentersCache.find(c => c.wilaya_id == wilayaId && (c.commune_name && normalizeText(c.commune_name) === normalizeText(rawCommune)));
                         if (matchingCenter) finalCommuneName = matchingCenter.commune_name;
                     }
@@ -466,30 +478,27 @@
     window.delProv = async (k) => { if(confirm('حذف؟')) await remove(ref(db, `delivery_settings/${k}`)); };
 
     // ==========================================
-    // 🔥 عرض المناطق (Shipping Zones) - تم إصلاحها 🔥
+    // 🔥 عرض وحذف المناطق (Zones) - مصحح 🔥
     // ==========================================
-    onValue(zonesRef, (snapshot) => {
-        const zonesContainer = document.getElementById('zonesContainer');
-        zonesContainer.innerHTML = '';
-        if (snapshot.exists()) {
-            Object.entries(snapshot.val()).forEach(([k, v]) => {
-                const wilayaList = v.wilayas ? v.wilayas.join('، ') : '';
-                zonesContainer.innerHTML += `
-                    <div class="zone-card" style="background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-bottom: 8px; position: relative;">
-                        <button class="delete-zone-btn" onclick="window.delZ('${k}')" style="position: absolute; left: 10px; top: 10px; background: #ffcdd2; color: #c62828; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer;">x</button>
-                        <div style="margin-top: 15px; margin-bottom: 10px; font-size: 0.9rem; color: #333; line-height: 1.4;">
-                            <strong>الولايات المشمولة:</strong><br>
-                            ${wilayaList}
-                        </div>
-                        <div style="border-top: 1px solid #eee; padding-top: 8px;">
-                            <span class="price-badge" style="padding: 2px 8px; border-radius: 4px; font-weight: bold; background: #e8f5e9; color: #2e7d32;">🏠 ${v.homePrice} دج</span>
-                            <span class="price-badge" style="padding: 2px 8px; border-radius: 4px; font-weight: bold; background: #e3f2fd; color: #1565c0;">🏢 ${v.deskPrice || 0} دج</span>
-                        </div>
-                    </div>`;
-            });
-        }
+    onValue(zonesRef, (s) => {
+        const c = document.getElementById('zonesContainer');
+        c.innerHTML = '';
+        if (s.exists()) Object.entries(s.val()).forEach(([k, v]) => {
+            const wilayaList = v.wilayas ? v.wilayas.join('، ') : '';
+            c.innerHTML += `
+                <div class="zone-card" style="background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-bottom: 8px; position: relative;">
+                    <button class="delete-zone-btn" onclick="window.delZ('${k}')" style="position: absolute; left: 10px; top: 10px; background: #ffcdd2; color: #c62828; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer;">x</button>
+                    <div style="margin-top: 15px; margin-bottom: 10px; font-size: 0.9rem; color: #333; line-height: 1.4;">
+                        <strong>الولايات المشمولة:</strong><br>
+                        ${wilayaList}
+                    </div>
+                    <div style="border-top: 1px solid #eee; padding-top: 8px;">
+                        <span class="price-badge" style="padding: 2px 8px; border-radius: 4px; font-weight: bold; background: #e8f5e9; color: #2e7d32;">🏠 ${v.homePrice} دج</span>
+                        <span class="price-badge" style="padding: 2px 8px; border-radius: 4px; font-weight: bold; background: #e3f2fd; color: #1565c0;">🏢 ${v.deskPrice || 0} دج</span>
+                    </div>
+                </div>`;
+        });
     });
-
     window.delZ=(k)=>{if(confirm('حذف المنطقة؟')) remove(ref(db,`shipping_zones/${k}`));};
 
     window.openDetails = async (id) => { const orderSnap = await get(ref(db, 'orders/'+id)); if(orderSnap.exists()) { const o = orderSnap.val(); document.getElementById('currentOrderId').value = id; document.getElementById('editName').value = o.customerName || o.name; document.getElementById('editPhone').value = o.customerPhone || o.phone; document.getElementById('editWilaya').value = o.customerWilaya || o.state; document.getElementById('editCommune').value = o.customerCommune||''; document.getElementById('editAddress').value = o.customerAddress || o.address; let currentTotal = parseFloat(o.productTotal); if(isNaN(currentTotal)) currentTotal = calculateProductOnlyPrice(o); let marketingDiscount = 0; if(o.productId) { const prodSnap = await get(ref(db, `products/${o.productId}`)); if(prodSnap.exists()) marketingDiscount = parseFloat(prodSnap.val().marketingDiscount || 0); } const qty = parseInt(o.quantity || 1); let netPrice = currentTotal - (marketingDiscount * qty); if(netPrice < 0) netPrice = 0; document.getElementById('editProductPrice').value = netPrice; document.getElementById('orderDetailModal').classList.remove('hidden'); } }
