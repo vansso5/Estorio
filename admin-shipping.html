@@ -98,7 +98,6 @@
     <div id="zonesContainer" class="orders-grid" style="margin-top: 20px;"></div>
 </div>
 
-<!-- تم تعديل المودال ليشمل خيار نوع التوصيل -->
 <div id="orderDetailModal" class="modal hidden">
     <div class="modal-content">
       <button class="close-modal-btn" id="closeDetailModal">&times;</button>
@@ -118,7 +117,6 @@
           <label style="display:block;margin-bottom:5px;">العنوان</label>
           <input type="text" id="editAddress" class="search-input" style="margin-bottom:10px;">
 
-          <!-- هنا تمت إضافة خيار نوع التوصيل داخل البطاقة -->
           <label style="display:block;margin-bottom:5px; color:var(--primary-color); font-weight:bold;">نوع التوصيل (Delivery Mode):</label>
           <select id="editDeliveryOption" class="search-input" style="margin-bottom:15px; background:#fff3cd; border:1px solid #ffecb3;">
               <option value="home">🏠 توصيل للمنزل (Home)</option>
@@ -152,9 +150,71 @@
     const shipProviderSelect = document.getElementById('shipProviderSelect');
     const savedProvidersList = document.getElementById('savedProvidersList');
     
-    // قائمة الولايات الرسمية
+    // قائمة الولايات الرسمية (للعرض في الـ Checkbox فقط)
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     
+    // قاموس الترجمة الذكي (يحتوي على الأشكال المختلفة لأسماء الولايات)
+    const wilayaMapping = {
+        "adrar": 1, "أدرار": 1, "adr": 1, "aderar": 1,
+        "chlef": 2, "الشلف": 2, "شلف": 2, "chleff": 2,
+        "laghouat": 3, "الأغواط": 3, "أغواط": 3,
+        "oum el bouaghi": 4, "أم البواقي": 4, "ام البواقي": 4, "oeb": 4,
+        "batna": 5, "باتنة": 5, "باتنه": 5,
+        "bejaia": 6, "بجاية": 6, "bgayet": 6,
+        "biskra": 7, "بسكرة": 7,
+        "bechar": 8, "بشار": 8,
+        "blida": 9, "البليدة": 9, "بليدة": 9,
+        "bouira": 10, "البويرة": 10, "بويرة": 10,
+        "tamanrasset": 11, "تمنراست": 11, "tam": 11,
+        "tebessa": 12, "تبسة": 12,
+        "tlemcen": 13, "تلمسان": 13,
+        "tiaret": 14, "تيارت": 14,
+        "tizi ouzou": 15, "تيزي وزو": 15, "tizi": 15, "to": 15,
+        "alger": 16, "الجزائر": 16, "جزائر": 16, "algiers": 16, "djazair": 16, "دزاير": 16, "العاصمة": 16, "عاصمة": 16,
+        "djelfa": 17, "الجلفة": 17, "جلفة": 17,
+        "jijel": 18, "جيجل": 18,
+        "setif": 19, "سطيف": 19,
+        "saida": 20, "سعيدة": 20,
+        "skikda": 21, "سكيكدة": 21,
+        "sidi bel abbes": 22, "سيدي بلعباس": 22, "sba": 22,
+        "annaba": 23, "عنابة": 23,
+        "guelma": 24, "قالمة": 24,
+        "constantine": 25, "قسنطينة": 25, "qsentina": 25,
+        "medea": 26, "المدية": 26, "مدية": 26,
+        "mostaganem": 27, "مستغانم": 27, "mosta": 27,
+        "msila": 28, "المسيلة": 28, "مسيلة": 28, "m'sila": 28,
+        "mascara": 29, "معسكر": 29,
+        "ouargla": 30, "ورقلة": 30,
+        "oran": 31, "وهران": 31, "wahran": 31,
+        "el bayadh": 32, "البيض": 32, "بيض": 32, "bayadh": 32,
+        "illizi": 33, "إليزي": 33, "اليزي": 33,
+        "bordj bou arreridj": 34, "برج بوعريريج": 34, "برج": 34, "bba": 34,
+        "boumerdes": 35, "بومرداس": 35,
+        "el tarf": 36, "الطارف": 36, "طارف": 36, "tarf": 36,
+        "tindouf": 37, "تندوف": 37,
+        "tissemsilt": 38, "تيسمسيلت": 38,
+        "el oued": 39, "الوادي": 39, "وادي": 39, "oued souf": 39, "واد سوف": 39, "oued": 39, "سوف": 39,
+        "khenchela": 40, "خنشلة": 40,
+        "souk ahras": 41, "سوق أهراس": 41,
+        "tipaza": 42, "تيبازة": 42, "tipa": 42,
+        "mila": 43, "ميلة": 43,
+        "ain defla": 44, "عين الدفلى": 44,
+        "naama": 45, "النعامة": 45, "نعامة": 45,
+        "ain temouchent": 46, "عين تموشنت": 46,
+        "ghardaia": 47, "غرداية": 47,
+        "relizane": 48, "غليزان": 48,
+        "timimoun": 49, "تيميمون": 49,
+        "bordj badji mokhtar": 50, "برج باجي مختار": 50, "bbm": 50,
+        "ouled djellal": 51, "أولاد جلال": 51, "ولاد جلال": 51, "odj": 51,
+        "beni abbes": 52, "بني عباس": 52,
+        "in salah": 53, "إن صالح": 53, "عين صالح": 53, "ain salah": 53,
+        "in guezzam": 54, "إن قزام": 54, "عين قزام": 54, "ain guezzam": 54,
+        "touggourt": 55, "تقرت": 55,
+        "djanet": 56, "جانت": 56,
+        "el mghair": 57, "المغير": 57, "مغير": 57,
+        "el meniaa": 58, "المنيعة": 58, "منيعة": 58
+    };
+
     const OFFLINE_CENTERS = {
         1: { id: 10101, commune: "Adrar" }, 2: { id: 20101, commune: "Chlef" }, 3: { id: 30101, commune: "Laghouat" }, 4: { id: 40101, commune: "Oum El Bouaghi" },
         5: { id: 50101, commune: "Batna" }, 6: { id: 60101, commune: "Bejaia" }, 7: { id: 70101, commune: "Biskra" }, 8: { id: 80101, commune: "Bechar" },
@@ -188,22 +248,59 @@
     let allWilayasApiCache = JSON.parse(localStorage.getItem('yal_wilayas')) || [];
     let allCommunesApiCache = JSON.parse(localStorage.getItem('yal_communes')) || [];
 
+    // دالة تنظيف النص (محدثة لتدعم الحروف العربية بشكل أفضل)
     function normalizeText(text) {
         if (!text) return "";
         let str = text.toLowerCase().trim();
-        str = str.replace(/(آ|إ|أ)/g, 'a').replace(/ة/g, 'e').replace(/ئ/g, 'i').replace(/ى/g, 'i');
-        str = str.replace(/[^a-z0-9]/g, ""); 
-        return str;
+        str = str.replace(/(آ|إ|أ)/g, 'ا').replace(/ة/g, 'ه').replace(/ئ/g, 'ي').replace(/ى/g, 'ي');
+        // السماح بالحروف العربية (\u0600-\u06FF) والمسافات
+        str = str.replace(/[^a-z0-9\u0600-\u06FF\s]/g, ""); 
+        return str.trim();
     }
 
-    function getWilayaIdByName(arabicName) {
-        if(!arabicName) return null;
-        const matchNum = arabicName.match(/^(\d+)/);
+    // الدالة الذكية للبحث عن رقم الولاية
+    function getWilayaIdByName(rawName) {
+        if (!rawName) return null;
+        
+        // إذا كان إدخال رقمي مباشر
+        const matchNum = rawName.match(/^(\d+)/);
         if (matchNum) return parseInt(matchNum[1]);
-        const cleanName = normalizeText(arabicName);
-        const match = allWilayas.find(w => normalizeText(w.split('. ')[1]) === cleanName);
-        if(match) return parseInt(match.split('.')[0]); 
-        return null;
+
+        // تنظيف النص
+        let cleanName = normalizeText(rawName); 
+        cleanName = cleanName.replace("wilaya", "").trim();
+
+        // 1. البحث المباشر (التطابق التام)
+        if (wilayaMapping[cleanName]) return wilayaMapping[cleanName];
+        
+        // 2. محاولة إزالة "ال" التعريف (مثل: "المدية" -> "مدية")
+        if (cleanName.startsWith("ال")) {
+            const withoutAl = cleanName.substring(2).trim();
+            if (wilayaMapping[withoutAl]) return wilayaMapping[withoutAl];
+        }
+
+        // 3. محاولة إضافة "ال" التعريف (مثل: "مدية" -> "المدية")
+        const withAl = "ال" + cleanName;
+        if (wilayaMapping[withAl]) return wilayaMapping[withAl];
+
+        // 4. محاولة إضافة "el" للكلمات اللاتينية (مثل: "tarf" -> "el tarf")
+        const withEl = "el " + cleanName;
+        if (wilayaMapping[withEl]) return wilayaMapping[withEl];
+
+        // 5. البحث الجزئي (Fallback) - يبحث إذا كانت الكلمة جزء من اسم الولاية
+        for (const [key, val] of Object.entries(wilayaMapping)) {
+            if (key.length > 2 && (cleanName.includes(key) || key.includes(cleanName))) {
+                return val;
+            }
+        }
+
+        // 6. البحث في كاش الـ API (الفرنسي الرسمي)
+        if (allWilayasApiCache.length > 0) {
+            const foundInApi = allWilayasApiCache.find(w => normalizeText(w.name) === cleanName);
+            if (foundInApi) return foundInApi.id;
+        }
+
+        return null; 
     }
 
     onAuthStateChanged(auth, (user) => {
@@ -364,9 +461,7 @@
         }
     }
 
-    // ==========================================
-    // تعديل عرض الطلبات: إزالة القائمة المنسدلة والزر الصغير
-    // ==========================================
+    // عرض الطلبات (بدون القائمة المنسدلة، فقط شارة توضيحية)
     onValue(ordersRef, async (snapshot) => {
         shippingContainer.innerHTML = '';
         const orders = snapshot.val() || {};
@@ -391,7 +486,6 @@
             const row = document.createElement('div'); row.className = 'order-row'; row.dataset.id = id;
             row.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: #fff; border-radius: 8px; margin-bottom: 8px; border: 1px solid #eee; border-right: 4px solid #f1c40f;";
             
-            // تم استبدال القائمة المنسدلة بشارة (Badge) توضح الحالة فقط
             row.innerHTML = `
                 <div class="row-info" style="display:flex;align-items:center; flex: 2;">
                     <input type="checkbox" class="order-checkbox" value="${id}" style="margin-left: 15px; transform: scale(1.3);">
@@ -413,119 +507,213 @@
         if(count === 0) shippingContainer.innerHTML = '<p class="loading-message">لا توجد طلبات جديدة أو قيد التجهيز.</p>';
     });
 
+    // ============================================================
+    //  زر الإرسال المحدث (Validation -> Translation -> Sending)
+    // ============================================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
-        const btn = this; const providerId = shipProviderSelect.value; const checks = document.querySelectorAll('.order-checkbox:checked');
-        if(!providerId || checks.length === 0) return alert('اختر الشركة والطلبات');
+        const btn = this; 
+        const providerId = shipProviderSelect.value; 
+        const checks = document.querySelectorAll('.order-checkbox:checked');
         
+        if(!providerId) return alert('⚠️ الرجاء اختيار شركة التوصيل أولاً.');
+        if(checks.length === 0) return alert('⚠️ لم تقم بتحديد أي طلبيات.');
+        
+        // التحقق من تحميل البيانات الأساسية
         if(allCentersCache.length === 0) {
-           if(!confirm("⚠️ تحذير: قائمة المكاتب غير محملة من السيرفر. سيتم الاعتماد على البيانات الاحتياطية. هل تود الاستمرار؟")) return;
-        } else if(!confirm(`إرسال ${checks.length} طلب؟`)) return;
+           if(!confirm("⚠️ تحذير: قائمة المكاتب غير محملة. هل تود الاستمرار بالبيانات الاحتياطية؟")) return;
+        }
 
-        btn.textContent = "جاري الإرسال..."; btn.disabled = true;
+        btn.textContent = "🔍 جاري الفحص والترجمة..."; 
+        btn.disabled = true;
 
+        // 1. جلب إعدادات الشركة
         let apiData = null;
         try {
             const setSnap = await get(ref(db, `delivery_settings/${providerId}`));
-            if(setSnap.exists()) apiData = setSnap.val(); else throw new Error("بيانات الشركة مفقودة");
-        } catch(e) { alert(e.message); btn.textContent = "📤 إرسال المحدد"; btn.disabled = false; return; }
+            if(setSnap.exists()) apiData = setSnap.val(); 
+            else throw new Error("بيانات الشركة مفقودة");
+        } catch(e) { 
+            alert(e.message); 
+            btn.textContent = "📤 إرسال المحدد"; 
+            btn.disabled = false; 
+            return; 
+        }
 
-        if(apiData.driverType === 'yalidine_style') await fetchGuepexData(apiData.apiUrl, apiData.apiKey, apiData.apiToken);
+        // تحديث البيانات إذا لزم الأمر
+        if(apiData.driverType === 'yalidine_style' && allCentersCache.length === 0) {
+            await fetchGuepexData(apiData.apiUrl, apiData.apiKey, apiData.apiToken);
+        }
 
-        let successCount = 0; let failCount = 0; let errorDetails = "";
+        // ============================================================
+        // المرحلة الأولى: الترجمة والتجهيز (Validation & Preparation)
+        // ============================================================
+        let readyToSendList = []; 
+        let errorMessages = [];   
 
         for (const chk of checks) {
             const orderId = chk.value;
-            try {
-                const orderSnap = await get(ref(db, `orders/${orderId}`));
-                if(!orderSnap.exists()) continue;
-                const order = orderSnap.val();
-                
-                // هنا نعتمد على القيمة المحفوظة في قاعدة البيانات
-                let isStopDesk = (order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب')));
+            const orderSnap = await get(ref(db, `orders/${orderId}`));
+            
+            if(!orderSnap.exists()) continue;
+            const order = orderSnap.val();
+            const cleanOrderId = orderId.replace('#','').trim();
+            const fullName = (order.customerName || order.name || "Client").trim();
 
+            try {
+                // 1. تحديد نوع التوصيل
+                let isStopDesk = (order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب')));
+                
+                // 2. معالجة السعر
                 let currentTotal = parseFloat(order.productTotal);
                 if (isNaN(currentTotal)) currentTotal = parseFloat(order.totalPrice || 0) - parseFloat(order.shippingPrice || 0);
                 let marketingDiscount = 0;
-                if(order.productId) { try { const prodSnap = await get(ref(db, `products/${order.productId}`)); if(prodSnap.exists()) marketingDiscount = parseFloat(prodSnap.val().marketingDiscount || 0); } catch(e) { } }
+                if(order.productId) { 
+                    try { const prodSnap = await get(ref(db, `products/${order.productId}`)); if(prodSnap.exists()) marketingDiscount = parseFloat(prodSnap.val().marketingDiscount || 0); } catch(e) { } 
+                }
                 const qty = parseInt(order.quantity || 1);
-                let finalPriceToSend = currentTotal - (marketingDiscount * qty); if (finalPriceToSend < 0) finalPriceToSend = 0; 
+                let finalPriceToSend = currentTotal - (marketingDiscount * qty); 
+                if (finalPriceToSend < 0) finalPriceToSend = 0; 
 
+                // 3. الترجمة الذكية للولاية
                 let rawWilaya = order.customerWilaya || order.state || "";
-                let wilayaId = getWilayaIdByName(rawWilaya); 
                 let rawCommune = (order.customerCommune || "").trim();
+                let wilayaId = getWilayaIdByName(rawWilaya); // استخدام القاموس الذكي
 
-                let destination = null;
-                try {
-                    destination = resolveGuepexDestination(
-                        { wilayaId, rawCommune, isStopDesk, address: order.customerAddress || rawCommune },
-                        allCentersCache, allWilayasApiCache, allCommunesApiCache
-                    );
-                } catch(err) {
-                    failCount++; errorDetails += `\n❌ ${order.customerName}: ${err.message}`; continue;
+                if (!wilayaId) {
+                    throw new Error(`لم يتم التعرف على الولاية: "${rawWilaya}".`);
                 }
 
-                let phone = (order.customerPhone || order.phone || "").replace(/[^0-9]/g, ''); if(phone.length === 9) phone = '0'+phone;
-                let fullName = (order.customerName || order.name || "Client").trim();
-                const cleanOrderId = orderId.replace('#','').trim();
+                // محاولة إيجاد الوجهة الصحيحة
+                let destination = resolveGuepexDestination(
+                    { wilayaId, rawCommune, isStopDesk, address: order.customerAddress || rawCommune },
+                    allCentersCache, allWilayasApiCache, allCommunesApiCache
+                );
 
-                let payload = {}; let requestHeaders = { 'Content-Type': 'application/json' };
+                let phone = (order.customerPhone || order.phone || "").replace(/[^0-9]/g, ''); 
+                if(phone.length === 9) phone = '0'+phone;
 
-                if (apiData.driverType === 'yalidine_style') {
-                    requestHeaders['X-API-ID'] = apiData.apiKey;
-                    requestHeaders['X-API-TOKEN'] = apiData.apiToken;
-                    
-                    let parcelObj = {
-                        "order_id": cleanOrderId,
-                        "firstname": fullName,
-                        "familyname": ".",
-                        "contact_phone": phone,
-                        "address": destination.address,
-                        "to_wilaya_name": destination.to_wilaya_name,
-                        "to_commune_name": destination.to_commune_name,
-                        "product_list": order.productName || "Colis",
-                        "price": finalPriceToSend,
-                        "freeshipping": false,
-                        "do_insurance": false,
-                        "declared_value": finalPriceToSend,
-                        "has_exchange": false,
-                        "height": 10, "width": 20, "length": 30, "weight": 1,
-                        "is_stopdesk": destination.is_stopdesk
-                    };
+                // تجهيز البيانات
+                let parcelObj = {
+                    "order_id": cleanOrderId,
+                    "firstname": fullName,
+                    "familyname": ".",
+                    "contact_phone": phone,
+                    "address": destination.address,
+                    "to_wilaya_name": destination.to_wilaya_name,
+                    "to_commune_name": destination.to_commune_name,
+                    "product_list": order.productName || "Colis",
+                    "price": finalPriceToSend,
+                    "freeshipping": false,
+                    "do_insurance": false,
+                    "declared_value": finalPriceToSend,
+                    "has_exchange": false,
+                    "height": 10, "width": 20, "length": 30, "weight": 1,
+                    "is_stopdesk": destination.is_stopdesk
+                };
 
-                    if(destination.stopdesk_id) {
-                        parcelObj.stopdesk_id = destination.stopdesk_id;
-                    }
-                    
-                    payload = [parcelObj];
+                if(destination.stopdesk_id) {
+                    parcelObj.stopdesk_id = destination.stopdesk_id;
                 }
-
-                let postUrl = apiData.apiUrl;
-                if(postUrl.endsWith('/')) postUrl = postUrl.slice(0, -1);
-                if(!postUrl.includes('/v1/parcels')) postUrl += '/v1/parcels';
-                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(postUrl);
                 
-                const res = await fetch(proxyUrl, { method: 'POST', headers: requestHeaders, body: JSON.stringify(payload) });
-                const resText = await res.text();
-                let resJson; try { resJson = JSON.parse(resText); } catch (e) { throw new Error(`API Error: ${resText.substring(0, 50)}`); }
+                readyToSendList.push({
+                    firebaseId: orderId,
+                    payload: [parcelObj], 
+                    customerName: fullName
+                });
 
-                let isSuccess = false; let trackingCode = "Sent";
-                if (resJson[cleanOrderId] && resJson[cleanOrderId].success === true) { isSuccess = true; trackingCode = resJson[cleanOrderId].tracking; }
-                else if (Array.isArray(resJson) && resJson[0] && (resJson[0].tracking || resJson[0].success)) { isSuccess = true; trackingCode = resJson[0].tracking || "Sent"; }
+            } catch(err) {
+                errorMessages.push(`❌ ${fullName}: ${err.message}`);
+            }
+        }
+
+        // ============================================================
+        // نقطة التفتيش: هل توجد أخطاء؟
+        // ============================================================
+        if (errorMessages.length > 0) {
+            btn.textContent = "📤 إرسال المحدد"; 
+            btn.disabled = false;
+            
+            let msg = "⚠️ تنبيه: تم إيقاف العملية لوجود أخطاء في العناوين:\n\n";
+            msg += errorMessages.join("\n");
+            msg += "\n\nالرجاء تصحيح هذه الطلبات يدوياً ثم المحاولة مرة أخرى.";
+            alert(msg);
+            return; 
+        }
+
+        // ============================================================
+        // المرحلة الثانية: الإرسال الفعلي
+        // ============================================================
+        if(!confirm(`✅ تمت ترجمة جميع العناوين بنجاح (${readyToSendList.length} طلب).\nهل أنت متأكد من الإرسال الآن؟`)) {
+            btn.textContent = "📤 إرسال المحدد"; 
+            btn.disabled = false;
+            return;
+        }
+
+        btn.textContent = "🚀 جاري الإرسال للسيرفر..."; 
+        let successCount = 0; 
+        let failCount = 0; 
+        let sendDetails = "";
+
+        let postUrl = apiData.apiUrl;
+        if(postUrl.endsWith('/')) postUrl = postUrl.slice(0, -1);
+        if(!postUrl.includes('/v1/parcels')) postUrl += '/v1/parcels';
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(postUrl);
+
+        const requestHeaders = { 
+            'Content-Type': 'application/json',
+            'X-API-ID': apiData.apiKey,
+            'X-API-TOKEN': apiData.apiToken
+        };
+
+        for (const item of readyToSendList) {
+            try {
+                const res = await fetch(proxyUrl, { 
+                    method: 'POST', 
+                    headers: requestHeaders, 
+                    body: JSON.stringify(item.payload) 
+                });
+                
+                const resText = await res.text();
+                let resJson; 
+                try { resJson = JSON.parse(resText); } catch (e) { throw new Error(`API Error: ${resText.substring(0, 50)}`); }
+
+                let isSuccess = false; 
+                let trackingCode = "Sent";
+                
+                const cleanId = item.payload[0].order_id;
+                if (resJson[cleanId] && resJson[cleanId].success === true) { 
+                    isSuccess = true; trackingCode = resJson[cleanId].tracking; 
+                } else if (Array.isArray(resJson) && resJson[0] && (resJson[0].tracking || resJson[0].success)) { 
+                    isSuccess = true; trackingCode = resJson[0].tracking || "Sent"; 
+                }
                 
                 if (isSuccess) {
-                    await update(ref(db, `orders/${orderId}`), { status: 'Shipped', deliveryProvider: apiData.displayName, trackingCode: trackingCode, shippedAt: Date.now() });
+                    await update(ref(db, `orders/${item.firebaseId}`), { 
+                        status: 'Shipped', 
+                        deliveryProvider: apiData.displayName, 
+                        trackingCode: trackingCode, 
+                        shippedAt: Date.now() 
+                    });
                     successCount++;
                 } else { 
-                    if(!resJson[cleanOrderId]) { failCount++; errorDetails += `\n❌ ${fullName}: ${JSON.stringify(resJson).substring(0, 100)}`; } 
-                    else { failCount++; errorDetails += `\n❌ ${fullName}: ${resJson[cleanOrderId].message}`; }
+                    failCount++; 
+                    const errMsg = resJson[cleanId] ? resJson[cleanId].message : JSON.stringify(resJson).substring(0,50);
+                    sendDetails += `\n❌ ${item.customerName}: ${errMsg}`;
                 }
-            } catch(e) { console.error(e); failCount++; errorDetails += `\n⚠️ ${orderId}: ${e.message}`; }
+
+            } catch(e) {
+                console.error(e); 
+                failCount++; 
+                sendDetails += `\n⚠️ ${item.customerName}: خطأ اتصال (${e.message})`;
+            }
         }
         
-        let report = `النتيجة:\n✅ نجاح: ${successCount}\n❌ فشل: ${failCount}`;
-        if(failCount > 0 || errorDetails.length > 0) report += `\n\nالتفاصيل:${errorDetails}`;
+        let report = `النتيجة النهائية:\n✅ تم الإرسال بنجاح: ${successCount}\n❌ فشل الإرسال: ${failCount}`;
+        if(failCount > 0) report += `\n\nتفاصيل الفشل:${sendDetails}`;
         alert(report);
-        btn.textContent = "📤 إرسال المحدد"; btn.disabled = false;
+        
+        btn.textContent = "📤 إرسال المحدد"; 
+        btn.disabled = false;
     });
 
     function calculateProductOnlyPrice(order) {
@@ -593,7 +781,7 @@
     window.delZ=(k)=>{if(confirm('حذف المنطقة؟')) remove(ref(db,`shipping_zones/${k}`));};
 
     // =======================================================
-    // تعديل دوال فتح البطاقة والحفظ لتشمل نوع التوصيل
+    // دوال فتح البطاقة والحفظ مع القائمة المنسدلة
     // =======================================================
     window.openDetails = async (id) => { 
         const orderSnap = await get(ref(db, 'orders/'+id)); 
@@ -621,7 +809,7 @@
             if(netPrice < 0) netPrice = 0; 
             document.getElementById('editProductPrice').value = netPrice; 
 
-            // تحديد نوع التوصيل الحالي في القائمة المنسدلة
+            // ضبط القائمة المنسدلة داخل البطاقة
             const isDesk = (o.deliveryOption && (o.deliveryOption.includes('desk') || o.deliveryOption.includes('مكتب')));
             document.getElementById('editDeliveryOption').value = isDesk ? 'desk' : 'home';
 
@@ -643,7 +831,7 @@
             customerCommune:document.getElementById('editCommune').value, 
             customerAddress:document.getElementById('editAddress').value, 
             productTotal: parseFloat(document.getElementById('editProductPrice').value),
-            deliveryOption: delOptionText // حفظ خيار التوصيل
+            deliveryOption: delOptionText // حفظ خيار التوصيل الجديد
         }); 
         document.getElementById('orderDetailModal').classList.add('hidden'); 
         alert("✅ تم حفظ جميع بيانات الطلب بنجاح"); 
