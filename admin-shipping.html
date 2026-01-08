@@ -28,15 +28,6 @@
   </div>
 </nav>
 
-<!-- مكان أيقونة الزوار -->
-<div class="visitors-wrapper">
-  <div id="liveVisitors" class="live-visitors-badge inactive">
-    <span class="live-dot"></span>
-    <span style="margin-right:5px">عدد الزوار الآن: </span>
-    <strong id="visitorsCount" style="margin:0 4px">0</strong>
-  </div>
-</div>
-
 <div class="container">
     
     <!-- القسم 1: إدارة الشركات -->
@@ -172,9 +163,8 @@
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
 
     let allCentersCache = []; 
-    let allWilayasApiCache = []; // لتخزين بيانات الولايات (ID واسم فرنسي) من الـ API
+    let allWilayasApiCache = []; // لتخزين بيانات الولايات
 
-    // تنظيف النصوص للمقارنة
     function normalizeText(text) {
         if (!text) return "";
         let str = text.toLowerCase().trim();
@@ -183,14 +173,10 @@
         return str;
     }
 
-    // استخراج رقم الولاية من الاسم (مثلاً: "16. الجزائر" -> 16)
     function getWilayaIdByName(arabicName) {
         if(!arabicName) return null;
-        // 1. إذا كان يبدأ برقم
         const matchNum = arabicName.match(/^(\d+)/);
         if (matchNum) return parseInt(matchNum[1]);
-
-        // 2. البحث بالاسم في القائمة الثابتة
         const cleanName = normalizeText(arabicName);
         const match = allWilayas.find(w => normalizeText(w.split('. ')[1]) === cleanName);
         if(match) return parseInt(match.split('.')[0]); 
@@ -203,7 +189,41 @@
     });
     document.getElementById('logoutBtn').addEventListener('click', async () => await signOut(auth));
 
-    // جلب البيانات من API الشركة
+    // ============================================
+    // جلب البيانات من Guepex (مع دعم التصفح Pagination)
+    // ============================================
+    async function fetchAllPages(url, headers) {
+        let allData = [];
+        let page = 1;
+        let hasMore = true;
+
+        while(hasMore) {
+            try {
+                // استخدام الرمز & أو ? حسب الرابط
+                const sep = url.includes('?') ? '&' : '?';
+                const finalUrl = `${url}${sep}page=${page}&page_size=1000`;
+                
+                const res = await fetch('https://corsproxy.io/?' + encodeURIComponent(finalUrl), { headers });
+                const json = await res.json();
+                
+                if (json.data) {
+                    allData = allData.concat(json.data);
+                }
+                
+                hasMore = json.has_more;
+                page++;
+                
+                // حماية من الحلقات اللانهائية
+                if(page > 10) hasMore = false; 
+
+            } catch(e) {
+                console.error("Error fetching page " + page, e);
+                hasMore = false;
+            }
+        }
+        return allData;
+    }
+
     async function fetchGuepexData(apiUrl, apiId, apiToken) {
         if(allCentersCache.length > 0 && allWilayasApiCache.length > 0) return; 
         
@@ -213,22 +233,18 @@
         const headers = { 'X-API-ID': apiId, 'X-API-TOKEN': apiToken };
 
         try {
-            console.log("جاري جلب البيانات من شركة التوصيل...");
-            // جلب الولايات لمعرفة الاسم الفرنسي الصحيح
-            const wilRes = await fetch('https://corsproxy.io/?' + encodeURIComponent(`${baseUrl}/wilayas?page_size=100`), { headers });
-            const wilJson = await wilRes.json();
-            if(wilJson.data) allWilayasApiCache = wilJson.data;
-
-            // جلب المكاتب (StopDesks)
-            const centerRes = await fetch('https://corsproxy.io/?' + encodeURIComponent(`${baseUrl}/centers?page_size=1000`), { headers });
-            const centerJson = await centerRes.json();
-            if(centerJson.data) allCentersCache = centerJson.data;
+            console.log("جاري جلب كل البيانات من شركة التوصيل...");
+            
+            // جلب كل الولايات
+            allWilayasApiCache = await fetchAllPages(`${baseUrl}/wilayas`, headers);
+            
+            // جلب كل المراكز
+            allCentersCache = await fetchAllPages(`${baseUrl}/centers`, headers);
 
             console.log(`تم تحميل ${allWilayasApiCache.length} ولاية و ${allCentersCache.length} مكتب.`);
         } catch(e) { console.error("خطأ API:", e); }
     }
 
-    // عرض عدد الزوار
     onValue(visitorsRef, (s) => { 
         if(!s.exists()) { document.getElementById('visitorsCount').textContent=0; return;} 
         const c = Object.keys(s.val()).length; 
@@ -236,7 +252,6 @@
         document.getElementById('liveVisitors').className = c>0?'live-visitors-badge active':'live-visitors-badge inactive';
     });
 
-    // حفظ إعدادات الشركة
     document.getElementById('saveProviderBtn').addEventListener('click', async function() {
         let url = document.getElementById('provUrl').value;
         if(url && url.endsWith('/')) url = url.slice(0, -1);
@@ -252,7 +267,6 @@
         } catch(e) { alert(e.message); } finally { btn.textContent = "حفظ إعدادات الشركة"; btn.disabled = false; }
     });
 
-    // تحميل الشركات
     function loadActiveProviders() {
         onValue(settingsRef, (snap) => {
             shipProviderSelect.innerHTML = '<option value="" disabled selected>-- اختر شركة --</option>';
@@ -270,7 +284,6 @@
     }
     window.delProv = async (k) => { if(confirm('حذف؟')) await remove(ref(db, `delivery_settings/${k}`)); };
 
-    // عرض الطلبات
     onValue(ordersRef, async (snapshot) => {
         shippingContainer.innerHTML = '';
         const orders = snapshot.val() || {};
@@ -325,13 +338,13 @@
     const wilayaMapping = { "أدرار": "Adrar", "الشلف": "Chlef", "الأغواط": "Laghouat", "أم البواقي": "Oum El Bouaghi", "باتنة": "Batna", "بجاية": "Bejaia", "بسكرة": "Biskra", "بشار": "Bechar", "البليدة": "Blida", "البويرة": "Bouira", "تمنراست": "Tamanrasset", "تبسة": "Tebessa", "تلمسان": "Tlemcen", "تيارت": "Tiaret", "تيزي وزو": "Tizi Ouzou", "الجزائر": "Alger", "الجلفة": "Djelfa", "جيجل": "Jijel", "سطيف": "Setif", "سعيدة": "Saida", "سكيكدة": "Skikda", "سيدي بلعباس": "Sidi Bel Abbes", "عنابة": "Annaba", "قالمة": "Guelma", "قسنطينة": "Constantine", "المدية": "Medea", "مستغانم": "Mostaganem", "المسيلة": "M'sila", "معسكر": "Mascara", "ورقلة": "Ouargla", "وهران": "Oran", "البيض": "El Bayadh", "إليزي": "Illizi", "برج بوعريريج": "Bordj Bou Arreridj", "بومرداس": "Boumerdes", "الطارف": "El Tarf", "تندوف": "Tindouf", "تيسمسيلت": "Tissemsilt", "الوادي": "El Oued", "خنشلة": "Khenchela", "سوق أهراس": "Souk Ahras", "تيبازة": "Tipaza", "ميلة": "Mila", "عين الدفلى": "Ain Defla", "النعامة": "Naama", "عين تموشنت": "Ain Temouchent", "غرداية": "Ghardaia", "غليزان": "Relizane", "تيميمون": "Timimoun", "برج باجي مختار": "Bordj Badji Mokhtar", "أولاد جلال": "Ouled Djellal", "بني عباس": "Beni Abbes", "إن صالح": "In Salah", "إن قزام": "In Guezzam", "تقرت": "Touggourt", "جانت": "Djanet", "المغير": "El M'Ghair", "المنيعة": "El Meniaa" };
 
     // ==========================================
-    // 🔥 الكود المصحح للإرسال 🔥
+    // 🔥 زر الإرسال مع تحميل كل الصفحات 🔥
     // ==========================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const btn = this; const providerId = shipProviderSelect.value; const checks = document.querySelectorAll('.order-checkbox:checked');
         if(!providerId || checks.length === 0) return alert('اختر الشركة والطلبات');
         if(!confirm(`إرسال ${checks.length} طلب؟`)) return;
-        btn.textContent = "جاري الإرسال..."; btn.disabled = true;
+        btn.textContent = "جاري الإرسال (يرجى الانتظار)..."; btn.disabled = true;
 
         let apiData = null;
         try {
@@ -339,6 +352,7 @@
             if(setSnap.exists()) apiData = setSnap.val(); else throw new Error("بيانات الشركة مفقودة");
         } catch(e) { alert(e.message); btn.textContent = "📤 إرسال المحدد"; btn.disabled = false; return; }
 
+        // تحميل البيانات الحقيقية من Guepex (جميع الصفحات)
         if(apiData.driverType === 'yalidine_style') {
             await fetchGuepexData(apiData.apiUrl, apiData.apiKey, apiData.apiToken);
         }
@@ -364,37 +378,28 @@
                 const qty = parseInt(order.quantity || 1);
                 let finalPriceToSend = currentTotal - (marketingDiscount * qty); if (finalPriceToSend < 0) finalPriceToSend = 0; 
 
-                // ---------------------------------------------------------
-                // 1. تحديد الولاية بدقة (باستخدام ID)
-                // ---------------------------------------------------------
+                // 1. تحديد الولاية
                 let rawWilaya = order.customerWilaya || order.state || "";
-                let wilayaId = getWilayaIdByName(rawWilaya); // نحصل على الرقم (مثلاً 16)
+                let wilayaId = getWilayaIdByName(rawWilaya); // رقم الولاية
                 
-                // البحث عن الاسم الفرنسي في بيانات Guepex باستخدام الرقم
-                let finalWilayaName = "Alger"; // قيمة افتراضية
+                let finalWilayaName = "Alger";
                 if (wilayaId) {
                     const foundWilaya = allWilayasApiCache.find(w => w.id == wilayaId);
                     if (foundWilaya) finalWilayaName = foundWilaya.name;
                 } else {
-                    // إذا فشل الرقم، نستخدم الاسم بعد تنظيفه
                     let tempW = rawWilaya.replace(/^[0-9]+[\.\-\s]*/, '').trim(); 
                     if(wilayaMapping[tempW]) finalWilayaName = wilayaMapping[tempW];
                     else finalWilayaName = tempW;
-                    
                     if(normalizeText(finalWilayaName) === 'الجزائر') finalWilayaName = 'Alger';
                 }
 
-                // ---------------------------------------------------------
-                // 2. تحديد البلدية (لتفادي خطأ Unknown commune)
-                // ---------------------------------------------------------
+                // 2. تحديد البلدية
                 let rawCommune = (order.customerCommune || "").trim();
-                let finalCommuneName = finalWilayaName; // افتراضياً نفس الولاية
+                let finalCommuneName = finalWilayaName;
 
-                // Guepex ترفض "Alger" كبلدية، يجب أن تكون "Alger Centre"
                 if (wilayaId === 16 || finalWilayaName.toLowerCase() === 'alger') {
                     finalCommuneName = "Alger Centre"; 
                 } else {
-                    // محاولة تحسين الاسم من قائمة المراكز إذا وجدت
                     const matchingCenter = allCentersCache.find(c => 
                         c.wilaya_id == wilayaId && 
                         (c.commune_name && normalizeText(c.commune_name) === normalizeText(rawCommune))
@@ -402,26 +407,20 @@
                     if (matchingCenter) {
                         finalCommuneName = matchingCenter.commune_name;
                     } else {
-                        // إذا لم نجد تطابق، نستخدم اسم الولاية كبديل آمن
                         finalCommuneName = finalWilayaName;
                     }
                 }
 
-                // ---------------------------------------------------------
-                // 3. تحديد المكتب (Stop Desk ID)
-                // ---------------------------------------------------------
+                // 3. تحديد المكتب
                 let stopDeskId = null;
                 if (isStopDesk && apiData.driverType === 'yalidine_style') {
-                    // تصفية المكاتب الموجودة في هذه الولاية فقط
                     let centersInWilaya = allCentersCache.filter(c => c.wilaya_id == wilayaId);
                     
-                    // إذا لم نجد بالرقم (نادر الحدوث)، نبحث بالاسم
                     if(centersInWilaya.length === 0) {
                         centersInWilaya = allCentersCache.filter(c => c.wilaya_name.toLowerCase() === finalWilayaName.toLowerCase());
                     }
 
                     if (centersInWilaya.length > 0) {
-                        // محاولة إيجاد مكتب يطابق البلدية
                         let foundCenter = centersInWilaya.find(c => 
                             c.name.includes(rawCommune) || 
                             (c.commune_name && c.commune_name.toLowerCase().includes(normalizeText(rawCommune)))
@@ -430,9 +429,9 @@
                         if (foundCenter) {
                             stopDeskId = foundCenter.center_id || foundCenter.id;
                         } else {
-                            // 🔥 الحل السحري: نأخذ المكتب الرئيسي للولاية (الأول) لضمان عدم الفشل
+                            // الحل السحري: أخذ أول مكتب في القائمة
                             stopDeskId = centersInWilaya[0].center_id || centersInWilaya[0].id;
-                            errorDetails += `\n⚠️ تنبيه: تم اختيار مكتب (${centersInWilaya[0].name}) تلقائياً لأننا لم نجد مكتباً في ${rawCommune}.`;
+                            errorDetails += `\n⚠️ تنبيه: تم اختيار مكتب (${centersInWilaya[0].name}) تلقائياً.`;
                         }
                     } else {
                         failCount++; errorDetails += `\n⛔ لا توجد مكاتب في ${finalWilayaName} (ID: ${wilayaId})`; continue;
@@ -473,16 +472,9 @@
                 let resJson; try { resJson = JSON.parse(resText); } catch (e) { throw new Error(`API Error: ${resText.substring(0, 50)}`); }
 
                 let isSuccess = false; let trackingCode = "Sent";
-                
-                // التحقق من الاستجابة حسب التوثيق (order_id key)
-                if (resJson[cleanOrderId]) { 
-                    if (resJson[cleanOrderId].success === true) { 
-                        isSuccess = true; trackingCode = resJson[cleanOrderId].tracking; 
-                    } else { 
-                        failCount++; errorDetails += `\n❌ ${fullName}: ${resJson[cleanOrderId].message}`; continue; 
-                    }
-                }
-                else if (Array.isArray(resJson) && resJson[0] && (resJson[0].tracking || resJson[0].success)) {
+                if (resJson[cleanOrderId] && resJson[cleanOrderId].success === true) { 
+                    isSuccess = true; trackingCode = resJson[cleanOrderId].tracking; 
+                } else if (Array.isArray(resJson) && resJson[0] && (resJson[0].tracking || resJson[0].success)) {
                      isSuccess = true; trackingCode = resJson[0].tracking || "Sent";
                 }
                 
@@ -491,6 +483,7 @@
                     successCount++;
                 } else { 
                     if(!resJson[cleanOrderId]) { failCount++; errorDetails += `\n❌ ${fullName}: ${JSON.stringify(resJson).substring(0, 100)}`; } 
+                    else { failCount++; errorDetails += `\n❌ ${fullName}: ${resJson[cleanOrderId].message}`; }
                 }
 
             } catch(e) { console.error(e); failCount++; errorDetails += `\n⚠️ ${orderId}: ${e.message}`; }
@@ -501,7 +494,6 @@
         btn.textContent = "📤 إرسال المحدد"; btn.disabled = false;
     });
 
-    // ... المودال (التفاصيل) ...
     window.openDetails = async (id) => { const orderSnap = await get(ref(db, 'orders/'+id)); if(orderSnap.exists()) { const o = orderSnap.val(); document.getElementById('currentOrderId').value = id; document.getElementById('editName').value = o.customerName || o.name; document.getElementById('editPhone').value = o.customerPhone || o.phone; document.getElementById('editWilaya').value = o.customerWilaya || o.state; document.getElementById('editCommune').value = o.customerCommune||''; document.getElementById('editAddress').value = o.customerAddress || o.address; let currentTotal = parseFloat(o.productTotal); if(isNaN(currentTotal)) currentTotal = calculateProductOnlyPrice(o); let marketingDiscount = 0; if(o.productId) { const prodSnap = await get(ref(db, `products/${o.productId}`)); if(prodSnap.exists()) marketingDiscount = parseFloat(prodSnap.val().marketingDiscount || 0); } const qty = parseInt(o.quantity || 1); let netPrice = currentTotal - (marketingDiscount * qty); if(netPrice < 0) netPrice = 0; document.getElementById('editProductPrice').value = netPrice; document.getElementById('orderDetailModal').classList.remove('hidden'); } }
     document.getElementById('closeDetailModal').addEventListener('click',()=>document.getElementById('orderDetailModal').classList.add('hidden'));
     document.getElementById('saveChangesBtn').addEventListener('click',async()=>{ const id=document.getElementById('currentOrderId').value; await update(ref(db,'orders/'+id), { customerName:document.getElementById('editName').value, customerPhone:document.getElementById('editPhone').value, customerWilaya:document.getElementById('editWilaya').value, customerCommune:document.getElementById('editCommune').value, customerAddress:document.getElementById('editAddress').value, productTotal: parseFloat(document.getElementById('editProductPrice').value) }); document.getElementById('orderDetailModal').classList.add('hidden'); alert("✅ تم حفظ التعديلات"); });
