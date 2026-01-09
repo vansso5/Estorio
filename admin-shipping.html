@@ -3,9 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>إدارة الشحن والربط - النظام المحصن</title>
+<title>إدارة الشحن - النظام الكامل</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin-style.css">
+<style>
+    /* تحسينات الموبايل */
+    .loading-overlay { opacity: 0.7; pointer-events: none; }
+    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+    .badge-desk { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    .badge-home { background: #e8f5e9; color: #2e7d32; border: 1px solid #c3e6cb; }
+    .fix-btn { background-color: #673ab7; color: white; width: 100%; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 15px; }
+</style>
 </head>
 <body>
 
@@ -24,40 +32,29 @@
   </div>
 </nav>
 
+<div class="visitors-wrapper">
+  <div id="liveVisitors" class="live-visitors-badge inactive">
+    <span class="live-dot"></span>
+    <span style="margin-right:5px">عدد الزوار الآن: </span>
+    <strong id="visitorsCount" style="margin:0 4px">0</strong>
+  </div>
+</div>
 
 <div class="container">
-    <h2 style="margin-bottom: 20px; color: var(--primary-color);">⚙️ إعداد شركات التوصيل (API)</h2>
+    <!-- قسم إعداد الشركات -->
+    <h2 style="margin-bottom: 20px; color: var(--primary-color);">⚙️ إعداد شركات التوصيل</h2>
     <div class="form-card" style="margin-bottom: 30px;">
-        <h4 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">إضافة شركة جديدة / تعديل</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div><label>اسم الشركة:</label><input type="text" id="provName" class="search-input" placeholder="مثلاً: GuepEX"></div>
-            <div><label>رابط API:</label><input type="text" id="provUrl" class="search-input" placeholder="رابط الـ API"></div>
-            <div><label>API Key / User ID:</label><input type="text" id="provKey" class="search-input" placeholder="رقم المستخدم"></div>
-            <div><label>API Token / Password:</label><input type="text" id="provToken" class="search-input" placeholder="الكود الطويل (Token)"></div>
-            <div>
-                <label>هيكلة البيانات:</label>
-                <select id="provDriver" class="search-input">
-                    <option value="yalidine_style" selected>نظام Yalidine / Guepex (الجديد)</option>
-                    <option value="standard">نظام آخر / قياسي</option>
-                </select>
-            </div>
-            <div>
-                <label>صيغة الولاية:</label>
-                <select id="provWilayaFormat" class="search-input">
-                    <option value="french_name" selected>الاسم بالفرنسية (Alger)</option>
-                    <option value="id">رقم الولاية (16)</option>
-                    <option value="arabic_name">الاسم بالعربية (الجزائر)</option>
-                </select>
-            </div>
-        </div>
-        <button id="saveProviderBtn" class="save-btn" style="margin-top:15px; width:100%; background-color: var(--secondary-color); color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">حفظ إعدادات الشركة</button>
-        <div style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px;">
-            <label>الشركات المحفوظة:</label>
-            <div id="savedProvidersList" style="margin-top: 10px;"><p class="loading-message">جاري التحميل...</p></div>
+        <!-- زر الإصلاح التلقائي للموبايل -->
+        <button id="autoFixProvidersBtn" class="fix-btn">🛠️ اضغط هنا لإصلاح وإضافة الشركات الافتراضية</button>
+        
+        <h4 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">الشركات المحفوظة:</h4>
+        <div id="savedProvidersList" style="margin-top: 10px;">
+            <p class="loading-message">جاري التحميل...</p>
         </div>
     </div>
 
-    <h2 style="margin-bottom: 20px; color: var(--primary-color);">📦 إرسال الطلبات (Shipping)</h2>
+    <!-- قسم الإرسال -->
+    <h2 style="margin-bottom: 20px; color: var(--primary-color);">📦 إرسال الطلبات (Shipping Engine)</h2>
     <div class="form-card" style="margin-bottom: 30px;">
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
             <div style="flex:3; min-width: 250px;">
@@ -68,7 +65,7 @@
             </div>
             <div style="flex:1; display:flex; gap:5px;">
                 <button id="sendBulkBtn" style="flex:2; padding: 10px; background-color: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer;">📤 إرسال المحدد</button>
-                <button id="forceRefreshBtn" style="flex:1; padding: 10px; background-color: #17a2b8; color: white; border: none; border-radius: 5px; cursor: pointer;" title="تحديث قائمة المكاتب من السيرفر">🔄 تحديث البيانات</button>
+                <button id="forceRefreshBtn" style="flex:1; padding: 10px; background-color: #17a2b8; color: white; border: none; border-radius: 5px; cursor: pointer;" title="تحديث قائمة المكاتب من السيرفر">🔄 تحديث</button>
             </div>
         </div>
         <div id="apiStatusMsg" style="margin-bottom:10px; font-size:0.85rem; color:#666;"></div>
@@ -78,52 +75,32 @@
         </div>
     </div>
 
-    <h2 style="margin-bottom: 20px; color: var(--primary-color);">💰 تسعيرات التوصيل (للمتجر)</h2>
-    <div class="form-card">
-      <div style="display:flex; gap:10px; margin-bottom:15px;">
-           <div style="flex:1;"><label>سعر المنزل (Home):</label><input type="number" id="homePrice" class="search-input"></div>
-           <div style="flex:1;"><label>سعر المكتب (Desk):</label><input type="number" id="deskPrice" class="search-input"></div>
-      </div>
-      <div style="margin-bottom: 10px;"><button type="button" id="selectAllBtn" style="padding:5px 10px; cursor:pointer; background: #eee; border: 1px solid #ddd; border-radius: 4px;">تحديد/إلغاء الكل</button></div>
-      <div id="wilayaGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; max-height: 200px; overflow-y: auto; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px;"></div>
-      <button id="saveZoneBtn" class="save-btn" style="margin-top:15px; width: 100%; background-color: var(--secondary-color); color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">حفظ التسعيرة</button>
-    </div>
     <div id="zonesContainer" class="orders-grid" style="margin-top: 20px;"></div>
 </div>
 
+<!-- مودال التعديل -->
 <div id="orderDetailModal" class="modal hidden">
     <div class="modal-content">
       <button class="close-modal-btn" id="closeDetailModal">&times;</button>
       <h3>📝 تعديل بيانات الطلب</h3>
       <div class="details-section" style="margin-top: 15px;">
-          <label style="display:block;margin-bottom:5px;">الاسم الكامل</label>
-          <input type="text" id="editName" class="search-input" style="margin-bottom:10px;">
-          
-          <label style="display:block;margin-bottom:5px;">رقم الهاتف</label>
-          <input type="text" id="editPhone" class="search-input" style="margin-bottom:10px;">
-          
+          <label>الاسم الكامل</label><input type="text" id="editName" class="search-input">
+          <label>رقم الهاتف</label><input type="text" id="editPhone" class="search-input">
           <div style="display:flex; gap:10px;">
-              <div style="flex:1"><label style="display:block;margin-bottom:5px;">الولاية</label><input type="text" id="editWilaya" class="search-input" style="margin-bottom:10px;"></div>
-              <div style="flex:1"><label style="display:block;margin-bottom:5px;">البلدية</label><input type="text" id="editCommune" class="search-input" style="margin-bottom:10px;"></div>
+              <div style="flex:1"><label>الولاية</label><input type="text" id="editWilaya" class="search-input"></div>
+              <div style="flex:1"><label>البلدية</label><input type="text" id="editCommune" class="search-input"></div>
           </div>
-          
-          <label style="display:block;margin-bottom:5px;">العنوان</label>
-          <input type="text" id="editAddress" class="search-input" style="margin-bottom:10px;">
-
-          <label style="display:block;margin-bottom:5px; color:var(--primary-color); font-weight:bold;">نوع التوصيل (Delivery Mode):</label>
-          <select id="editDeliveryOption" class="search-input" style="margin-bottom:15px; background:#fff3cd; border:1px solid #ffecb3;">
+          <label>العنوان</label><input type="text" id="editAddress" class="search-input">
+          <label>نوع التوصيل:</label>
+          <select id="editDeliveryOption" class="search-input" style="background:#fff3cd;">
               <option value="home">🏠 توصيل للمنزل (Home)</option>
               <option value="desk">🏢 توصيل للمكتب (Stop Desk)</option>
           </select>
-          
-          <label style="color:var(--primary-color); font-weight:bold; display:block; margin-bottom:5px;">سعر المنتج الصافي:</label>
-          <input type="number" id="editProductPrice" class="search-input" style="margin-bottom:10px; border:2px solid var(--primary-color); background:#f0f8ff; font-weight:bold; font-size:1.1rem;">
-          
+          <label>السعر الصافي:</label><input type="number" id="editProductPrice" class="search-input" style="background:#f0f8ff; font-weight:bold;">
           <input type="hidden" id="currentOrderId">
-          
           <div class="modal-actions" style="display: flex; gap: 10px; margin-top: 15px;">
-              <button id="saveChangesBtn" style="flex: 1; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size:1rem; font-weight:bold;">💾 حفظ التغييرات</button>
-              <button id="cancelOrderBtn" class="btn-delete">إلغاء الطلب</button>
+              <button id="saveChangesBtn" style="flex: 1; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer;">💾 حفظ التغييرات</button>
+              <button id="cancelOrderBtn" class="btn-delete">إلغاء</button>
           </div>
       </div>
     </div>
@@ -131,7 +108,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, push, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, push, onValue, update, remove, get, set } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
     import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
     const firebaseConfig = { apiKey: "AIzaSyBUeCV2eX3LgA1X3WcEMcsTIubXN1YlVl4", authDomain: "myestore-34f65.firebaseapp.com", databaseURL: "https://myestore-34f65-default-rtdb.firebaseio.com", projectId: "myestore-34f65", storageBucket: "myestore-34f65.firebasestorage.app", messagingSenderId: "14078917211", appId: "1:14078917211:web:a48eab2a7396c094f7dd7e", measurementId: "G-9181DX0XNJ" };
@@ -143,96 +120,70 @@
     const shipProviderSelect = document.getElementById('shipProviderSelect');
     const savedProvidersList = document.getElementById('savedProvidersList');
     
-    // الثوابت الأساسية والقواميس
-    const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
-    
-    const wilayaMapping = {
-        "adrar": 1, "أدرار": 1, "adr": 1, "aderar": 1,
-        "chlef": 2, "الشلف": 2, "شلف": 2, "chleff": 2,
-        "laghouat": 3, "الأغواط": 3, "أغواط": 3, "laghouat": 3,
-        "oum el bouaghi": 4, "أم البواقي": 4, "ام البواقي": 4, "oeb": 4,
-        "batna": 5, "باتنة": 5, "باتنه": 5, "batna": 5,
-        "bejaia": 6, "بجاية": 6, "بجايه": 6, "bgayet": 6,
-        "biskra": 7, "بسكرة": 7, "بسكره": 7,
-        "bechar": 8, "بشار": 8,
-        "blida": 9, "البليدة": 9, "بليدة": 9, "البليده": 9, "بليده": 9, "blida": 9,
-        "bouira": 10, "البويرة": 10, "بويرة": 10, "البويره": 10, "بويره": 10, "bouira": 10,
-        "tamanrasset": 11, "تمنراست": 11, "tam": 11, "tamanrasset": 11,
-        "tebessa": 12, "تبسة": 12, "تبسه": 12,
-        "tlemcen": 13, "تلمسان": 13,
-        "tiaret": 14, "تيارت": 14,
-        "tizi ouzou": 15, "تيزي وزو": 15, "tizi": 15, "to": 15,
-        "alger": 16, "الجزائر": 16, "جزائر": 16, "algiers": 16, "djazair": 16, "دزاير": 16, "العاصمة": 16, "عاصمة": 16,
-        "djelfa": 17, "الجلفة": 17, "جلفة": 17, "الجلفه": 17, "جلفه": 17, "djelfa": 17,
-        "jijel": 18, "جيجل": 18,
-        "setif": 19, "سطيف": 19,
-        "saida": 20, "سعيدة": 20, "سعيده": 20,
-        "skikda": 21, "سكيكدة": 21, "سكيكده": 21,
-        "sidi bel abbes": 22, "سيدي بلعباس": 22, "sba": 22,
-        "annaba": 23, "عنابة": 23, "عنابه": 23,
-        "guelma": 24, "قالمة": 24, "قالمه": 24, 
-        "constantine": 25, "قسنطينة": 25, "قسنطينه": 25, "constantine": 25,
-        "medea": 26, "المدية": 26, "مدية": 26, "المديه": 26, "مديه": 26, "medea": 26,
-        "mostaganem": 27, "مستغانم": 27, "mosta": 27,
-        "msila": 28, "المسيلة": 28, "مسيلة": 28, "المسيله": 28, "مسيله": 28, "msila": 28,
-        "mascara": 29, "معسكر": 29,
-        "ouargla": 30, "ورقلة": 30, "ورقله": 30,
-        "oran": 31, "وهران": 31, "wahran": 31,
-        "el bayadh": 32, "البيض": 32, "بيض": 32, "el bayadh": 32, "bayadh": 32,
-        "illizi": 33, "إليزي": 33, "اليزي": 33,
-        "bordj bou arreridj": 34, "برج بوعريريج": 34, "برج": 34, "bba": 34,
-        "boumerdes": 35, "بومرداس": 35,
-        "el tarf": 36, "الطارف": 36, "طارف": 36, "el tarf": 36, "tarf": 36,
-        "tindouf": 37, "تندوف": 37,
-        "tissemsilt": 38, "تيسمسيلت": 38,
-        "el oued": 39, "الوادي": 39, "وادي": 39, "oued souf": 39, "واد سوف": 39, "oued": 39, "سوف": 39,
-        "khenchela": 40, "خنشلة": 40, "خنشله": 40,
-        "souk ahras": 41, "سوق أهراس": 41,
-        "tipaza": 42, "تيبازة": 42, "تيبازه": 42, "tipa": 42,
-        "mila": 43, "ميلة": 43, "ميله": 43,
-        "ain defla": 44, "عين الدفلى": 44,
-        "naama": 45, "النعامة": 45, "نعامة": 45, "النعامه": 45, "نعامه": 45, "naama": 45,
-        "ain temouchent": 46, "عين تموشنت": 46,
-        "ghardaia": 47, "غرداية": 47, "غردايه": 47,
-        "relizane": 48, "غليزان": 48,
-        "timimoun": 49, "تيميمون": 49,
-        "bordj badji mokhtar": 50, "برج باجي مختار": 50, "bbm": 50,
-        "ouled djellal": 51, "أولاد جلال": 51, "ولاد جلال": 51, "odj": 51,
-        "beni abbes": 52, "بني عباس": 52,
-        "in salah": 53, "إن صالح": 53, "عين صالح": 53,
-        "in guezzam": 54, "إن قزام": 54, "عين قزام": 54,
-        "touggourt": 55, "تقرت": 55,
-        "djanet": 56, "جانت": 56,
-        "el mghair": 57, "المغير": 57, "مغير": 57,
-        "el meniaa": 58, "المنيعة": 58, "منيعة": 58, "المنيعه": 58, "منيعه": 58
-    };
-
-    const communeMap = {
-        "زرالدة": "Zeralda", "الجزائر": "Alger Centre", "الجزائر الوسطى": "Alger Centre", "الرويبة": "Rouiba",
-        "بئر مراد رايس": "Bir Mourad Rais", "حيدرة": "Hydra", "بن عكنون": "Ben Aknoun", "بوزريعة": "Bouzareah",
-        "الشراقة": "Cheraga", "دالي ابراهيم": "Dely Ibrahim", "القبة": "Kouba", "حسين داي": "Hussein Dey",
-        "باب الزوار": "Bab Ezzouar", "الدار البيضاء": "Dar El Beida", "الحراش": "El Harrach",
-        "بئر توتة": "Birtouta", "سيدي عبد الله": "Sidi Abdellah", "عين بنيان": "Ain Benian",
-        "سطاوالي": "Staoueli", "بابا حسن": "Baba Hassen",
-        "وهران": "Oran", "السانية": "Es Senia", "بئر الجير": "Bir El Djir", "أرزيو": "Arzew",
-        "سطيف": "Setif", "العلمة": "El Eulma", "عين ولمان": "Ain Oulmene", "البليدة": "Blida", "بوفاريك": "Boufarik"
-    };
-
-    // ============================================================
-    // 🛡️ المتغيرات العالمية وأدوات الحماية (The Defensive Engine)
-    // ============================================================
-    const RATE_LIMIT_DELAY = 1000; // 1 ثانية بين كل طلب لتجنب الحظر
-    const MAX_WEIGHT_FOR_PARTNERS = 10; // الحد الأقصى للمكاتب الصغيرة
-    const CACHE_TTL = 24 * 60 * 60 * 1000; // صلاحية البيانات 24 ساعة
+    // الثوابت
+    const RATE_LIMIT_DELAY = 1000;
+    const MAX_WEIGHT_FOR_PARTNERS = 10; 
+    const CACHE_TTL = 24 * 60 * 60 * 1000; 
 
     let allCentersCache = JSON.parse(localStorage.getItem('yal_centers')) || [];
     let allWilayasApiCache = JSON.parse(localStorage.getItem('yal_wilayas')) || [];
     let allCommunesApiCache = JSON.parse(localStorage.getItem('yal_communes')) || [];
 
-    // تأخير لتجنب الحظر
     const delay = ms => new Promise(res => setTimeout(res, ms));
 
-    // 1. استخراج الهواتف الذكي (Multi-Phone Extraction)
+    const wilayaMapping = {
+        "adrar": 1, "أدرار": 1, "adr": 1, "chlef": 2, "الشلف": 2, "شلف": 2, 
+        "laghouat": 3, "الأغواط": 3, "أغواط": 3, "oum el bouaghi": 4, "أم البواقي": 4, "oeb": 4,
+        "batna": 5, "باتنة": 5, "bejaia": 6, "بجاية": 6, "bgayet": 6, "biskra": 7, "بسكرة": 7,
+        "bechar": 8, "بشار": 8, "blida": 9, "البليدة": 9, "بليدة": 9, "bouira": 10, "البويرة": 10,
+        "tamanrasset": 11, "تمنراست": 11, "tam": 11, "tebessa": 12, "تبسة": 12, "tlemcen": 13, "تلمسان": 13,
+        "tiaret": 14, "تيارت": 14, "tizi ouzou": 15, "تيزي وزو": 15, "tizi": 15,
+        "alger": 16, "الجزائر": 16, "جزائر": 16, "algiers": 16, "djazair": 16, "العاصمة": 16,
+        "djelfa": 17, "الجلفة": 17, "jijel": 18, "جيجل": 18, "setif": 19, "سطيف": 19,
+        "saida": 20, "سعيدة": 20, "skikda": 21, "سكيكدة": 21, "sidi bel abbes": 22, "سيدي بلعباس": 22, "sba": 22,
+        "annaba": 23, "عنابة": 23, "guelma": 24, "قالمة": 24, "constantine": 25, "قسنطينة": 25,
+        "medea": 26, "المدية": 26, "مدية": 26, "mostaganem": 27, "مستغانم": 27, "msila": 28, "المسيلة": 28, "مسيلة": 28,
+        "mascara": 29, "معسكر": 29, "ouargla": 30, "ورقلة": 30, "oran": 31, "وهران": 31, "wahran": 31,
+        "el bayadh": 32, "البيض": 32, "illizi": 33, "إليزي": 33, "bordj bou arreridj": 34, "برج بوعريريج": 34, "bba": 34,
+        "boumerdes": 35, "بومرداس": 35, "el tarf": 36, "الطارف": 36, "tindouf": 37, "تندوف": 37,
+        "tissemsilt": 38, "تيسمسيلت": 38, "el oued": 39, "الوادي": 39, "khenchela": 40, "خنشلة": 40,
+        "souk ahras": 41, "سوق أهراس": 41, "tipaza": 42, "تيبازة": 42, "mila": 43, "ميلة": 43,
+        "ain defla": 44, "عين الدفلى": 44, "naama": 45, "النعامة": 45, "ain temouchent": 46, "عين تموشنت": 46,
+        "ghardaia": 47, "غرداية": 47, "relizane": 48, "غليزان": 48, "timimoun": 49, "تيميمون": 49,
+        "bordj badji mokhtar": 50, "برج باجي مختار": 50, "ouled djellal": 51, "أولاد جلال": 51,
+        "beni abbes": 52, "بني عباس": 52, "in salah": 53, "إن صالح": 53, "in guezzam": 54, "إن قزام": 54,
+        "touggourt": 55, "تقرت": 55, "djanet": 56, "جانت": 56, "el mghair": 57, "المغير": 57, "el meniaa": 58, "المنيعة": 58
+    };
+
+    // =====================================
+    // 🔥 زر الإصلاح التلقائي للموبايل 🔥
+    // =====================================
+    document.getElementById('autoFixProvidersBtn').addEventListener('click', async () => {
+        const confirmFix = confirm("هل تريد إصلاح قائمة الشركات وإضافة الإعدادات الافتراضية؟ سيتم مسح الإعدادات الخاطئة.");
+        if (!confirmFix) return;
+
+        const defaultProviders = {
+          "djezzy_express": {
+            "displayName": "DjezzyExpress", "apiUrl": "https://api.djezzyexpress.dz/v1", "apiKey": "123456789", "apiToken": "abcdefg12345", "driverType": "standard", "wilayaFormat": "arabic_name", "active": true
+          },
+          "baraka_shipping": {
+            "displayName": "BarakaShipping", "apiUrl": "https://api.barakashipping.com/v1", "apiKey": "987654321", "apiToken": "hijklm67890", "driverType": "yalidine_style", "wilayaFormat": "french_name", "active": true
+          },
+          "guepex": {
+            "displayName": "GuepEX", "apiUrl": "https://api.guepex.com/v1", "apiKey": "CHANGE_ME", "apiToken": "CHANGE_ME", "driverType": "yalidine_style", "wilayaFormat": "french_name", "active": true
+          }
+        };
+
+        try {
+            await set(ref(db, 'delivery_settings'), defaultProviders);
+            alert("✅ تم إصلاح الشركات! سيتم تحديث الصفحة.");
+            location.reload();
+        } catch (error) {
+            alert("خطأ: " + error.message);
+        }
+    });
+
+    // بقية الدوال المساعدة
     function extractSmartPhones(rawText) {
         const regex = /(0[567][0-9]{8})/g; 
         const matches = (rawText || "").match(regex) || [];
@@ -241,14 +192,12 @@
         return { primary: unique[0], secondary: unique.slice(1).join(' / ') };
     }
 
-    // 2. تنظيف النصوص (Text Sanitization)
     function sanitizeString(str, maxLength = 60) {
         if (!str) return "";
         let clean = str.replace(/[^\w\s\u0600-\u06FF\-\.]/g, ''); 
         return clean.replace(/\s+/g, ' ').trim().substring(0, maxLength);
     }
 
-    // 3. تطبيع النصوص للبحث (Normalization)
     function normalizeText(text) {
         if (!text) return "";
         let str = text.toLowerCase().trim();
@@ -257,14 +206,12 @@
         return str.trim();
     }
 
-    // 4. حشو العنوان (Address Padding)
     function padAddress(addr, communeName, wilayaName) {
         let clean = sanitizeString(addr, 120);
         if (clean.length < 8) return `${clean}, ${communeName}, ${wilayaName} (Adresse Personnelle)`;
         return clean;
     }
 
-    // 5. إدارة اللقطات (Snapshot Manager) - لمنع Zombie Orders
     function saveOrderSnapshot(orderId, payload) {
         const snapshots = JSON.parse(localStorage.getItem('shipping_snapshots') || '{}');
         snapshots[orderId] = { payload, timestamp: Date.now() };
@@ -277,11 +224,11 @@
         localStorage.setItem('shipping_snapshots', JSON.stringify(snapshots));
     }
 
-    // دالة البحث عن ID الولاية
     function getWilayaIdByName(rawName) {
         if (!rawName) return null;
         const matchNum = rawName.match(/^(\d+)/);
-        if (matchNum) return parseInt(matchNum[1]);
+        if (matchNum) { const id = parseInt(matchNum[1]); if (id >= 1 && id <= 58) return id; }
+        
         let cleanName = normalizeText(rawName).replace("wilaya", "").trim();
         if (wilayaMapping[cleanName]) return wilayaMapping[cleanName];
         if (cleanName.startsWith("ال")) {
@@ -294,8 +241,7 @@
         if (cleanName.endsWith("ة")) altName = cleanName.slice(0, -1) + "ه";
         else if (cleanName.endsWith("ه")) altName = cleanName.slice(0, -1) + "ة";
         if (wilayaMapping[altName]) return wilayaMapping[altName];
-        const withEl = "el " + cleanName;
-        if (wilayaMapping[withEl]) return wilayaMapping[withEl];
+        
         if (allWilayasApiCache.length > 0) {
             const foundInApi = allWilayasApiCache.find(w => normalizeText(w.name) === cleanName);
             if (foundInApi) return foundInApi.id;
@@ -307,7 +253,7 @@
         if (!user) window.location.href = 'admin-login.html';
         else { 
             document.getElementById('logoutBtn').style.display = 'block'; 
-            loadActiveProviders(); renderWilayaCheckboxes();
+            loadActiveProviders(); 
             updateApiStatusUI();
         }
     });
@@ -354,9 +300,8 @@
             localStorage.setItem('yal_wilayas', JSON.stringify(allWilayasApiCache));
             localStorage.setItem('yal_centers', JSON.stringify(allCentersCache));
             localStorage.setItem('yal_communes', JSON.stringify(allCommunesApiCache));
-            localStorage.setItem('yal_last_update', Date.now()); // Timestamp
+            localStorage.setItem('yal_last_update', Date.now()); 
 
-            console.log(`تم تحميل ${allWilayasApiCache.length} ولاية، ${allCentersCache.length} مكتب.`);
             updateApiStatusUI();
             if(forceUpdate) alert("✅ تم تحديث بيانات المكاتب والولايات بنجاح!");
         } catch(e) { 
@@ -375,13 +320,6 @@
             const d = snap.val();
             await fetchGuepexData(d.apiUrl, d.apiKey, d.apiToken, true);
         }
-    });
-
-    onValue(visitorsRef, (s) => { 
-        if(!s.exists()) { document.getElementById('visitorsCount').textContent=0; return;} 
-        const c = Object.keys(s.val()).length; 
-        document.getElementById('visitorsCount').textContent=c; 
-        document.getElementById('liveVisitors').className = c>0?'live-visitors-badge active':'live-visitors-badge inactive';
     });
 
     onValue(ordersRef, async (snapshot) => {
@@ -413,7 +351,7 @@
                     </div>
                 </div>
                 <div style="flex: 1; text-align: center;">
-                    <span style="display:inline-block; padding:5px 10px; border-radius:15px; font-size:0.85rem; font-weight:bold; background:${isDeskByDefualt ? '#fff3cd' : '#e8f5e9'}; color:${isDeskByDefualt ? '#856404' : '#2e7d32'}; border:1px solid ${isDeskByDefualt ? '#ffeeba' : '#c3e6cb'};">${isDeskByDefualt ? '🏢 مكتب (Desk)' : '🏠 منزل (Home)'}</span>
+                    <span class="status-badge ${isDeskByDefualt ? 'badge-desk' : 'badge-home'}">${isDeskByDefualt ? '🏢 مكتب (Desk)' : '🏠 منزل (Home)'}</span>
                 </div>
                 <div onclick="window.openDetails('${id}')" style="cursor:pointer; background:#e3f2fd; color:#0d47a1; padding:5px 10px; border-radius:5px; font-weight:bold; font-size:0.9rem;">✏️ تعديل</div>`;
             shippingContainer.appendChild(row);
@@ -422,36 +360,31 @@
     });
 
     // ============================================================
-    // 🧠 المحلل اللوجستي الصارم (Strict Logic Resolver)
+    // 🔥 المحلل اللوجستي (الحل النهائي)
     // ============================================================
     function resolveLogisticDestination(orderData, centersList, wilayasList, communesList) {
         const { wilayaId, rawCommune, isStopDesk, originalAddress, parcelWeight, isCOD, customerPhone } = orderData;
         let logs = [];
         let driverNoteParts = []; 
 
-        // 1. التحقق من القائمة السوداء (محاكاة)
-        if (["0550000000"].includes(customerPhone)) throw new Error("BLOCKED_CUSTOMER: هذا الزبون في القائمة السوداء.");
+        if (["0550000000"].includes(customerPhone)) throw new Error("BLOCKED_CUSTOMER");
 
-        // 2. العثور على الولاية الرسمية (Baseline)
         const officialWilaya = wilayasList.find(w => w.id == wilayaId);
         if (!officialWilaya) throw new Error(`الولاية رقم ${wilayaId} غير مدعومة.`);
 
-        // البحث عن بلدية الزبون (للاستخدام في حالة Home)
         let normalizedInput = normalizeText(rawCommune || "");
         const validCommunes = communesList.filter(c => c.wilaya_id == wilayaId);
+        
         let targetCommuneObj = validCommunes.find(c => normalizeText(c.name) === normalizedInput) ||
                                validCommunes.find(c => normalizeText(c.name).includes(normalizedInput));
 
-        // Fallback: عاصمة الولاية
+        // 🔥 Fallback قوي للبلدية لتجنب "Not Deliverable"
         if (!targetCommuneObj) {
-            targetCommuneObj = validCommunes.find(c => normalizeText(c.name) === normalizeText(officialWilaya.name));
-            if (!targetCommuneObj) targetCommuneObj = validCommunes[0];
-            logs.push(`⚠️ البلدية غير مطابقة، تم اعتماد: ${targetCommuneObj.name}`);
+            targetCommuneObj = validCommunes.find(c => normalizeText(c.name) === normalizeText(officialWilaya.name)); // العاصمة
+            if (!targetCommuneObj) targetCommuneObj = validCommunes[0]; // أي بلدية
+            logs.push(`⚠️ البلدية "${rawCommune}" غير مقبولة، تم اعتماد: ${targetCommuneObj.name}`);
         }
 
-        // =====================================
-        // منطق StopDesk المعقد (The Complex Desk Logic)
-        // =====================================
         let finalIsStopDesk = isStopDesk;
         let finalStopDeskId = null;
         let finalWilayaName = officialWilaya.name;
@@ -459,37 +392,27 @@
         let finalAddress = padAddress(originalAddress, finalCommuneName, finalWilayaName);
 
         if (finalIsStopDesk) {
-            // فلترة المكاتب الصارمة (Strict Filtering)
             let candidates = centersList.filter(c => {
-                if (c.wilaya_id != wilayaId) return false; // 1. تطابق الولاية الجغرافي
-                if (!c.active) return false; // 2. استبعاد غير النشط
-                
-                // 3. استبعاد الـ Hubs ومراكز التوزيع
+                if (c.wilaya_id != wilayaId) return false;
+                if (!c.active) return false;
                 const nameLower = c.name.toLowerCase();
-                if (c.is_hub || nameLower.includes('hub') || nameLower.includes('depot') || nameLower.includes('liv') || nameLower.includes('sorting')) return false;
-
-                // 4. التحقق من الوزن
+                if (c.is_hub || nameLower.includes('hub') || nameLower.includes('depot')) return false;
                 if (parcelWeight > MAX_WEIGHT_FOR_PARTNERS && (c.is_partner || nameLower.includes('kiosk'))) return false;
-
-                // 5. التحقق من COD (اذا توفرت المعلومة)
                 if (isCOD && c.no_cod === true) return false;
-
                 return true;
             });
 
-            // اختيار المكتب الأفضل (البلدية -> Centre -> أي شيء)
-            let chosenCenter = candidates.find(c => normalizeText(c.name).includes(normalizedInput) || normalizeText(c.commune_name || "").includes(normalizedInput));
+            let chosenCenter = null;
+            if (!chosenCenter) chosenCenter = candidates.find(c => normalizeText(c.name).includes(normalizedInput));
             if (!chosenCenter) chosenCenter = candidates.find(c => c.name.toLowerCase().includes('centre'));
             if (!chosenCenter && candidates.length > 0) chosenCenter = candidates[0];
 
             if (chosenCenter) {
-                // ✅ نجاح: فرض بيانات المكتب
                 finalStopDeskId = chosenCenter.center_id || chosenCenter.id;
                 finalWilayaName = chosenCenter.wilaya_name || finalWilayaName; 
                 finalCommuneName = chosenCenter.commune_name || finalCommuneName; 
                 finalAddress = `Stop Desk: ${chosenCenter.name} (${finalCommuneName})`;
             } else {
-                // ❌ فشل: التحويل لـ Home + ملاحظة
                 finalIsStopDesk = false;
                 logs.push("⚠️ تم التحويل لـ Home (لا توجد مكاتب مناسبة).");
                 driverNoteParts.push("⚠️ Client preferred Desk but forced Home - PLEASE CALL");
@@ -507,9 +430,6 @@
         };
     }
 
-    // ============================================================
-    // 🚀 زر الإرسال المحصن (The Bulletproof Sender)
-    // ============================================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const btn = this; 
         const providerId = shipProviderSelect.value; 
@@ -518,27 +438,27 @@
         if(!providerId) return alert('⚠️ اختر شركة التوصيل.');
         if(checks.length === 0) return alert('⚠️ حدد طلبية واحدة على الأقل.');
 
-        // التأكد من حداثة البيانات (Cache Freshness)
-        const lastUpdate = localStorage.getItem('yal_last_update');
-        if(!lastUpdate || (Date.now() - lastUpdate > CACHE_TTL) || allCentersCache.length === 0) {
-            if(confirm("♻️ البيانات قديمة. هل تريد التحديث الآن لضمان دقة المكاتب؟")) {
-                return document.getElementById('forceRefreshBtn').click();
-            }
-        }
-
-        btn.textContent = "⚙️ جاري المعالجة..."; btn.disabled = true;
-
         let apiData = null;
         try {
             const snap = await get(ref(db, `delivery_settings/${providerId}`));
             if(snap.exists()) apiData = snap.val();
             else throw new Error("إعدادات الشركة مفقودة.");
-        } catch(e) { alert(e.message); btn.disabled=false; return; }
+        } catch(e) { alert(e.message); return; }
+
+        if(apiData.driverType === 'yalidine_style') {
+            const lastUpdate = localStorage.getItem('yal_last_update');
+            if(!lastUpdate || (Date.now() - lastUpdate > CACHE_TTL) || allCentersCache.length === 0) {
+                if(confirm("♻️ البيانات قديمة أو مفقودة. هل تريد التحديث الآن لضمان دقة المكاتب؟")) {
+                    return document.getElementById('forceRefreshBtn').click();
+                }
+            }
+        }
+
+        btn.textContent = "⚙️ جاري المعالجة..."; btn.disabled = true;
 
         let successCount = 0;
         let failReport = "";
 
-        // === حلقة المعالجة (The Processing Loop) ===
         for (const chk of checks) {
             const orderId = chk.value;
             try {
@@ -546,37 +466,44 @@
                 if(!orderSnap.exists()) continue;
                 const order = orderSnap.val();
 
-                // 1. استخراج وتنظيف الهاتف (Multi-Phone)
                 const phones = extractSmartPhones(order.customerPhone || order.phone);
                 if (!phones.primary) throw new Error("رقم الهاتف غير صالح");
 
-                // 2. حساب الوزن والسعر
                 let weight = parseFloat(order.weight || 1); 
                 let price = parseFloat(order.totalPrice || 0); 
                 let isCOD = price > 0;
 
-                // 3. تحديد الولاية
                 let wilayaId = getWilayaIdByName(order.customerWilaya || order.state);
-                if (!wilayaId) throw new Error("اسم الولاية غير معروف");
+                if (!wilayaId) throw new Error(`اسم الولاية غير معروف: ${order.customerWilaya}`);
 
-                // 4. تحليل الوجهة (Resolver Call)
-                const dest = resolveLogisticDestination({
-                    wilayaId, 
-                    rawCommune: order.customerCommune, 
-                    isStopDesk: (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب'))), 
-                    originalAddress: order.customerAddress || order.customerCommune,
-                    parcelWeight: weight,
-                    isCOD: isCOD,
-                    customerPhone: phones.primary
-                }, allCentersCache, allWilayasApiCache, allCommunesApiCache);
+                let dest;
+                if(apiData.driverType === 'yalidine_style') {
+                    dest = resolveLogisticDestination({
+                        wilayaId, 
+                        rawCommune: order.customerCommune, 
+                        isStopDesk: (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب'))), 
+                        originalAddress: order.customerAddress || order.customerCommune,
+                        parcelWeight: weight,
+                        isCOD: isCOD,
+                        customerPhone: phones.primary
+                    }, allCentersCache, allWilayasApiCache, allCommunesApiCache);
+                } else {
+                    const w = allWilayasApiCache.find(x=>x.id==wilayaId);
+                    dest = {
+                        to_wilaya_name: (apiData.wilayaFormat === 'id') ? wilayaId : (w ? w.name : "Alger"),
+                        to_commune_name: order.customerCommune || "Centre",
+                        is_stopdesk: false,
+                        address: padAddress(order.customerAddress, order.customerCommune, "Wilaya"),
+                        logs: [],
+                        driverNotePrefix: ""
+                    };
+                }
 
-                // 5. بناء الملاحظة الذكية (Smart Note Construction)
                 let finalNote = dest.driverNotePrefix || "";
                 if (phones.secondary) finalNote += ` | 2nd Phone: ${phones.secondary}`;
                 if (dest.logs.length > 0) finalNote += ` | Sys: ${dest.logs.join(',')}`;
                 finalNote = sanitizeString(finalNote, 200);
 
-                // 6. تجهيز الـ Payload
                 let parcelObj = {
                     "order_id": orderId.replace('#','').trim(),
                     "firstname": (order.customerName || "Client").trim(),
@@ -596,10 +523,8 @@
                     parcelObj.stopdesk_id = dest.stopdesk_id;
                 }
 
-                // 7. حفظ Snapshot (Zombie Protection)
                 saveOrderSnapshot(orderId, parcelObj);
 
-                // 8. الإرسال (Execution)
                 let postUrl = apiData.apiUrl.replace(/\/$/, '') + (apiData.apiUrl.includes('/v1/parcels') ? '' : '/v1/parcels');
                 let proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(postUrl);
                 
@@ -620,7 +545,6 @@
                 }
 
                 if (isSuccess) {
-                    // نجاح: تحديث DB وحذف Snapshot
                     await update(ref(db, `orders/${orderId}`), { 
                         status: 'Shipped', 
                         deliveryProvider: apiData.displayName, 
@@ -635,7 +559,6 @@
                     failReport += `\n❌ ${order.customerName}: ${msg}`;
                 }
 
-                // انتظار لتجنب الحظر
                 await delay(RATE_LIMIT_DELAY);
 
             } catch(err) {
@@ -662,21 +585,6 @@
         return (total - ship) > 0 ? (total - ship) : total;
     }
 
-    document.getElementById('saveProviderBtn').addEventListener('click', async function() {
-        let url = document.getElementById('provUrl').value;
-        if(url && url.endsWith('/')) url = url.slice(0, -1);
-        if(url && url.includes('/v1/parcels')) url = url.replace('/v1/parcels', '');
-        const name=document.getElementById('provName').value, key=document.getElementById('provKey').value, token=document.getElementById('provToken').value;
-        if(!name || !url || !key) return alert("أكمل البيانات");
-        const btn = this; btn.textContent = "جاري الحفظ..."; btn.disabled = true;
-        try {
-            await update(ref(db, `delivery_settings/${name.replace(/\s+/g,'_').toLowerCase()}`), {
-                displayName: name, apiUrl: url, apiKey: key, apiToken: token, driverType: document.getElementById('provDriver').value, wilayaFormat: document.getElementById('provWilayaFormat').value, active: true
-            });
-            alert("✅ تم الحفظ"); document.getElementById('provName').value=''; document.getElementById('provKey').value=''; document.getElementById('provToken').value='';
-        } catch(e) { alert(e.message); } finally { btn.textContent = "حفظ إعدادات الشركة"; btn.disabled = false; }
-    });
-
     function loadActiveProviders() {
         onValue(settingsRef, (snap) => {
             shipProviderSelect.innerHTML = '<option value="" disabled selected>-- اختر شركة --</option>';
@@ -694,30 +602,6 @@
     }
     window.delProv = async (k) => { if(confirm('حذف؟')) await remove(ref(db, `delivery_settings/${k}`)); };
 
-    onValue(zonesRef, (s) => {
-        const c = document.getElementById('zonesContainer');
-        c.innerHTML = '';
-        if (s.exists()) Object.entries(s.val()).forEach(([k, v]) => {
-            const wilayaList = v.wilayas ? v.wilayas.join('، ') : '';
-            c.innerHTML += `
-                <div class="zone-card" style="background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-bottom: 8px; position: relative;">
-                    <button class="delete-zone-btn" onclick="window.delZ('${k}')" style="position: absolute; left: 10px; top: 10px; background: #ffcdd2; color: #c62828; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer;">x</button>
-                    <div style="margin-top: 15px; margin-bottom: 10px; font-size: 0.9rem; color: #333; line-height: 1.4;">
-                        <strong>الولايات المشمولة:</strong><br>
-                        ${wilayaList}
-                    </div>
-                    <div style="border-top: 1px solid #eee; padding-top: 8px;">
-                        <span class="price-badge" style="padding: 2px 8px; border-radius: 4px; font-weight: bold; background: #e8f5e9; color: #2e7d32;">🏠 ${v.homePrice} دج</span>
-                        <span class="price-badge" style="padding: 2px 8px; border-radius: 4px; font-weight: bold; background: #e3f2fd; color: #1565c0;">🏢 ${v.deskPrice || 0} دج</span>
-                    </div>
-                </div>`;
-        });
-    });
-    window.delZ=(k)=>{if(confirm('حذف المنطقة؟')) remove(ref(db,`shipping_zones/${k}`));};
-
-    // =======================================================
-    // دوال فتح البطاقة والحفظ (كما هي)
-    // =======================================================
     window.openDetails = async (id) => { 
         const orderSnap = await get(ref(db, 'orders/'+id)); 
         if(orderSnap.exists()) { 
@@ -728,16 +612,10 @@
             document.getElementById('editWilaya').value = o.customerWilaya || o.state; 
             document.getElementById('editCommune').value = o.customerCommune||''; 
             document.getElementById('editAddress').value = o.customerAddress || o.address; 
-            
             let currentTotal = parseFloat(o.productTotal); 
             if(isNaN(currentTotal)) currentTotal = calculateProductOnlyPrice(o); 
             let marketingDiscount = 0; 
-            if(o.productId) { 
-                try {
-                    const prodSnap = await get(ref(db, `products/${o.productId}`)); 
-                    if(prodSnap.exists()) marketingDiscount = parseFloat(prodSnap.val().marketingDiscount || 0); 
-                } catch(e) {}
-            } 
+            if(o.productId) { try { const prodSnap = await get(ref(db, `products/${o.productId}`)); if(prodSnap.exists()) marketingDiscount = parseFloat(prodSnap.val().marketingDiscount || 0); } catch(e) {} } 
             const qty = parseInt(o.quantity || 1); 
             let netPrice = currentTotal - (marketingDiscount * qty); 
             if(netPrice < 0) netPrice = 0; 
@@ -753,20 +631,14 @@
         const delOptionVal = document.getElementById('editDeliveryOption').value;
         const delOptionText = delOptionVal === 'desk' ? 'Stop Desk (مكتب)' : 'Home (منزل)';
         await update(ref(db,'orders/'+id), { 
-            customerName:document.getElementById('editName').value, 
-            customerPhone:document.getElementById('editPhone').value, 
-            customerWilaya:document.getElementById('editWilaya').value, 
-            customerCommune:document.getElementById('editCommune').value, 
-            customerAddress:document.getElementById('editAddress').value, 
-            productTotal: parseFloat(document.getElementById('editProductPrice').value),
+            customerName:document.getElementById('editName').value, customerPhone:document.getElementById('editPhone').value, 
+            customerWilaya:document.getElementById('editWilaya').value, customerCommune:document.getElementById('editCommune').value, 
+            customerAddress:document.getElementById('editAddress').value, productTotal: parseFloat(document.getElementById('editProductPrice').value),
             deliveryOption: delOptionText 
         }); 
         document.getElementById('orderDetailModal').classList.add('hidden'); 
         alert("✅ تم حفظ جميع بيانات الطلب بنجاح"); 
     });
-    function renderWilayaCheckboxes(){ const g=document.getElementById('wilayaGrid'); g.innerHTML=''; allWilayas.forEach(w=>{ g.innerHTML+=`<div class="wilaya-checkbox-item" style="font-size: 0.85rem; display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="wilaya-chk" value="${w.split('. ')[1]}"><span>${w.split('. ')[1]}</span></div>`; }); }
-    document.getElementById('selectAllBtn').addEventListener('click',()=>{ const c=document.querySelectorAll('.wilaya-chk'); if(c.length>0){const s=!c[0].checked;c.forEach(i=>i.checked=s);} });
-    document.getElementById('saveZoneBtn').addEventListener('click',async()=>{ const h=document.getElementById('homePrice').value, d=document.getElementById('deskPrice').value; const sel=[]; document.querySelectorAll('.wilaya-chk:checked').forEach(c=>sel.push(c.value)); if(!h||sel.length==0) return alert('خطأ'); await push(zonesRef,{homePrice:h,deskPrice:d,wilayas:sel}); alert('تم'); renderWilayaCheckboxes(); });
 </script>
 
 <script>
