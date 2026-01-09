@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>إدارة الشحن والربط</title>
+<title>إدارة الشحن والربط - النظام المحصن</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin-style.css">
 </head>
@@ -24,13 +24,6 @@
   </div>
 </nav>
 
-<div class="visitors-wrapper">
-  <div id="liveVisitors" class="live-visitors-badge inactive">
-    <span class="live-dot"></span>
-    <span style="margin-right:5px">عدد الزوار الآن: </span>
-    <strong id="visitorsCount" style="margin:0 4px">0</strong>
-  </div>
-</div>
 
 <div class="container">
     <h2 style="margin-bottom: 20px; color: var(--primary-color);">⚙️ إعداد شركات التوصيل (API)</h2>
@@ -129,7 +122,6 @@
           <input type="hidden" id="currentOrderId">
           
           <div class="modal-actions" style="display: flex; gap: 10px; margin-top: 15px;">
-              <!-- الزر الأخضر كما طلبت -->
               <button id="saveChangesBtn" style="flex: 1; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size:1rem; font-weight:bold;">💾 حفظ التغييرات</button>
               <button id="cancelOrderBtn" class="btn-delete">إلغاء الطلب</button>
           </div>
@@ -151,14 +143,10 @@
     const shipProviderSelect = document.getElementById('shipProviderSelect');
     const savedProvidersList = document.getElementById('savedProvidersList');
     
-    // قائمة الولايات الرسمية (للعرض فقط)
+    // الثوابت الأساسية والقواميس
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     
-    // ============================================
-    // القاموس الذكي المحدث (شامل لكل الاختلافات)
-    // ============================================
     const wilayaMapping = {
-        // 01 - 10
         "adrar": 1, "أدرار": 1, "adr": 1, "aderar": 1,
         "chlef": 2, "الشلف": 2, "شلف": 2, "chleff": 2,
         "laghouat": 3, "الأغواط": 3, "أغواط": 3, "laghouat": 3,
@@ -169,8 +157,6 @@
         "bechar": 8, "بشار": 8,
         "blida": 9, "البليدة": 9, "بليدة": 9, "البليده": 9, "بليده": 9, "blida": 9,
         "bouira": 10, "البويرة": 10, "بويرة": 10, "البويره": 10, "بويره": 10, "bouira": 10,
-
-        // 11 - 20
         "tamanrasset": 11, "تمنراست": 11, "tam": 11, "tamanrasset": 11,
         "tebessa": 12, "تبسة": 12, "تبسه": 12,
         "tlemcen": 13, "تلمسان": 13,
@@ -191,8 +177,6 @@
         "msila": 28, "المسيلة": 28, "مسيلة": 28, "المسيله": 28, "مسيله": 28, "msila": 28,
         "mascara": 29, "معسكر": 29,
         "ouargla": 30, "ورقلة": 30, "ورقله": 30,
-
-        // 31 - 40
         "oran": 31, "وهران": 31, "wahran": 31,
         "el bayadh": 32, "البيض": 32, "بيض": 32, "el bayadh": 32, "bayadh": 32,
         "illizi": 33, "إليزي": 33, "اليزي": 33,
@@ -223,24 +207,6 @@
         "el meniaa": 58, "المنيعة": 58, "منيعة": 58, "المنيعه": 58, "منيعه": 58
     };
 
-    const OFFLINE_CENTERS = {
-        1: { id: 10101, commune: "Adrar" }, 2: { id: 20101, commune: "Chlef" }, 3: { id: 30101, commune: "Laghouat" }, 4: { id: 40101, commune: "Oum El Bouaghi" },
-        5: { id: 50101, commune: "Batna" }, 6: { id: 60101, commune: "Bejaia" }, 7: { id: 70101, commune: "Biskra" }, 8: { id: 80101, commune: "Bechar" },
-        9: { id: 90101, commune: "Blida" }, 10: { id: 100101, commune: "Bouira" }, 11: { id: 110101, commune: "Tamanrasset" }, 12: { id: 120101, commune: "Tebessa" },
-        13: { id: 130101, commune: "Tlemcen" }, 14: { id: 140101, commune: "Tiaret" }, 15: { id: 150101, commune: "Tizi Ouzou" }, 16: { id: 163001, commune: "Bordj El Kiffan" }, 
-        17: { id: 170101, commune: "Djelfa" }, 18: { id: 180101, commune: "Jijel" }, 19: { id: 190101, commune: "Setif" }, 20: { id: 200101, commune: "Saida" },
-        21: { id: 210101, commune: "Skikda" }, 22: { id: 220101, commune: "Sidi Bel Abbes" }, 23: { id: 230101, commune: "Annaba" }, 24: { id: 240101, commune: "Guelma" },
-        25: { id: 250101, commune: "Constantine" }, 26: { id: 260101, commune: "Medea" }, 27: { id: 270101, commune: "Mostaganem" }, 28: { id: 280101, commune: "M'Sila" },
-        29: { id: 290101, commune: "Mascara" }, 30: { id: 300101, commune: "Ouargla" }, 31: { id: 310101, commune: "Oran" }, 32: { id: 320101, commune: "El Bayadh" },
-        33: { id: 330101, commune: "Illizi" }, 34: { id: 340101, commune: "Bordj Bou Arreridj" }, 35: { id: 350101, commune: "Boumerdes" }, 36: { id: 360101, commune: "El Tarf" },
-        37: { id: 370101, commune: "Tindouf" }, 38: { id: 380101, commune: "Tissemsilt" }, 39: { id: 390101, commune: "El Oued" }, 40: { id: 400101, commune: "Khenchela" },
-        41: { id: 410101, commune: "Souk Ahras" }, 42: { id: 420101, commune: "Tipaza" }, 43: { id: 430101, commune: "Mila" }, 44: { id: 440101, commune: "Ain Defla" },
-        45: { id: 450101, commune: "Naama" }, 46: { id: 460101, commune: "Ain Temouchent" }, 47: { id: 470101, commune: "Ghardaia" }, 48: { id: 480101, commune: "Relizane" },
-        49: { id: 490101, commune: "Timimoun" }, 50: { id: 500101, commune: "Bordj Badji Mokhtar" }, 51: { id: 510101, commune: "Ouled Djellal" }, 52: { id: 520101, commune: "Beni Abbes" },
-        53: { id: 530101, commune: "In Salah" }, 54: { id: 540101, commune: "In Guezzam" }, 55: { id: 550101, commune: "Touggourt" }, 56: { id: 560101, commune: "Djanet" },
-        57: { id: 570101, commune: "El M'Ghair" }, 58: { id: 580101, commune: "El Meniaa" }
-    };
-
     const communeMap = {
         "زرالدة": "Zeralda", "الجزائر": "Alger Centre", "الجزائر الوسطى": "Alger Centre", "الرويبة": "Rouiba",
         "بئر مراد رايس": "Bir Mourad Rais", "حيدرة": "Hydra", "بن عكنون": "Ben Aknoun", "بوزريعة": "Bouzareah",
@@ -252,70 +218,88 @@
         "سطيف": "Setif", "العلمة": "El Eulma", "عين ولمان": "Ain Oulmene", "البليدة": "Blida", "بوفاريك": "Boufarik"
     };
 
+    // ============================================================
+    // 🛡️ المتغيرات العالمية وأدوات الحماية (The Defensive Engine)
+    // ============================================================
+    const RATE_LIMIT_DELAY = 1000; // 1 ثانية بين كل طلب لتجنب الحظر
+    const MAX_WEIGHT_FOR_PARTNERS = 10; // الحد الأقصى للمكاتب الصغيرة
+    const CACHE_TTL = 24 * 60 * 60 * 1000; // صلاحية البيانات 24 ساعة
+
     let allCentersCache = JSON.parse(localStorage.getItem('yal_centers')) || [];
     let allWilayasApiCache = JSON.parse(localStorage.getItem('yal_wilayas')) || [];
     let allCommunesApiCache = JSON.parse(localStorage.getItem('yal_communes')) || [];
 
-    // =====================================
-    // دالة تنظيف النص (محسنة)
-    // =====================================
+    // تأخير لتجنب الحظر
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+    // 1. استخراج الهواتف الذكي (Multi-Phone Extraction)
+    function extractSmartPhones(rawText) {
+        const regex = /(0[567][0-9]{8})/g; 
+        const matches = (rawText || "").match(regex) || [];
+        const unique = [...new Set(matches)];
+        if (unique.length === 0) return { primary: null, secondary: null };
+        return { primary: unique[0], secondary: unique.slice(1).join(' / ') };
+    }
+
+    // 2. تنظيف النصوص (Text Sanitization)
+    function sanitizeString(str, maxLength = 60) {
+        if (!str) return "";
+        let clean = str.replace(/[^\w\s\u0600-\u06FF\-\.]/g, ''); 
+        return clean.replace(/\s+/g, ' ').trim().substring(0, maxLength);
+    }
+
+    // 3. تطبيع النصوص للبحث (Normalization)
     function normalizeText(text) {
         if (!text) return "";
         let str = text.toLowerCase().trim();
-        // توحيد الألف فقط، وترك التاء المربوطة والهاء كما هي للمقارنة الدقيقة
         str = str.replace(/(آ|إ|أ)/g, 'ا'); 
         str = str.replace(/[^a-z0-9\u0600-\u06FF\s]/g, ""); 
         return str.trim();
     }
 
-    // =====================================
-    // دالة البحث الذكي عن الولاية (The Smart Finder)
-    // =====================================
+    // 4. حشو العنوان (Address Padding)
+    function padAddress(addr, communeName, wilayaName) {
+        let clean = sanitizeString(addr, 120);
+        if (clean.length < 8) return `${clean}, ${communeName}, ${wilayaName} (Adresse Personnelle)`;
+        return clean;
+    }
+
+    // 5. إدارة اللقطات (Snapshot Manager) - لمنع Zombie Orders
+    function saveOrderSnapshot(orderId, payload) {
+        const snapshots = JSON.parse(localStorage.getItem('shipping_snapshots') || '{}');
+        snapshots[orderId] = { payload, timestamp: Date.now() };
+        localStorage.setItem('shipping_snapshots', JSON.stringify(snapshots));
+    }
+
+    function clearOrderSnapshot(orderId) {
+        const snapshots = JSON.parse(localStorage.getItem('shipping_snapshots') || '{}');
+        delete snapshots[orderId];
+        localStorage.setItem('shipping_snapshots', JSON.stringify(snapshots));
+    }
+
+    // دالة البحث عن ID الولاية
     function getWilayaIdByName(rawName) {
         if (!rawName) return null;
-        
         const matchNum = rawName.match(/^(\d+)/);
         if (matchNum) return parseInt(matchNum[1]);
-
-        let cleanName = normalizeText(rawName); 
-        cleanName = cleanName.replace("wilaya", "").trim();
-
-        // 1. التطابق التام
+        let cleanName = normalizeText(rawName).replace("wilaya", "").trim();
         if (wilayaMapping[cleanName]) return wilayaMapping[cleanName];
-        
-        // 2. إزالة "ال" (المدية -> مدية)
         if (cleanName.startsWith("ال")) {
             const withoutAl = cleanName.substring(2).trim();
             if (wilayaMapping[withoutAl]) return wilayaMapping[withoutAl];
         }
-
-        // 3. إضافة "ال" (مدية -> المدية)
         const withAl = "ال" + cleanName;
         if (wilayaMapping[withAl]) return wilayaMapping[withAl];
-
-        // 4. تبديل التاء المربوطة بالهاء والعكس (لضمان تغطية الأخطاء الإملائية)
         let altName = cleanName;
         if (cleanName.endsWith("ة")) altName = cleanName.slice(0, -1) + "ه";
         else if (cleanName.endsWith("ه")) altName = cleanName.slice(0, -1) + "ة";
         if (wilayaMapping[altName]) return wilayaMapping[altName];
-
-        // 5. الفرنسية
         const withEl = "el " + cleanName;
         if (wilayaMapping[withEl]) return wilayaMapping[withEl];
-
-        // 6. البحث الجزئي
-        for (const [key, val] of Object.entries(wilayaMapping)) {
-            if (key.length > 2 && (cleanName.includes(key) || key.includes(cleanName))) {
-                return val;
-            }
-        }
-
-        // 7. البحث في الـ API Cache
         if (allWilayasApiCache.length > 0) {
             const foundInApi = allWilayasApiCache.find(w => normalizeText(w.name) === cleanName);
             if (foundInApi) return foundInApi.id;
         }
-
         return null; 
     }
 
@@ -336,9 +320,7 @@
     }
 
     async function fetchAllPages(url, headers) {
-        let allData = [];
-        let page = 1;
-        let hasMore = true;
+        let allData = []; let page = 1; let hasMore = true;
         while(hasMore && page < 20) { 
             try {
                 const sep = url.includes('?') ? '&' : '?';
@@ -355,11 +337,9 @@
 
     async function fetchGuepexData(apiUrl, apiId, apiToken, forceUpdate = false) {
         if(!forceUpdate && allCentersCache.length > 0 && allCommunesApiCache.length > 0) return; 
-
         let baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
         if(baseUrl.includes('/v1/parcels')) baseUrl = baseUrl.replace('/v1/parcels', '/v1'); 
         else if(!baseUrl.includes('/v1')) baseUrl += '/v1';
-
         const headers = { 'X-API-ID': apiId, 'X-API-TOKEN': apiToken };
         const btn = document.getElementById('forceRefreshBtn');
         const originalText = btn.textContent;
@@ -374,6 +354,7 @@
             localStorage.setItem('yal_wilayas', JSON.stringify(allWilayasApiCache));
             localStorage.setItem('yal_centers', JSON.stringify(allCentersCache));
             localStorage.setItem('yal_communes', JSON.stringify(allCommunesApiCache));
+            localStorage.setItem('yal_last_update', Date.now()); // Timestamp
 
             console.log(`تم تحميل ${allWilayasApiCache.length} ولاية، ${allCentersCache.length} مكتب.`);
             updateApiStatusUI();
@@ -403,85 +384,10 @@
         document.getElementById('liveVisitors').className = c>0?'live-visitors-badge active':'live-visitors-badge inactive';
     });
 
-    function resolveGuepexDestination(orderData, centersList, wilayasList, communesList) {
-        const { wilayaId, rawCommune, isStopDesk } = orderData;
-        
-        let finalWilayaName = "Alger";
-        const foundWilaya = wilayasList.find(w => w.id == wilayaId);
-        if (foundWilaya) finalWilayaName = foundWilaya.name;
-
-        let searchCommune = rawCommune || "";
-        if (communeMap[searchCommune]) searchCommune = communeMap[searchCommune];
-        const normalizedSearch = normalizeText(searchCommune);
-
-        if (isStopDesk) {
-            let stopDeskId = null;
-            let centerCommuneName = null;
-            let centerName = "";
-            
-            const centersInWilaya = centersList.filter(c => c.wilaya_id == wilayaId);
-            const foundCenter = centersInWilaya.find(c => 
-                normalizeText(c.name).includes(normalizedSearch) || 
-                (c.commune_name && normalizeText(c.commune_name).includes(normalizedSearch))
-            );
-
-            if (foundCenter) {
-                stopDeskId = foundCenter.center_id || foundCenter.id;
-                centerCommuneName = foundCenter.commune_name;
-                centerName = foundCenter.name;
-            } else {
-                if (centersInWilaya.length > 0) {
-                    stopDeskId = centersInWilaya[0].center_id || centersInWilaya[0].id;
-                    centerCommuneName = centersInWilaya[0].commune_name;
-                    centerName = centersInWilaya[0].name;
-                }
-                else if (OFFLINE_CENTERS[wilayaId]) {
-                    stopDeskId = OFFLINE_CENTERS[wilayaId].id;
-                    centerCommuneName = OFFLINE_CENTERS[wilayaId].commune;
-                    centerName = "Main Desk";
-                }
-            }
-
-            if (!stopDeskId) throw new Error(`لا توجد مكاتب متاحة في ولاية ${finalWilayaName}`);
-
-            return {
-                to_wilaya_name: finalWilayaName,
-                to_commune_name: centerCommuneName || finalWilayaName, 
-                is_stopdesk: true,
-                stopdesk_id: stopDeskId,
-                address: `Stop Desk - ${centerName}` 
-            };
-        }
-        else {
-            let finalCommuneName = null;
-            const exactCommune = communesList.find(c => c.wilaya_id == wilayaId && normalizeText(c.name) === normalizedSearch);
-            
-            if (exactCommune) {
-                finalCommuneName = exactCommune.name;
-            } else {
-                const partialCommune = communesList.find(c => c.wilaya_id == wilayaId && normalizeText(c.name).includes(normalizedSearch));
-                if (partialCommune) finalCommuneName = partialCommune.name;
-                else {
-                    if(OFFLINE_CENTERS[wilayaId]) finalCommuneName = OFFLINE_CENTERS[wilayaId].commune;
-                    else finalCommuneName = finalWilayaName;
-                    if (normalizeText(finalWilayaName) === 'alger') finalCommuneName = "Alger Centre";
-                }
-            }
-
-            return {
-                to_wilaya_name: finalWilayaName,
-                to_commune_name: finalCommuneName,
-                is_stopdesk: false,
-                address: orderData.address 
-            };
-        }
-    }
-
     onValue(ordersRef, async (snapshot) => {
         shippingContainer.innerHTML = '';
         const orders = snapshot.val() || {};
         const sorted = Object.entries(orders).sort((a,b) => b[1].timestamp - a[1].timestamp);
-        
         let products = {};
         try { const productsSnap = await get(ref(db, 'products')); if (productsSnap.exists()) products = productsSnap.val(); } catch(e) { }
 
@@ -495,12 +401,9 @@
             let discount = 0; if (order.productId && products[order.productId]) discount = parseFloat(products[order.productId].marketingDiscount || 0);
             const qty = parseInt(order.quantity || 1);
             let netPrice = currentTotal - (discount * qty); if(netPrice < 0) netPrice = 0;
-            
             const isDeskByDefualt = (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب')));
-
             const row = document.createElement('div'); row.className = 'order-row'; row.dataset.id = id;
             row.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: #fff; border-radius: 8px; margin-bottom: 8px; border: 1px solid #eee; border-right: 4px solid #f1c40f;";
-            
             row.innerHTML = `
                 <div class="row-info" style="display:flex;align-items:center; flex: 2;">
                     <input type="checkbox" class="order-checkbox" value="${id}" style="margin-left: 15px; transform: scale(1.3);">
@@ -509,13 +412,9 @@
                         <div style="font-size: 0.85rem; color: #666;"> ${order.customerWilaya || order.state} | ${order.customerCommune || ''} | <span style="color:#27ae60;font-weight:bold;">${netPrice} دج</span></div>
                     </div>
                 </div>
-                
                 <div style="flex: 1; text-align: center;">
-                    <span style="display:inline-block; padding:5px 10px; border-radius:15px; font-size:0.85rem; font-weight:bold; background:${isDeskByDefualt ? '#fff3cd' : '#e8f5e9'}; color:${isDeskByDefualt ? '#856404' : '#2e7d32'}; border:1px solid ${isDeskByDefualt ? '#ffeeba' : '#c3e6cb'};">
-                        ${isDeskByDefualt ? '🏢 مكتب (Desk)' : '🏠 منزل (Home)'}
-                    </span>
+                    <span style="display:inline-block; padding:5px 10px; border-radius:15px; font-size:0.85rem; font-weight:bold; background:${isDeskByDefualt ? '#fff3cd' : '#e8f5e9'}; color:${isDeskByDefualt ? '#856404' : '#2e7d32'}; border:1px solid ${isDeskByDefualt ? '#ffeeba' : '#c3e6cb'};">${isDeskByDefualt ? '🏢 مكتب (Desk)' : '🏠 منزل (Home)'}</span>
                 </div>
-
                 <div onclick="window.openDetails('${id}')" style="cursor:pointer; background:#e3f2fd; color:#0d47a1; padding:5px 10px; border-radius:5px; font-weight:bold; font-size:0.9rem;">✏️ تعديل</div>`;
             shippingContainer.appendChild(row);
         });
@@ -523,208 +422,229 @@
     });
 
     // ============================================================
-    //  زر الإرسال (مع الفحص المسبق والتحقق الصارم)
+    // 🧠 المحلل اللوجستي الصارم (Strict Logic Resolver)
+    // ============================================================
+    function resolveLogisticDestination(orderData, centersList, wilayasList, communesList) {
+        const { wilayaId, rawCommune, isStopDesk, originalAddress, parcelWeight, isCOD, customerPhone } = orderData;
+        let logs = [];
+        let driverNoteParts = []; 
+
+        // 1. التحقق من القائمة السوداء (محاكاة)
+        if (["0550000000"].includes(customerPhone)) throw new Error("BLOCKED_CUSTOMER: هذا الزبون في القائمة السوداء.");
+
+        // 2. العثور على الولاية الرسمية (Baseline)
+        const officialWilaya = wilayasList.find(w => w.id == wilayaId);
+        if (!officialWilaya) throw new Error(`الولاية رقم ${wilayaId} غير مدعومة.`);
+
+        // البحث عن بلدية الزبون (للاستخدام في حالة Home)
+        let normalizedInput = normalizeText(rawCommune || "");
+        const validCommunes = communesList.filter(c => c.wilaya_id == wilayaId);
+        let targetCommuneObj = validCommunes.find(c => normalizeText(c.name) === normalizedInput) ||
+                               validCommunes.find(c => normalizeText(c.name).includes(normalizedInput));
+
+        // Fallback: عاصمة الولاية
+        if (!targetCommuneObj) {
+            targetCommuneObj = validCommunes.find(c => normalizeText(c.name) === normalizeText(officialWilaya.name));
+            if (!targetCommuneObj) targetCommuneObj = validCommunes[0];
+            logs.push(`⚠️ البلدية غير مطابقة، تم اعتماد: ${targetCommuneObj.name}`);
+        }
+
+        // =====================================
+        // منطق StopDesk المعقد (The Complex Desk Logic)
+        // =====================================
+        let finalIsStopDesk = isStopDesk;
+        let finalStopDeskId = null;
+        let finalWilayaName = officialWilaya.name;
+        let finalCommuneName = targetCommuneObj.name;
+        let finalAddress = padAddress(originalAddress, finalCommuneName, finalWilayaName);
+
+        if (finalIsStopDesk) {
+            // فلترة المكاتب الصارمة (Strict Filtering)
+            let candidates = centersList.filter(c => {
+                if (c.wilaya_id != wilayaId) return false; // 1. تطابق الولاية الجغرافي
+                if (!c.active) return false; // 2. استبعاد غير النشط
+                
+                // 3. استبعاد الـ Hubs ومراكز التوزيع
+                const nameLower = c.name.toLowerCase();
+                if (c.is_hub || nameLower.includes('hub') || nameLower.includes('depot') || nameLower.includes('liv') || nameLower.includes('sorting')) return false;
+
+                // 4. التحقق من الوزن
+                if (parcelWeight > MAX_WEIGHT_FOR_PARTNERS && (c.is_partner || nameLower.includes('kiosk'))) return false;
+
+                // 5. التحقق من COD (اذا توفرت المعلومة)
+                if (isCOD && c.no_cod === true) return false;
+
+                return true;
+            });
+
+            // اختيار المكتب الأفضل (البلدية -> Centre -> أي شيء)
+            let chosenCenter = candidates.find(c => normalizeText(c.name).includes(normalizedInput) || normalizeText(c.commune_name || "").includes(normalizedInput));
+            if (!chosenCenter) chosenCenter = candidates.find(c => c.name.toLowerCase().includes('centre'));
+            if (!chosenCenter && candidates.length > 0) chosenCenter = candidates[0];
+
+            if (chosenCenter) {
+                // ✅ نجاح: فرض بيانات المكتب
+                finalStopDeskId = chosenCenter.center_id || chosenCenter.id;
+                finalWilayaName = chosenCenter.wilaya_name || finalWilayaName; 
+                finalCommuneName = chosenCenter.commune_name || finalCommuneName; 
+                finalAddress = `Stop Desk: ${chosenCenter.name} (${finalCommuneName})`;
+            } else {
+                // ❌ فشل: التحويل لـ Home + ملاحظة
+                finalIsStopDesk = false;
+                logs.push("⚠️ تم التحويل لـ Home (لا توجد مكاتب مناسبة).");
+                driverNoteParts.push("⚠️ Client preferred Desk but forced Home - PLEASE CALL");
+            }
+        }
+
+        return {
+            to_wilaya_name: finalWilayaName,
+            to_commune_name: finalCommuneName,
+            is_stopdesk: finalIsStopDesk,
+            stopdesk_id: finalStopDeskId,
+            address: finalAddress,
+            logs: logs,
+            driverNotePrefix: driverNoteParts.join(' | ')
+        };
+    }
+
+    // ============================================================
+    // 🚀 زر الإرسال المحصن (The Bulletproof Sender)
     // ============================================================
     document.getElementById('sendBulkBtn').addEventListener('click', async function() {
         const btn = this; 
         const providerId = shipProviderSelect.value; 
         const checks = document.querySelectorAll('.order-checkbox:checked');
         
-        if(!providerId) return alert('⚠️ الرجاء اختيار شركة التوصيل أولاً.');
-        if(checks.length === 0) return alert('⚠️ لم تقم بتحديد أي طلبيات.');
-        
-        if(allCentersCache.length === 0) {
-           if(!confirm("⚠️ تحذير: قائمة المكاتب غير محملة من السيرفر. هل تود الاستمرار بالبيانات الاحتياطية؟")) return;
+        if(!providerId) return alert('⚠️ اختر شركة التوصيل.');
+        if(checks.length === 0) return alert('⚠️ حدد طلبية واحدة على الأقل.');
+
+        // التأكد من حداثة البيانات (Cache Freshness)
+        const lastUpdate = localStorage.getItem('yal_last_update');
+        if(!lastUpdate || (Date.now() - lastUpdate > CACHE_TTL) || allCentersCache.length === 0) {
+            if(confirm("♻️ البيانات قديمة. هل تريد التحديث الآن لضمان دقة المكاتب؟")) {
+                return document.getElementById('forceRefreshBtn').click();
+            }
         }
 
-        btn.textContent = "🔍 جاري الفحص والترجمة..."; 
-        btn.disabled = true;
+        btn.textContent = "⚙️ جاري المعالجة..."; btn.disabled = true;
 
-        // 1. جلب إعدادات الشركة
         let apiData = null;
         try {
-            const setSnap = await get(ref(db, `delivery_settings/${providerId}`));
-            if(setSnap.exists()) apiData = setSnap.val(); 
-            else throw new Error("بيانات الشركة مفقودة");
-        } catch(e) { 
-            alert(e.message); 
-            btn.textContent = "📤 إرسال المحدد"; 
-            btn.disabled = false; 
-            return; 
-        }
+            const snap = await get(ref(db, `delivery_settings/${providerId}`));
+            if(snap.exists()) apiData = snap.val();
+            else throw new Error("إعدادات الشركة مفقودة.");
+        } catch(e) { alert(e.message); btn.disabled=false; return; }
 
-        if(apiData.driverType === 'yalidine_style' && allCentersCache.length === 0) {
-            await fetchGuepexData(apiData.apiUrl, apiData.apiKey, apiData.apiToken);
-        }
+        let successCount = 0;
+        let failReport = "";
 
-        // ============================================================
-        // المرحلة الأولى: التحقق (Validation Phase)
-        // ============================================================
-        let readyToSendList = []; 
-        let errorMessages = [];   
-
+        // === حلقة المعالجة (The Processing Loop) ===
         for (const chk of checks) {
             const orderId = chk.value;
-            const orderSnap = await get(ref(db, `orders/${orderId}`));
-            
-            if(!orderSnap.exists()) continue;
-            const order = orderSnap.val();
-            const cleanOrderId = orderId.replace('#','').trim();
-            const fullName = (order.customerName || order.name || "Client").trim();
-
             try {
-                // 1. تحديد نوع التوصيل
-                let isStopDesk = (order.deliveryOption && (order.deliveryOption.toLowerCase().includes('desk') || order.deliveryOption.includes('مكتب')));
-                
-                // 2. معالجة السعر
-                let currentTotal = parseFloat(order.productTotal);
-                if (isNaN(currentTotal)) currentTotal = parseFloat(order.totalPrice || 0) - parseFloat(order.shippingPrice || 0);
-                let marketingDiscount = 0;
-                if(order.productId) { 
-                    try { const prodSnap = await get(ref(db, `products/${order.productId}`)); if(prodSnap.exists()) marketingDiscount = parseFloat(prodSnap.val().marketingDiscount || 0); } catch(e) { } 
-                }
-                const qty = parseInt(order.quantity || 1);
-                let finalPriceToSend = currentTotal - (marketingDiscount * qty); 
-                if (finalPriceToSend < 0) finalPriceToSend = 0; 
+                const orderSnap = await get(ref(db, `orders/${orderId}`));
+                if(!orderSnap.exists()) continue;
+                const order = orderSnap.val();
 
-                // 3. التحقق من الولاية (هنا يحدث السحر)
-                let rawWilaya = order.customerWilaya || order.state || "";
-                let rawCommune = (order.customerCommune || "").trim();
-                let wilayaId = getWilayaIdByName(rawWilaya); 
+                // 1. استخراج وتنظيف الهاتف (Multi-Phone)
+                const phones = extractSmartPhones(order.customerPhone || order.phone);
+                if (!phones.primary) throw new Error("رقم الهاتف غير صالح");
 
-                // إذا لم يتم التعرف على الولاية، نوقف العملية لهذا الطلب
-                if (!wilayaId) {
-                    throw new Error(`لم يتم التعرف على الولاية: "${rawWilaya}". يرجى تصحيح الاسم.`);
-                }
+                // 2. حساب الوزن والسعر
+                let weight = parseFloat(order.weight || 1); 
+                let price = parseFloat(order.totalPrice || 0); 
+                let isCOD = price > 0;
 
-                // محاولة إيجاد الوجهة (البلدية أو المكتب)
-                let destination = resolveGuepexDestination(
-                    { wilayaId, rawCommune, isStopDesk, address: order.customerAddress || rawCommune },
-                    allCentersCache, allWilayasApiCache, allCommunesApiCache
-                );
+                // 3. تحديد الولاية
+                let wilayaId = getWilayaIdByName(order.customerWilaya || order.state);
+                if (!wilayaId) throw new Error("اسم الولاية غير معروف");
 
-                let phone = (order.customerPhone || order.phone || "").replace(/[^0-9]/g, ''); 
-                if(phone.length === 9) phone = '0'+phone;
+                // 4. تحليل الوجهة (Resolver Call)
+                const dest = resolveLogisticDestination({
+                    wilayaId, 
+                    rawCommune: order.customerCommune, 
+                    isStopDesk: (order.deliveryOption && (order.deliveryOption.includes('desk') || order.deliveryOption.includes('مكتب'))), 
+                    originalAddress: order.customerAddress || order.customerCommune,
+                    parcelWeight: weight,
+                    isCOD: isCOD,
+                    customerPhone: phones.primary
+                }, allCentersCache, allWilayasApiCache, allCommunesApiCache);
 
-                // تجهيز كائن البيانات
+                // 5. بناء الملاحظة الذكية (Smart Note Construction)
+                let finalNote = dest.driverNotePrefix || "";
+                if (phones.secondary) finalNote += ` | 2nd Phone: ${phones.secondary}`;
+                if (dest.logs.length > 0) finalNote += ` | Sys: ${dest.logs.join(',')}`;
+                finalNote = sanitizeString(finalNote, 200);
+
+                // 6. تجهيز الـ Payload
                 let parcelObj = {
-                    "order_id": cleanOrderId,
-                    "firstname": fullName,
+                    "order_id": orderId.replace('#','').trim(),
+                    "firstname": (order.customerName || "Client").trim(),
                     "familyname": ".",
-                    "contact_phone": phone,
-                    "address": destination.address,
-                    "to_wilaya_name": destination.to_wilaya_name,
-                    "to_commune_name": destination.to_commune_name,
-                    "product_list": order.productName || "Colis",
-                    "price": finalPriceToSend,
+                    "contact_phone": phones.primary,
+                    "address": dest.address,
+                    "to_wilaya_name": dest.to_wilaya_name,
+                    "to_commune_name": dest.to_commune_name,
+                    "product_list": sanitizeString(order.productName || "Colis", 40),
+                    "price": price,
                     "freeshipping": false,
-                    "do_insurance": false,
-                    "declared_value": finalPriceToSend,
+                    "is_stopdesk": dest.is_stopdesk,
                     "has_exchange": false,
-                    "height": 10, "width": 20, "length": 30, "weight": 1,
-                    "is_stopdesk": destination.is_stopdesk
+                    "note": finalNote
                 };
-
-                if(destination.stopdesk_id) {
-                    parcelObj.stopdesk_id = destination.stopdesk_id;
+                if(dest.is_stopdesk && dest.stopdesk_id) {
+                    parcelObj.stopdesk_id = dest.stopdesk_id;
                 }
+
+                // 7. حفظ Snapshot (Zombie Protection)
+                saveOrderSnapshot(orderId, parcelObj);
+
+                // 8. الإرسال (Execution)
+                let postUrl = apiData.apiUrl.replace(/\/$/, '') + (apiData.apiUrl.includes('/v1/parcels') ? '' : '/v1/parcels');
+                let proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(postUrl);
                 
-                readyToSendList.push({
-                    firebaseId: orderId,
-                    payload: [parcelObj], 
-                    customerName: fullName
+                let res = await fetch(proxyUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-API-ID': apiData.apiKey, 'X-API-TOKEN': apiData.apiToken },
+                    body: JSON.stringify([parcelObj])
                 });
 
-            } catch(err) {
-                // تجميع الأخطاء
-                errorMessages.push(`❌ ${fullName}: ${err.message}`);
-            }
-        }
+                let json = await res.json();
+                let cleanId = parcelObj.order_id;
+                let isSuccess = false; let tracking = null;
 
-        // ============================================================
-        // نقطة التفتيش: هل توجد أخطاء؟
-        // ============================================================
-        if (errorMessages.length > 0) {
-            btn.textContent = "📤 إرسال المحدد"; 
-            btn.disabled = false;
-            
-            let msg = "⚠️ تنبيه: تم إيقاف العملية لوجود أخطاء في العناوين:\n\n";
-            msg += errorMessages.join("\n");
-            msg += "\n\nالرجاء تصحيح هذه الطلبات يدوياً ثم المحاولة مرة أخرى.";
-            alert(msg);
-            return; // توقف تام
-        }
-
-        // ============================================================
-        // المرحلة الثانية: الإرسال (Execution Phase)
-        // ============================================================
-        if(!confirm(`✅ تمت ترجمة جميع العناوين بنجاح (${readyToSendList.length} طلب).\nهل أنت متأكد من الإرسال الآن؟`)) {
-            btn.textContent = "📤 إرسال المحدد"; 
-            btn.disabled = false;
-            return;
-        }
-
-        btn.textContent = "🚀 جاري الإرسال للسيرفر..."; 
-        let successCount = 0; 
-        let failCount = 0; 
-        let sendDetails = "";
-
-        let postUrl = apiData.apiUrl;
-        if(postUrl.endsWith('/')) postUrl = postUrl.slice(0, -1);
-        if(!postUrl.includes('/v1/parcels')) postUrl += '/v1/parcels';
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(postUrl);
-
-        const requestHeaders = { 
-            'Content-Type': 'application/json',
-            'X-API-ID': apiData.apiKey,
-            'X-API-TOKEN': apiData.apiToken
-        };
-
-        for (const item of readyToSendList) {
-            try {
-                const res = await fetch(proxyUrl, { 
-                    method: 'POST', 
-                    headers: requestHeaders, 
-                    body: JSON.stringify(item.payload) 
-                });
-                
-                const resText = await res.text();
-                let resJson; 
-                try { resJson = JSON.parse(resText); } catch (e) { throw new Error(`API Error: ${resText.substring(0, 50)}`); }
-
-                let isSuccess = false; 
-                let trackingCode = "Sent";
-                
-                const cleanId = item.payload[0].order_id;
-                if (resJson[cleanId] && resJson[cleanId].success === true) { 
-                    isSuccess = true; trackingCode = resJson[cleanId].tracking; 
-                } else if (Array.isArray(resJson) && resJson[0] && (resJson[0].tracking || resJson[0].success)) { 
-                    isSuccess = true; trackingCode = resJson[0].tracking || "Sent"; 
+                if (json[cleanId] && json[cleanId].success) {
+                    isSuccess = true; tracking = json[cleanId].tracking;
+                } else if (Array.isArray(json) && json[0] && (json[0].tracking || json[0].success)) {
+                    isSuccess = true; tracking = json[0].tracking;
                 }
-                
+
                 if (isSuccess) {
-                    await update(ref(db, `orders/${item.firebaseId}`), { 
+                    // نجاح: تحديث DB وحذف Snapshot
+                    await update(ref(db, `orders/${orderId}`), { 
                         status: 'Shipped', 
                         deliveryProvider: apiData.displayName, 
-                        trackingCode: trackingCode, 
-                        shippedAt: Date.now() 
+                        trackingCode: tracking,
+                        shippedAt: Date.now(),
+                        shippingLog: dest.logs.join(' | ') 
                     });
+                    clearOrderSnapshot(orderId);
                     successCount++;
-                } else { 
-                    failCount++; 
-                    const errMsg = resJson[cleanId] ? resJson[cleanId].message : JSON.stringify(resJson).substring(0,50);
-                    sendDetails += `\n❌ ${item.customerName}: ${errMsg}`;
+                } else {
+                    let msg = json[cleanId] ? json[cleanId].message : JSON.stringify(json);
+                    failReport += `\n❌ ${order.customerName}: ${msg}`;
                 }
 
-            } catch(e) {
-                console.error(e); 
-                failCount++; 
-                sendDetails += `\n⚠️ ${item.customerName}: خطأ اتصال (${e.message})`;
+                // انتظار لتجنب الحظر
+                await delay(RATE_LIMIT_DELAY);
+
+            } catch(err) {
+                failReport += `\n⚠️ ${orderId}: ${err.message}`;
             }
         }
-        
-        let report = `النتيجة النهائية:\n✅ تم الإرسال بنجاح: ${successCount}\n❌ فشل الإرسال: ${failCount}`;
-        if(failCount > 0) report += `\n\nتفاصيل الفشل:${sendDetails}`;
+
+        let report = `✅ تم الإرسال: ${successCount}`;
+        if(failReport) report += `\n\n🛑 الأخطاء:${failReport}`;
         alert(report);
         
         btn.textContent = "📤 إرسال المحدد"; 
@@ -796,7 +716,7 @@
     window.delZ=(k)=>{if(confirm('حذف المنطقة؟')) remove(ref(db,`shipping_zones/${k}`));};
 
     // =======================================================
-    // دوال فتح البطاقة والحفظ
+    // دوال فتح البطاقة والحفظ (كما هي)
     // =======================================================
     window.openDetails = async (id) => { 
         const orderSnap = await get(ref(db, 'orders/'+id)); 
@@ -822,22 +742,16 @@
             let netPrice = currentTotal - (marketingDiscount * qty); 
             if(netPrice < 0) netPrice = 0; 
             document.getElementById('editProductPrice').value = netPrice; 
-
-            // ضبط القائمة المنسدلة
             const isDesk = (o.deliveryOption && (o.deliveryOption.includes('desk') || o.deliveryOption.includes('مكتب')));
             document.getElementById('editDeliveryOption').value = isDesk ? 'desk' : 'home';
-
             document.getElementById('orderDetailModal').classList.remove('hidden'); 
         } 
     }
-
     document.getElementById('closeDetailModal').addEventListener('click',()=>document.getElementById('orderDetailModal').classList.add('hidden'));
-
     document.getElementById('saveChangesBtn').addEventListener('click',async()=>{ 
         const id=document.getElementById('currentOrderId').value; 
         const delOptionVal = document.getElementById('editDeliveryOption').value;
         const delOptionText = delOptionVal === 'desk' ? 'Stop Desk (مكتب)' : 'Home (منزل)';
-
         await update(ref(db,'orders/'+id), { 
             customerName:document.getElementById('editName').value, 
             customerPhone:document.getElementById('editPhone').value, 
@@ -850,7 +764,6 @@
         document.getElementById('orderDetailModal').classList.add('hidden'); 
         alert("✅ تم حفظ جميع بيانات الطلب بنجاح"); 
     });
-
     function renderWilayaCheckboxes(){ const g=document.getElementById('wilayaGrid'); g.innerHTML=''; allWilayas.forEach(w=>{ g.innerHTML+=`<div class="wilaya-checkbox-item" style="font-size: 0.85rem; display: flex; align-items: center; gap: 5px;"><input type="checkbox" class="wilaya-chk" value="${w.split('. ')[1]}"><span>${w.split('. ')[1]}</span></div>`; }); }
     document.getElementById('selectAllBtn').addEventListener('click',()=>{ const c=document.querySelectorAll('.wilaya-chk'); if(c.length>0){const s=!c[0].checked;c.forEach(i=>i.checked=s);} });
     document.getElementById('saveZoneBtn').addEventListener('click',async()=>{ const h=document.getElementById('homePrice').value, d=document.getElementById('deskPrice').value; const sel=[]; document.querySelectorAll('.wilaya-chk:checked').forEach(c=>sel.push(c.value)); if(!h||sel.length==0) return alert('خطأ'); await push(zonesRef,{homePrice:h,deskPrice:d,wilayas:sel}); alert('تم'); renderWilayaCheckboxes(); });
