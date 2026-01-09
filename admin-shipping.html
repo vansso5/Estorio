@@ -154,13 +154,13 @@
     const allWilayas = [ "01. أدرار", "02. الشلف", "03. الأغواط", "04. أم البواقي", "05. باتنة", "06. بجاية", "07. بسكرة", "08. بشار", "09. البليدة", "10. البويرة", "11. تمنراست", "12. تبسة", "13. تلمسان", "14. تيارت", "15. تيزي وزو", "16. الجزائر", "17. الجلفة", "18. جيجل", "19. سطيف", "20. سعيدة", "21. سكيكدة", "22. سيدي بلعباس", "23. عنابة", "24. قالمة", "25. قسنطينة", "26. المدية", "27. مستغانم", "28. المسيلة", "29. معسكر", "30. ورقلة", "31. وهران", "32. البيض", "33. إليزي", "34. برج بوعريريج", "35. بومرداس", "36. الطارف", "37. تندوف", "38. تيسمسيلت", "39. الوادي", "40. خنشلة", "41. سوق أهراس", "42. تيبازة", "43. ميلة", "44. عين الدفلى", "45. النعامة", "46. عين تموشنت", "47. غرداية", "48. غليزان", "49. تيميمون", "50. برج باجي مختار", "51. أولاد جلال", "52. بني عباس", "53. إن صالح", "54. إن قزام", "55. تقرت", "56. جانت", "57. المغير", "58. المنيعة" ];
     
     // ============================================
-    // القاموس الذكي المحدث (شامل لكل الاختلافات)
+    // القاموس الذكي المحدث (تمت إضافة النسخ بدون همزات)
     // ============================================
     const wilayaMapping = {
         // 01 - 10
-        "adrar": 1, "أدرار": 1, "adr": 1, "aderar": 1,
+        "adrar": 1, "أدرار": 1, "adr": 1, "aderar": 1, "ادرار": 1,
         "chlef": 2, "الشلف": 2, "شلف": 2, "chleff": 2,
-        "laghouat": 3, "الأغواط": 3, "أغواط": 3, "laghouat": 3,
+        "laghouat": 3, "الأغواط": 3, "أغواط": 3, "laghouat": 3, "الاغواط": 3, "اغواط": 3,
         "oum el bouaghi": 4, "أم البواقي": 4, "ام البواقي": 4, "oeb": 4,
         "batna": 5, "باتنة": 5, "باتنه": 5, "batna": 5,
         "bejaia": 6, "بجاية": 6, "بجايه": 6, "bgayet": 6,
@@ -194,7 +194,7 @@
         // 31 - 40
         "oran": 31, "وهران": 31, "wahran": 31,
         "el bayadh": 32, "البيض": 32, "بيض": 32, "el bayadh": 32, "bayadh": 32,
-        "illizi": 33, "إليزي": 33, "اليزي": 33,
+        "illizi": 33, "إليزي": 33, "اليزي": 33, "إليزي": 33,
         "bordj bou arreridj": 34, "برج بوعريريج": 34, "برج": 34, "bba": 34,
         "boumerdes": 35, "بومرداس": 35,
         "el tarf": 36, "الطارف": 36, "طارف": 36, "el tarf": 36, "tarf": 36,
@@ -202,20 +202,20 @@
         "tissemsilt": 38, "تيسمسيلت": 38,
         "el oued": 39, "الوادي": 39, "وادي": 39, "oued souf": 39, "واد سوف": 39, "oued": 39, "سوف": 39,
         "khenchela": 40, "خنشلة": 40, "خنشله": 40,
-        "souk ahras": 41, "سوق أهراس": 41,
+        "souk ahras": 41, "سوق أهراس": 41, "سوق اهراس": 41,
         "tipaza": 42, "تيبازة": 42, "تيبازه": 42, "tipa": 42,
         "mila": 43, "ميلة": 43, "ميله": 43,
-        "ain defla": 44, "عين الدفلى": 44,
+        "ain defla": 44, "عين الدفلى": 44, "عين الدفلي": 44,
         "naama": 45, "النعامة": 45, "نعامة": 45, "النعامه": 45, "نعامه": 45, "naama": 45,
         "ain temouchent": 46, "عين تموشنت": 46,
         "ghardaia": 47, "غرداية": 47, "غردايه": 47,
         "relizane": 48, "غليزان": 48,
         "timimoun": 49, "تيميمون": 49,
         "bordj badji mokhtar": 50, "برج باجي مختار": 50, "bbm": 50,
-        "ouled djellal": 51, "أولاد جلال": 51, "ولاد جلال": 51, "odj": 51,
+        "ouled djellal": 51, "أولاد جلال": 51, "ولاد جلال": 51, "odj": 51, "اولاد جلال": 51,
         "beni abbes": 52, "بني عباس": 52,
-        "in salah": 53, "إن صالح": 53, "عين صالح": 53,
-        "in guezzam": 54, "إن قزام": 54, "عين قزام": 54,
+        "in salah": 53, "إن صالح": 53, "عين صالح": 53, "ان صالح": 53,
+        "in guezzam": 54, "إن قزام": 54, "عين قزام": 54, "ان قزام": 54,
         "touggourt": 55, "تقرت": 55,
         "djanet": 56, "جانت": 56,
         "el mghair": 57, "المغير": 57, "مغير": 57,
@@ -267,41 +267,56 @@
     }
 
     // =====================================
-    // دالة البحث الذكي عن الولاية (The Smart Finder)
+    // دالة البحث الذكي عن الولاية (The Smart Finder) - نسخة مصححة
     // =====================================
     function getWilayaIdByName(rawName) {
         if (!rawName) return null;
         
-        const matchNum = rawName.match(/^(\d+)/);
-        if (matchNum) return parseInt(matchNum[1]);
+        // 1. إذا كان المدخل رقم، ارجعه مباشرة
+        const matchNum = rawName.toString().match(/^(\d+)/);
+        if (matchNum) {
+            const num = parseInt(matchNum[1]);
+            if (num > 0 && num <= 58) return num;
+        }
 
+        // 2. تنظيف النص الأساسي
         let cleanName = normalizeText(rawName); 
-        cleanName = cleanName.replace("wilaya", "").trim();
+        
+        // إزالة كلمات زائدة شائعة قد تسبب خطأ
+        cleanName = cleanName.replace(/^wilaya\s+/, "").replace(/^ولاية\s+/, "").trim();
 
+        // 3. البحث المباشر في القاموس
         if (wilayaMapping[cleanName]) return wilayaMapping[cleanName];
         
+        // 4. معالجة "ال" التعريف (إزالة أو إضافة)
         if (cleanName.startsWith("ال")) {
             const withoutAl = cleanName.substring(2).trim();
             if (wilayaMapping[withoutAl]) return wilayaMapping[withoutAl];
+        } else {
+            const withAl = "ال" + cleanName;
+            if (wilayaMapping[withAl]) return wilayaMapping[withAl];
         }
 
-        const withAl = "ال" + cleanName;
-        if (wilayaMapping[withAl]) return wilayaMapping[withAl];
-
+        // 5. معالجة التاء المربوطة والهاء (ة <-> ه)
         let altName = cleanName;
         if (cleanName.endsWith("ة")) altName = cleanName.slice(0, -1) + "ه";
         else if (cleanName.endsWith("ه")) altName = cleanName.slice(0, -1) + "ة";
+        
         if (wilayaMapping[altName]) return wilayaMapping[altName];
 
+        // 6. معالجة البادئات الأجنبية (El, Le, La)
         const withEl = "el " + cleanName;
         if (wilayaMapping[withEl]) return wilayaMapping[withEl];
 
+        // 7. بحث عميق (Partial Match) - كحل أخير
         for (const [key, val] of Object.entries(wilayaMapping)) {
-            if (key.length > 2 && (cleanName.includes(key) || key.includes(cleanName))) {
+            // نتأكد أن المفتاح طويل بما يكفي لتجنب التطابق العشوائي
+            if (key.length > 3 && (cleanName.includes(key) || key.includes(cleanName))) {
                 return val;
             }
         }
 
+        // 8. البحث في كاش الـ API إذا توفر
         if (allWilayasApiCache.length > 0) {
             const foundInApi = allWilayasApiCache.find(w => normalizeText(w.name) === cleanName);
             if (foundInApi) return foundInApi.id;
