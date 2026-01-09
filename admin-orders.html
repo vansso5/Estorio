@@ -72,6 +72,32 @@
     .status-new { background: #e3f2fd; color: #1565c0; }
     .status-processing { background: #fff3e0; color: #ef6c00; }
     .status-shipped { background: #e8f5e9; color: #2e7d32; }
+
+    /* === 🔴 تصميم نقطة التنبيه (الإضافة الجديدة) === */
+    .order-row {
+      position: relative; /* ضروري لكي تظهر النقطة بالنسبة للبطاقة */
+      overflow: visible;
+    }
+
+    .unread-dot {
+      position: absolute;
+      top: -6px;        
+      right: -6px;      
+      width: 14px;
+      height: 14px;
+      background-color: #2ecc71; /* لون أخضر */
+      border: 2px solid #ffffff; 
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      z-index: 10;
+      animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(46, 204, 113, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+    }
   </style>
 
 </head>
@@ -281,7 +307,7 @@ function getNextAction(status) {
   }
 }
 
-// جعل دالة فتح التفاصيل متاحة عالمياً (لكي تعمل في renderOrderRow)
+// جعل دالة فتح التفاصيل متاحة عالمياً
 window.openOrderDetails = function(order, id) {
   currentOpenOrderId = id;
   detailModal.classList.remove('hidden');
@@ -303,7 +329,6 @@ window.openOrderDetails = function(order, id) {
       const editBtn = document.createElement('button');
       editBtn.textContent = '✏️ تعديل البيانات';
       editBtn.className = 'btn-edit';
-      // نربط الدالة مباشرة هنا لأنها داخل نفس النطاق (Module Scope)
       editBtn.onclick = () => enableEditMode(order);
       editBtnContainer.appendChild(editBtn);
   }
@@ -341,7 +366,7 @@ window.openOrderDetails = function(order, id) {
       
       <div class="details-row"><span class="details-label">العنوان:</span> <span id="disp-address">${order.customerAddress || order.address || '-'}</span></div>
       <div class="details-row"><span class="details-label">التوصيل:</span> ${order.deliveryOption || '-'}</div>
-      <div class="details-row" style="background:#fff3cd; padding:5px; border-radius:4px;"><span class="details-label">ملاحظات:</span> ${order.note || 'لا يوجد'}</div>
+      
     </div>
 
     <div class="details-section">
@@ -442,17 +467,29 @@ async function updateOrderStatus(id, newStatus) {
     }
 }
 
+// ============================================
+// دالة عرض الصف المعدلة (مع ميزة النقطة الخضراء)
+// ============================================
 function renderOrderRow(order, id, container) {
   const row = document.createElement('div');
+  
   let statusClass = 'status-new';
   const st = (order.status || '').toLowerCase();
   if (st.includes('processing') || st.includes('تجهيز')) statusClass = 'status-processing';
   else if (st.includes('shipped') || st.includes('شحن')) statusClass = 'status-shipped';
   
   row.className = `order-row ${statusClass}`;
+
+  // 1. جلب قائمة الطلبات المقروءة من الذاكرة المحلية
+  const readOrders = JSON.parse(localStorage.getItem('admin_read_orders') || '[]');
+  // 2. التحقق مما إذا كان الطلب الحالي موجوداً في القائمة
+  const isUnread = !readOrders.includes(id);
+
   const productName = order.productName || (order.items ? (Array.isArray(order.items) ? order.items[0].name : Object.values(order.items)[0].name) : 'طلب متعدد');
 
+  // 3. إضافة عنصر النقطة شرطياً
   row.innerHTML = `
+    ${isUnread ? '<div class="unread-dot"></div>' : ''}
     <div class="row-info">
       <span class="row-id">#${id.slice(-5)}</span>
       <span class="row-name">${order.customerName || order.name || 'بدون اسم'}</span>
@@ -462,8 +499,23 @@ function renderOrderRow(order, id, container) {
     <div class="row-arrow">❮</div>
   `;
   
-  // نستخدم المتغير العالمي الذي عرفناه بالأعلى
-  row.addEventListener('click', () => window.openOrderDetails(order, id));
+  // 4. عند النقر: إخفاء النقطة وحفظ الحالة
+  row.addEventListener('click', () => {
+    // إخفاء النقطة بصرياً
+    const dot = row.querySelector('.unread-dot');
+    if (dot) dot.remove();
+
+    // حفظ معرف الطلب في الذاكرة لكي لا تظهر النقطة مرة أخرى
+    const currentReadOrders = JSON.parse(localStorage.getItem('admin_read_orders') || '[]');
+    if (!currentReadOrders.includes(id)) {
+        currentReadOrders.push(id);
+        localStorage.setItem('admin_read_orders', JSON.stringify(currentReadOrders));
+    }
+
+    // فتح التفاصيل
+    window.openOrderDetails(order, id);
+  });
+
   container.appendChild(row);
 }
 
@@ -529,7 +581,6 @@ searchInput.addEventListener('input', (e) => {
 
 <!-- ============================================== -->
 <!-- 2. كود Javascript الإضافي (للقائمة الجانبية) -->
-<!-- هذا الكود خارج الموديول ليكون متاحاً لـ onclick في الـ HTML -->
 <!-- ============================================== -->
 <script>
     function toggleMenu() {
